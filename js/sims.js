@@ -11,6 +11,39 @@ function btn(label, cls, onclick) {
 function row(content) { return '<div class="ctrl-row">' + content + '</div>'; }
 function label(t)     { return '<div class="sim-label">' + t + '</div>'; }
 
+/**
+ * getCtx(id) — hiDPI-aware canvas context
+ * Returns {ctx, W, H} in logical CSS pixels.
+ * Call at the start of every draw function instead of getElementById + getContext.
+ */
+function getCtx(id) {
+  var cv = document.getElementById(id);
+  if (!cv) return null;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  /* Measure true CSS display width — parent is more reliable than self before first paint */
+  var rect = cv.getBoundingClientRect();
+  var parentW = cv.parentElement ? cv.parentElement.getBoundingClientRect().width : 0;
+  var W = Math.max(rect.width > 10 ? rect.width : 0, parentW > 20 ? parentW : 0);
+  if (W < 10) W = parseInt(cv.getAttribute('data-w')) || 300;
+
+  /* Height from data-h attribute (explicit) or aspect ratio fallback */
+  var attrH = parseInt(cv.getAttribute('data-h')) || parseInt(cv.getAttribute('height')) || 0;
+  var H = attrH > 10 ? attrH : Math.round(W * 0.6);
+
+  /* Reinitialise backing store only when size actually changed */
+  if (!cv._hiDPIReady || Math.abs(cv._W - W) > 4 || Math.abs(cv._H - H) > 4) {
+    cv.width  = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    cv.style.width  = W + 'px';
+    cv.style.height = H + 'px';
+    cv._W = W; cv._H = H; cv._dpr = dpr; cv._hiDPIReady = true;
+  }
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(cv._dpr, 0, 0, cv._dpr, 0, 0);
+  return { ctx: ctx, W: cv._W, H: cv._H, cv: cv };
+}
+
 /* ══════════ SCIENCE SIMULATIONS ══════════ */
 
 /* Sink or Float */
@@ -32,10 +65,9 @@ SIM_REGISTRY['sink-float'] = function(c) {
   var raf;
 
   function draw() {
-    var cv = document.getElementById('sfCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('sfCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0, 0, W, H);
 
     /* Sky */
@@ -116,7 +148,7 @@ SIM_REGISTRY['sink-float'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Sink or Float?</div>' +
-      '<canvas id="sfCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="sfCanvas" data-w="280" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center">' +
       items.map(function(item) {
         return '<button onclick="sfDrop(\'' + item.name + '\')" style="padding:6px 12px;border-radius:10px;border:2px solid ' + item.color + ';background:' + item.color + '22;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif">' + item.name + '</button>';
@@ -126,7 +158,7 @@ SIM_REGISTRY['sink-float'] = function(c) {
       '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="sfReset()">↺ Clear</button></div>';
 
     cancelAnimationFrame(raf);
-    draw();
+    requestAnimationFrame(function(){ requestAnimationFrame(draw); });
   }
 
   window.sfDrop = function(name) {
@@ -171,10 +203,9 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('shadowCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('shadowCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0, 0, W, H);
 
     /* Background - wall */
@@ -231,7 +262,7 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Shadow Play</div>' +
-      '<canvas id="shadowCanvas" width="300" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="shadowCanvas" data-w="300" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">' +
       '<span style="font-size:11px;color:var(--muted)">Object distance:</span>' +
       '<input type="range" class="slide" min="10" max="80" value="50" oninput="shadowDist(this.value)" style="width:130px">' +
@@ -267,10 +298,9 @@ SIM_REGISTRY['circuit-sim'] = function(c) {
   var raf;
 
   function draw() {
-    var cv = document.getElementById('circuitCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('circuitCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
 
@@ -410,7 +440,7 @@ SIM_REGISTRY['circuit-sim'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Simple Electric Circuit</div>' +
-      '<canvas id="circuitCanvas" width="300" height="220" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="circuitCanvas" data-w="300" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">' +
       materials.map(function(mat) {
         var isSelected = selected === mat.name;
@@ -528,10 +558,9 @@ SIM_REGISTRY['magnet-sim'] = function(c) {
   var attraction = 0;
 
   function draw() {
-    var cv = document.getElementById('magnetCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('magnetCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -600,7 +629,7 @@ SIM_REGISTRY['magnet-sim'] = function(c) {
   function render() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Magnetic Materials</div>'+
-      '<canvas id="magnetCanvas" width="290" height="160" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="magnetCanvas" data-w="290" data-h="160" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">'+
       items.map(function(item){
         var isSel = sel && sel.n===item.n;
@@ -634,10 +663,9 @@ SIM_REGISTRY['germination'] = function(c) {
   ];
 
   function draw() {
-    var cv = document.getElementById('germCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('germCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Sky */
@@ -714,7 +742,7 @@ SIM_REGISTRY['germination'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Seed Germination Lab</div>' +
-      '<canvas id="germCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="germCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       /* Day progress bar */
       '<div style="height:6px;background:var(--surface2);border-radius:3px;margin:8px 0"><div id="germBar" style="height:6px;background:var(--evs);border-radius:3px;width:0%;transition:width .3s"></div></div>' +
       '<div class="ctrl-row" style="margin-top:4px">' +
@@ -763,10 +791,10 @@ SIM_REGISTRY['pendulum'] = function(c) {
   var len=140, theta=0.5, omega=0, running=false, raf, trail=[];
 
   function draw() {
-    var cv = document.getElementById('pendCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W=cv.width, H=cv.height, pivotX=W/2, pivotY=22;
+    var _g = getCtx('pendCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+     pivotX=W/2, pivotY=22;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -830,7 +858,7 @@ SIM_REGISTRY['pendulum'] = function(c) {
   function render() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Pendulum Physics</div>'+
-      '<canvas id="pendCanvas" width="300" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="pendCanvas" data-w="300" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<button class="cbtn" onclick="pendToggle()" id="pendBtn" style="background:var(--acc);color:white;border-color:var(--acc)">▶ Swing</button>'+
       '<span style="font-size:11px;color:var(--muted)">Length: <b id="pendLenLabel">140cm</b></span>'+
@@ -880,10 +908,9 @@ SIM_REGISTRY['food-web'] = function(c) {
   };
 
   function render() {
-    var cv = document.getElementById('fwCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g = getCtx('fwCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -936,11 +963,12 @@ SIM_REGISTRY['food-web'] = function(c) {
   }
 
   function setupCanvas() {
-    var cv = document.getElementById('fwCanvas');
+    var cv=document.getElementById('fwCanvas');
+  if(cv){var _dpr=Math.min(window.devicePixelRatio||1,2);if(!cv._hiDPIReady){var _rect=cv.getBoundingClientRect();var _W=_rect.width>10?_rect.width:parseInt(cv.getAttribute('width'))||300;var _H=_rect.height>10?_rect.height:parseInt(cv.getAttribute('height'))||200;cv.width=Math.round(_W*_dpr);cv.height=Math.round(_H*_dpr);cv.style.width=_W+'px';cv.style.height=_H+'px';cv._dpr=_dpr;cv._W=_W;cv._H=_H;cv._hiDPIReady=true;}}
     if (!cv) return;
     cv.onclick = function(e) {
       var rect = cv.getBoundingClientRect();
-      var scaleX = cv.width / rect.width;
+      var scaleX = W / rect.width;
       var mx = (e.clientX-rect.left)*scaleX;
       var my = (e.clientY-rect.top)*scaleX;
       organisms.forEach(function(org) {
@@ -961,7 +989,7 @@ SIM_REGISTRY['food-web'] = function(c) {
   function renderUI() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Food Web</div>'+
-      '<canvas id="fwCanvas" width="300" height="340" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>'+
+      '<canvas id="fwCanvas" data-w="300" data-h="340" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>'+
       '<div id="fwFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7">Tap any organism to remove it — watch how the ecosystem reacts!</div>'+
       '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="fwRestore()">🔄 Restore All</button></div>';
     setupCanvas(); render();
@@ -977,10 +1005,9 @@ SIM_REGISTRY['ohms-law'] = function(c) {
   var history=[];
 
   function draw() {
-    var cv = document.getElementById('ohmCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g = getCtx('ohmCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -1075,7 +1102,7 @@ SIM_REGISTRY['ohms-law'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Ohm\'s Law — V = IR</div>'+
-      '<canvas id="ohmCanvas" width="280" height="230" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="ohmCanvas" data-w="280" data-h="230" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<span style="font-size:11px;color:#fbbf24">Voltage V: <b>'+voltage+'V</b></span>'+
       '<input type="range" class="slide" min="1" max="12" value="'+voltage+'" oninput="ohmV(this.value)" style="width:100px">'+
@@ -1101,10 +1128,8 @@ SIM_REGISTRY['velocity-time'] = function(c) {
   var maxT=80;
 
   function draw(){
-    var cv=document.getElementById('vtCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g=getCtx('vtCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     /* Road */
@@ -1180,7 +1205,7 @@ SIM_REGISTRY['velocity-time'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Velocity-Time Graph</div>'+
-      '<canvas id="vtCanvas" width="300" height="240" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="vtCanvas" data-w="300" data-h="240" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<button class="cbtn" id="vtBtn" onclick="vtAccel()" style="background:var(--evs);color:white;border-color:var(--evs)">▶ Accelerate</button>'+
       '<button class="cbtn" onclick="vtBrake()" style="background:var(--sci);color:white;border-color:var(--sci)">🛑 Brake</button>'+
@@ -1250,7 +1275,7 @@ SIM_REGISTRY['pythagoras'] = function(c) {
     var a=parseFloat(document.getElementById('pyA').value)||3;
     var b=parseFloat(document.getElementById('pyB').value)||4;
     var c2=a*a+b*b, c=Math.sqrt(c2);
-    var cv=document.getElementById('pyCanvas'), ctx=cv.getContext('2d');
+    var _g=getCtx('pyCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     var scale=Math.min(100/Math.max(a,b), 8);
     var ox=20,oy=140,px=ox+a*scale,py=oy,qx=ox,qy=oy-b*scale;
     ctx.clearRect(0,0,220,160);
@@ -1282,7 +1307,7 @@ SIM_REGISTRY['probability-exp'] = function(c) {
     history.push(heads/total);if(history.length>50)history.shift();
     document.getElementById('coinDisplay').textContent=h?'👑':'🌀';
     document.getElementById('probInfo').textContent='Heads: '+heads+' / '+total+' = '+(heads/total).toFixed(3);
-    var cv=document.getElementById('probCanvas'),ctx=cv.getContext('2d');
+    var _g=getCtx('probCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,220,80);
     ctx.strokeStyle='rgba(255,255,255,.2)';ctx.beginPath();ctx.moveTo(0,40);ctx.lineTo(220,40);ctx.stroke();
     if(history.length<2)return;
@@ -1312,7 +1337,7 @@ SIM_REGISTRY['compound-interest'] = function(c) {
     var siArr=[],ciArr=[];
     for(var y=0;y<=T;y++){siArr.push(P+P*R*y/100);ciArr.push(P*Math.pow(1+R/100,y));}
     var maxV=ciArr[T];
-    var cv=document.getElementById('ciCanvas'),ctx=cv.getContext('2d');
+    var _g=getCtx('ciCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,220,120);
     function drawLine(arr,color){
       ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
@@ -1337,7 +1362,7 @@ SIM_REGISTRY['quadratic-real'] = function(c) {
     '<div id="quadInfo" style="font-size:12px;color:var(--muted);text-align:center"></div>' +
     row('<button class="cbtn" onclick="quadAnimate()">🏀 Launch Ball</button>');
   function drawCurve(){
-    var cv=document.getElementById('quadCanvas'),ctx=cv.getContext('2d');
+    var _g=getCtx('quadCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,240,130);
     ctx.strokeStyle='rgba(255,255,255,.15)';ctx.beginPath();ctx.moveTo(10,110);ctx.lineTo(230,110);ctx.stroke();
     ctx.strokeStyle='var(--acc)';ctx.lineWidth=2;ctx.beginPath();
@@ -1354,7 +1379,7 @@ SIM_REGISTRY['quadratic-real'] = function(c) {
       var h=20*t-5*t*t;
       if(h<0){document.getElementById('quadInfo').textContent='Landed! Total time = 4s (solve 20t−5t²=0 → t=0 or t=4)';return;}
       drawCurve();
-      var cv=document.getElementById('quadCanvas'),ctx=cv.getContext('2d');
+      var _g=getCtx('quadCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
       ctx.beginPath();ctx.arc(10+t/4*220,110-h/20*100,8,0,Math.PI*2);
       ctx.fillStyle='var(--sci)';ctx.fill();
       ctx.fillText('🏀',10+t/4*220-8,110-h/20*100+5);
@@ -1586,10 +1611,13 @@ SIM_REGISTRY['solar-system'] = function(c) {
     '</div>';
 
   canvas=document.getElementById('solarCanvas');
+  var _dpr=Math.min(window.devicePixelRatio||1,2);
   W=c.offsetWidth||340; H=W;
-  canvas.width=W; canvas.height=H;
+  canvas.width=Math.round(W*_dpr); canvas.height=Math.round(H*_dpr);
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
   CX=W/2; CY=H/2;
   ctx=canvas.getContext('2d');
+  ctx.scale(_dpr,_dpr);
   starsCache=buildStars(W,H);
 
   canvas.addEventListener('click', handleHit);
@@ -1691,7 +1719,7 @@ SIM_REGISTRY['micro-world'] = function(c) {
       '<div style="position:relative;width:240px;height:160px;border-radius:50%;overflow:hidden;' +
         'border:6px solid var(--surface2);box-shadow:0 0 0 3px var(--border),0 0 40px rgba(0,0,0,.3);' +
         'background:#000;margin:0 auto">' +
-      '<canvas id="microCanvas" width="240" height="160" style="width:100%;height:100%;' +
+      '<canvas id="microCanvas" data-w="240" data-h="160" style="width:100%;height:100%;' +
         'transform:scale(' + zoom + ');transform-origin:center;transition:transform .4s"></canvas>' +
       /* Lens crosshair */
       '<div style="position:absolute;inset:0;pointer-events:none;' +
@@ -1711,8 +1739,7 @@ SIM_REGISTRY['micro-world'] = function(c) {
       }).join('') +
       '</div>';
 
-    var cv = document.getElementById('microCanvas');
-    var ctx = cv.getContext('2d');
+    var _g=getCtx('microCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,240,160);
     s.draw(ctx, 240, 160);
 
@@ -1742,7 +1769,8 @@ SIM_REGISTRY['micro-world'] = function(c) {
 
   window.microZoom = function(d) {
     zoom = Math.max(1, Math.min(4, zoom + d * 0.5));
-    var cv = document.getElementById('microCanvas');
+    var cv=document.getElementById('microCanvas');
+  if(cv){var _dpr=Math.min(window.devicePixelRatio||1,2);if(!cv._hiDPIReady){var _rect=cv.getBoundingClientRect();var _W=_rect.width>10?_rect.width:parseInt(cv.getAttribute('width'))||300;var _H=_rect.height>10?_rect.height:parseInt(cv.getAttribute('height'))||200;cv.width=Math.round(_W*_dpr);cv.height=Math.round(_H*_dpr);cv.style.width=_W+'px';cv.style.height=_H+'px';cv._dpr=_dpr;cv._W=_W;cv._H=_H;cv._hiDPIReady=true;}}
     if(cv) cv.style.transform = 'scale(' + zoom + ')';
     var lbl = document.getElementById('microZoomLabel');
     if(lbl) lbl.textContent = 'Zoom: ' + zoom + '×';
@@ -1809,8 +1837,7 @@ SIM_REGISTRY['states-matter'] = function(c) {
 
     initParticles(state);
     clearInterval(raf);
-    var cv = document.getElementById('stateCanvas');
-    var ctx = cv.getContext('2d');
+    var _g=getCtx('stateCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     raf = setInterval(function() {
       ctx.clearRect(0,0,240,140);
       var cfg2 = configs[state];
@@ -1862,7 +1889,8 @@ SIM_REGISTRY['newtons-laws'] = function(c) {
       subtitle: "Objects stay still or keep moving unless a force acts",
       color: 'var(--sci)',
       run: function(canvas) {
-        var ctx = canvas.getContext('2d');
+        var ctx=canvas.getContext('2d');
+  if(canvas._dpr){ctx.setTransform(canvas._dpr,0,0,canvas._dpr,0,0);}  var W=canvas._W||canvas.width, H=canvas._H||canvas.height;
         var x = 30, moving = false, friction = false;
         canvas.onclick = function(e) {
           moving = !moving;
@@ -1903,7 +1931,8 @@ SIM_REGISTRY['newtons-laws'] = function(c) {
       subtitle: "More mass needs more force for the same acceleration",
       color: 'var(--math)',
       run: function(canvas) {
-        var ctx = canvas.getContext('2d');
+        var ctx=canvas.getContext('2d');
+  if(canvas._dpr){ctx.setTransform(canvas._dpr,0,0,canvas._dpr,0,0);}  var W=canvas._W||canvas.width, H=canvas._H||canvas.height;
         var force = 3;
         document.getElementById('forceSlider').oninput = function() {
           force = parseInt(this.value);
@@ -1939,7 +1968,8 @@ SIM_REGISTRY['newtons-laws'] = function(c) {
       subtitle: "Every action has an equal and opposite reaction",
       color: 'var(--acc)',
       run: function(canvas) {
-        var ctx = canvas.getContext('2d');
+        var ctx=canvas.getContext('2d');
+  if(canvas._dpr){ctx.setTransform(canvas._dpr,0,0,canvas._dpr,0,0);}  var W=canvas._W||canvas.width, H=canvas._H||canvas.height;
         var rocketX = 140, exhaust = [];
         var launched = false;
         document.getElementById('launchBtn').onclick = function() { launched=!launched; };
@@ -1988,7 +2018,7 @@ SIM_REGISTRY['newtons-laws'] = function(c) {
     c.innerHTML =
       '<div style="font-size:14px;font-weight:900;color:' + l.color + ';margin-bottom:2px">' + l.title + '</div>' +
       '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">' + l.subtitle + '</div>' +
-      '<canvas id="newtonCanvas" width="280" height="120" style="border-radius:12px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:block;width:100%"></canvas>' +
+      '<canvas id="newtonCanvas" data-w="280" data-h="120" style="border-radius:12px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:block;width:100%"></canvas>' +
       /* Law-specific controls */
       (law===1 ? '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" id="frictionBtn">🫧 No Friction</button><div style="font-size:11px;color:var(--muted)">Tap canvas to push ball</div></div>' : '') +
       (law===2 ? '<div class="ctrl-row" style="margin-top:8px"><span style="font-size:12px;color:var(--muted)">Force:</span><input id="forceSlider" type="range" class="slide" min="1" max="10" value="3" style="width:120px"><span id="forceLabel" style="font-size:12px;color:var(--math);font-weight:700">Force: 3N</span></div>' : '') +
@@ -2000,8 +2030,8 @@ SIM_REGISTRY['newtons-laws'] = function(c) {
           (n===law?'background:'+l.color+';color:white;border-color:'+l.color:'') + '">Law ' + n + '</button>';
       }).join('') + '</div>';
 
-    var canvas = document.getElementById('newtonCanvas');
-    l.run(canvas);
+    var _ng=getCtx('newtonCanvas'); if(!_ng)return; var canvas=_ng.cv;
+    l.run(canvas, _ng.W, _ng.H, _ng.ctx);
   }
 
   window.newtonLaw = function(n) { clearInterval(raf); law=n; render(); };
@@ -2134,8 +2164,7 @@ SIM_REGISTRY['dna-extraction'] = function(c) {
         '<button class="cbtn" onclick="dnaStep(-' + step + ')" style="background:var(--acc);color:white;border-color:var(--acc)">🔄 Restart</button>') +
       '</div>';
 
-    var cv = document.getElementById('dnaCanvas');
-    var ctx = cv.getContext('2d');
+    var _g=getCtx('dnaCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     var t = 0;
     if(step === steps.length-1) {
       raf = setInterval(function() {
@@ -2430,7 +2459,7 @@ SIM_REGISTRY['reflection-sim'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🪞 Light & Reflection Lab</div>' +
-      '<canvas id="refCanvas" width="300" height="180" style="border-radius:12px;background:#050510;border:1px solid var(--border);display:block;margin:0 auto;width:100%"></canvas>' +
+      '<canvas id="refCanvas" data-w="300" data-h="180" style="border-radius:12px;background:#050510;border:1px solid var(--border);display:block;margin:0 auto;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<span style="font-size:11px;color:var(--muted)">Angle:</span>' +
       '<input type="range" class="slide" min="5" max="85" value="'+angle+'" oninput="refAngle(this.value)" style="width:110px">' +
@@ -2443,13 +2472,12 @@ SIM_REGISTRY['reflection-sim'] = function(c) {
       }).join('') + '</div>' +
       '<div id="refInfo" style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;min-height:16px"></div>';
 
-    var cv = document.getElementById('refCanvas');
-    var ctx = cv.getContext('2d');
+    var _g=getCtx('refCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     cancelAnimationFrame(raf);
 
     function draw() {
       t += 0.03;
-      var W=cv.width, H=cv.height, cx=W/2, my=H-30;
+       cx=W/2, my=H-30;
       ctx.clearRect(0,0,W,H);
 
       /* Mirror surface */
@@ -2702,10 +2730,9 @@ SIM_REGISTRY['terrarium-cycle'] = function(c) {
   ];
 
   function draw() {
-    var cv = document.getElementById('wcCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('wcCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Sky gradient */
@@ -2796,7 +2823,7 @@ SIM_REGISTRY['terrarium-cycle'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:6px;text-align:center">' + stages[stage].name + '</div>' +
-      '<canvas id="wcCanvas" width="320" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="wcCanvas" data-w="320" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin:8px 0;font-size:12px;color:var(--text);line-height:1.7;border:1px solid var(--border)">' + stages[stage].desc + '</div>' +
       '<div class="ctrl-row">' +
       stages.map(function(s,i){
@@ -2805,7 +2832,7 @@ SIM_REGISTRY['terrarium-cycle'] = function(c) {
       }).join('') +
       '</div>';
     cancelAnimationFrame(raf);
-    draw();
+    requestAnimationFrame(function(){ requestAnimationFrame(draw); });
   }
   window.wcStage = function(i) { stage=i; render(); };
   window.simCleanup = function() { cancelAnimationFrame(raf); };
@@ -2966,11 +2993,11 @@ SIM_REGISTRY['digestion-sim'] = function(c) {
   }
 
   function animate() {
-    var cv = document.getElementById('digestCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
+    var _g = getCtx('digestCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     t += 0.03;
-    drawSystem(ctx, cv.width, cv.height, step, t);
+    drawSystem(ctx, W, H, step, t);
     raf = requestAnimationFrame(animate);
   }
 
@@ -3095,10 +3122,9 @@ SIM_REGISTRY['convection-sim'] = function(c) {
   }
 
   function draw() {
-    var cv = document.getElementById('convCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g = getCtx('convCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Tank */
@@ -3169,7 +3195,7 @@ SIM_REGISTRY['convection-sim'] = function(c) {
 
   c.innerHTML =
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Convection Currents</div>' +
-    '<canvas id="convCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+    '<canvas id="convCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
     '<div style="font-size:12px;color:var(--text);line-height:1.7;margin:8px 0;background:var(--surface2);border-radius:10px;padding:10px 14px;border:1px solid var(--border)">' +
     '🔴 Hot fluid <b>rises</b> (less dense) · 🔵 Cold fluid <b>sinks</b> (denser) · This loop drives <b>ocean currents</b>, <b>winds</b>, and even <b>tectonic plates!</b>' +
     '</div>' +
@@ -3371,10 +3397,8 @@ SIM_REGISTRY['em-induction'] = function(c) {
   var currentHistory=[];
 
   function draw() {
-    var cv=document.getElementById('emCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('emCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     /* Background */
@@ -3495,7 +3519,7 @@ SIM_REGISTRY['em-induction'] = function(c) {
 
   c.innerHTML=
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Electromagnetic Induction</div>'+
-    '<canvas id="emCanvas" width="300" height="260" style="border-radius:12px;display:block;width:100%;cursor:ew-resize"></canvas>'+
+    '<canvas id="emCanvas" data-w="300" data-h="260" style="border-radius:12px;display:block;width:100%;cursor:ew-resize"></canvas>'+
     '<div class="ctrl-row" style="margin-top:8px">'+
     '<button class="cbtn" onclick="emLeft()" style="font-size:12px">← Move In</button>'+
     '<button class="cbtn" onclick="emAuto()" id="emAutoBtn" style="font-size:12px">🔄 Auto</button>'+
@@ -3530,10 +3554,8 @@ SIM_REGISTRY['projectile-sim'] = function(c) {
   }
 
   function draw() {
-    var cv=document.getElementById('projCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('projCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     /* Sky */
@@ -3600,7 +3622,7 @@ SIM_REGISTRY['projectile-sim'] = function(c) {
   function render() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Projectile Motion</div>'+
-      '<canvas id="projCanvas" width="300" height="190" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="projCanvas" data-w="300" data-h="190" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<span style="font-size:11px;color:var(--muted)">Angle: <b style="color:var(--math)">'+angle+'°</b></span>'+
       '<input type="range" class="slide" min="10" max="80" value="'+angle+'" oninput="projAngle(this.value)" style="width:100px">'+
@@ -3614,7 +3636,7 @@ SIM_REGISTRY['projectile-sim'] = function(c) {
       '45° gives <b style="color:var(--text)">maximum range</b>! Horizontal and vertical motion are completely independent.'+
       '</div>';
     cancelAnimationFrame(raf);
-    draw();
+    requestAnimationFrame(function(){ requestAnimationFrame(draw); });
   }
 
   window.projAngle  = function(v){ angle=parseInt(v); launched=false; trail=[]; };
@@ -3647,10 +3669,8 @@ SIM_REGISTRY['titration'] = function(c) {
   }
 
   function draw() {
-    var cv=document.getElementById('titCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('titCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -3746,7 +3766,7 @@ SIM_REGISTRY['titration'] = function(c) {
 
   c.innerHTML=
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Acid-Base Titration</div>'+
-    '<canvas id="titCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+    '<canvas id="titCanvas" data-w="280" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
     '<div class="ctrl-row" style="margin-top:8px">'+
     '<button class="cbtn" onclick="titDrop(0.5)" style="font-size:12px">💧 0.5mL Drop</button>'+
     '<button class="cbtn" onclick="titDrop(2)" style="font-size:12px">💦 2mL Burst</button>'+
@@ -3788,10 +3808,9 @@ SIM_REGISTRY['atomic-model'] = function(c) {
   var raf, t = 0;
 
   function draw() {
-    var cv = document.getElementById('atomCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('atomCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     var CX = W/2, CY = H/2;
     ctx.clearRect(0,0,W,H);
 
@@ -3865,7 +3884,7 @@ SIM_REGISTRY['atomic-model'] = function(c) {
         return '<button onclick="atomSel('+i+')" style="padding:4px 8px;border-radius:8px;border:1.5px solid '+(i===sel?e.color:'var(--border)')+';background:'+(i===sel?e.color+'22':'var(--surface2)')+';color:'+(i===sel?e.color:'var(--muted)')+';font-size:12px;font-weight:800;cursor:pointer">'+e.sym+'</button>';
       }).join('') +
       '</div>' +
-      '<canvas id="atomCanvas" width="280" height="240" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="atomCanvas" data-w="280" data-h="240" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">' +
       '<div style="font-size:14px;font-weight:900;color:'+el.color+'">'+el.name+' ('+el.sym+')  — Z='+el.z+'</div>' +
       '<div style="font-size:11px;color:var(--muted);margin:3px 0">Shells: ['+el.shells.join(', ')+'] · Valence electrons: <b style="color:'+el.color+'">'+el.shells[el.shells.length-1]+'</b></div>' +
@@ -3951,10 +3970,8 @@ SIM_REGISTRY['coord-distance'] = function(c) {
   function toGrid(px,axis){ return axis==='x'?(px-orig*cellPx)/cellPx:(orig*cellPx-px)/cellPx; }
 
   function draw() {
-    var cv=document.getElementById('coordCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g=getCtx('coordCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='var(--surface2)'.replace ? '#22263A' : '#22263A';
     ctx.fillRect(0,0,W,H);
@@ -4027,7 +4044,7 @@ SIM_REGISTRY['coord-distance'] = function(c) {
     var dx=pts[1].x-pts[0].x, dy=pts[1].y-pts[0].y;
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Coordinate Geometry — Distance Formula</div>'+
-      '<canvas id="coordCanvas" width="270" height="270" style="border-radius:12px;display:block;width:100%;cursor:crosshair"></canvas>'+
+      '<canvas id="coordCanvas" data-w="270" data-h="270" style="border-radius:12px;display:block;width:100%;cursor:crosshair"></canvas>'+
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;line-height:2">' +
       '<div>P1 = ('+pts[0].x.toFixed(1)+', '+pts[0].y.toFixed(1)+') &nbsp;&nbsp; P2 = ('+pts[1].x.toFixed(1)+', '+pts[1].y.toFixed(1)+')</div>'+
       '<div style="color:var(--muted)">d = √( ('+dx.toFixed(1)+')<sup>2</sup> + ('+dy.toFixed(1)+')<sup>2</sup> ) = √('+( dx*dx+dy*dy).toFixed(1)+') = <b style="color:#C77DFF">'+d.toFixed(3)+'</b></div>'+
@@ -4054,10 +4071,8 @@ SIM_REGISTRY['angle-sum'] = function(c) {
   var a=60, b=70, raf, phase=0, animating=false;
 
   function draw(tearing) {
-    var cv=document.getElementById('angleCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g=getCtx('angleCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     var ga=a*Math.PI/180, gb=b*Math.PI/180, gc=Math.PI-ga-gb;
@@ -4149,7 +4164,7 @@ SIM_REGISTRY['angle-sum'] = function(c) {
     if(cc<5){ b=Math.min(b,170-a); }
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Triangle Angle Sum = 180°</div>'+
-      '<canvas id="angleCanvas" width="300" height="210" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="angleCanvas" data-w="300" data-h="210" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<span style="font-size:11px;color:#FF6B6B">α: <b>'+a+'°</b></span>'+
       '<input type="range" class="slide" min="10" max="'+(160-b)+'" value="'+a+'" oninput="angleA(this.value)" style="width:90px">'+
@@ -4252,10 +4267,8 @@ SIM_REGISTRY['erosion-sim'] = function(c) {
   var forest=true;
 
   function draw(){
-    var cv=document.getElementById('erosionCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g=getCtx('erosionCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     /* Sky */
@@ -4339,7 +4352,7 @@ SIM_REGISTRY['erosion-sim'] = function(c) {
 
   c.innerHTML=
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Erosion & Deforestation</div>'+
-    '<canvas id="erosionCanvas" width="300" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+    '<canvas id="erosionCanvas" data-w="300" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
     '<div class="ctrl-row" style="margin-top:8px">'+
     '<button class="cbtn" onclick="erosionRain()" id="erosionRainBtn" style="background:var(--life);color:white;border-color:var(--life)">🌧️ Start Rain</button>'+
     '<button class="cbtn" onclick="erosionToggle()" id="erosionForestBtn" style="background:var(--evs);color:white;border-color:var(--evs)">🪓 Cut Forest</button>'+
@@ -4515,10 +4528,8 @@ SIM_REGISTRY['lung-capacity'] = function(c) {
   var phase='inhale', t=0, lungFill=0;
 
   function draw(){
-    var cv=document.getElementById('lungCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width, H=cv.height;
+    var _g=getCtx('lungCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -4577,7 +4588,7 @@ SIM_REGISTRY['lung-capacity'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Lung Capacity Visualiser</div>'+
-      '<canvas id="lungCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="lungCanvas" data-w="280" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<button class="cbtn" onclick="lungBreath()" id="lungBtn" style="background:var(--life);color:white;border-color:var(--life)">▶ Start Breathing</button>'+
       '</div>'+
@@ -4813,10 +4824,8 @@ SIM_REGISTRY['sound-pitch'] = function(c) {
   var audioCtx=null, osc=null;
 
   function draw() {
-    var cv=document.getElementById('soundCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('soundCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -4869,7 +4878,7 @@ SIM_REGISTRY['sound-pitch'] = function(c) {
   function render() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Sound Wave Visualiser</div>'+
-      '<canvas id="soundCanvas" width="300" height="180" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="soundCanvas" data-w="300" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<span style="font-size:11px;color:var(--muted)">Pitch (Hz):</span>'+
       '<input type="range" class="slide" min="50" max="2000" value="'+freq+'" oninput="soundFreq(this.value)" style="width:120px">'+
@@ -5114,10 +5123,8 @@ SIM_REGISTRY['water-filter'] = function(c) {
   var filtered=0, total=0;
 
   function draw(){
-    var cv=document.getElementById('filterCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('filterCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -5197,7 +5204,7 @@ SIM_REGISTRY['water-filter'] = function(c) {
 
   c.innerHTML=
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Water Filtration System</div>'+
-    '<canvas id="filterCanvas" width="280" height="230" style="border-radius:12px;display:block;width:100%"></canvas>'+
+    '<canvas id="filterCanvas" data-w="280" data-h="230" style="border-radius:12px;display:block;width:100%"></canvas>'+
     '<div class="ctrl-row" style="margin-top:8px">'+
     '<button class="cbtn" onclick="filterRun()" id="filterBtn" style="background:var(--life);color:white;border-color:var(--life)">▶ Flow Water</button>'+
     '</div>'+
@@ -5222,10 +5229,8 @@ SIM_REGISTRY['photosynthesis-test'] = function(c) {
   function oxygenRate(){ return Math.round((light/100)*(co2/100)*(water/100)*100); }
 
   function draw(){
-    var cv=document.getElementById('photoCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('photoCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
 
     var rate=oxygenRate();
@@ -5312,7 +5317,7 @@ SIM_REGISTRY['photosynthesis-test'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Photosynthesis Simulator</div>'+
-      '<canvas id="photoCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="photoCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
       '<span style="font-size:11px;color:#FFD93D">☀️ Light: <b>'+light+'%</b></span>'+
       '<input type="range" class="slide" min="0" max="100" value="'+light+'" oninput="photoLight(this.value)" style="width:80px">'+
@@ -5779,10 +5784,10 @@ SIM_REGISTRY['energy-types'] = function(c) {
   var raf2, t2 = 0;
 
   function draw() {
-    var cv = document.getElementById('energyCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    scenarios[scenario].animate(ctx, cv.width, cv.height, t2);
+    var _g = getCtx('energyCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    scenarios[scenario].animate(ctx, W, H, t2);
     t2 += 0.04;
     raf2 = requestAnimationFrame(draw);
   }
@@ -5797,7 +5802,7 @@ SIM_REGISTRY['energy-types'] = function(c) {
           (i === scenario ? s2.color + '22' : 'var(--surface2)') + ';color:' +
           (i === scenario ? s2.color : 'var(--muted)') + ';font-size:11px;font-weight:800;cursor:pointer">' + s2.name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="energyCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="energyCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' + s.desc + '</div>';
     cancelAnimationFrame(raf2); draw();
   }
@@ -5927,10 +5932,9 @@ SIM_REGISTRY['pulley-sim'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('pulleyCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('pulleyCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -6029,7 +6033,7 @@ SIM_REGISTRY['pulley-sim'] = function(c) {
           (k===type?'var(--acc)':'var(--border)') + ';background:' + (k===type?'var(--acc-dim)':'var(--surface2)') + ';color:' + (k===type?'var(--acc)':'var(--muted)') + '">' +
           systems[k].name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="pulleyCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="pulleyCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<span style="font-size:11px;color:var(--muted)">Load: <b style="color:var(--sci)">' + load + 'kg</b></span>' +
       '<input type="range" class="slide" min="10" max="100" step="10" value="' + load + '" oninput="pulleyLoad(this.value)" style="width:120px">' +
@@ -6050,10 +6054,9 @@ SIM_REGISTRY['acid-rain'] = function(c) {
   var raf2, t2 = 0, drops = [], damage = 0, running = false;
 
   function draw() {
-    var cv = document.getElementById('acidCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('acidCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Sky */
@@ -6102,7 +6105,7 @@ SIM_REGISTRY['acid-rain'] = function(c) {
 
   c.innerHTML =
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Acid Rain Simulation</div>' +
-    '<canvas id="acidCanvas" width="300" height="210" style="border-radius:12px;display:block;width:100%"></canvas>' +
+    '<canvas id="acidCanvas" data-w="300" data-h="210" style="border-radius:12px;display:block;width:100%"></canvas>' +
     '<div class="ctrl-row" style="margin-top:8px">' +
     '<button class="cbtn" onclick="acidRain()" id="acidBtn" style="background:var(--acc);color:white;border-color:var(--acc)">🌧️ Start Acid Rain</button>' +
     '<button class="cbtn" onclick="acidReset()">↺ Reset</button>' +
@@ -6346,10 +6349,8 @@ SIM_REGISTRY['separation-sim'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('sepCanvas');
-    if(!cv) return;
-    var ctx = cv.getContext('2d');
-    methods[method].animate(ctx, cv.width, cv.height, t2);
+    var _g=getCtx('sepCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    methods[method].animate(ctx, W, H, t2);
     t2 += 0.04;
     raf2 = requestAnimationFrame(draw);
   }
@@ -6363,7 +6364,7 @@ SIM_REGISTRY['separation-sim'] = function(c) {
           (k===method?methods[k].color:'var(--border)') + ';background:' + (k===method?methods[k].color+'22':'var(--surface2)') +
           ';color:' + (k===method?methods[k].color:'var(--muted)') + '">' + methods[k].name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="sepCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="sepCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">' +
       '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">🧪 Used for: <b style="color:var(--text)">' + m.mixtures + '</b></div>' +
       '<div style="font-size:12px;color:var(--text);line-height:1.7">' + m.desc + '</div>' +
@@ -6381,10 +6382,9 @@ SIM_REGISTRY['pi-measure'] = function(c) {
   var raf2, t2 = 0, rolling = false;
 
   function draw() {
-    var cv = document.getElementById('piCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('piCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -6444,7 +6444,7 @@ SIM_REGISTRY['pi-measure'] = function(c) {
 
   c.innerHTML =
     '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Discovering π — Roll a Circle!</div>' +
-    '<canvas id="piCanvas" width="300" height="170" style="border-radius:12px;display:block;width:100%"></canvas>' +
+    '<canvas id="piCanvas" data-w="300" data-h="170" style="border-radius:12px;display:block;width:100%"></canvas>' +
     '<div class="ctrl-row" style="margin-top:8px">' +
     '<button class="cbtn" onclick="piRoll()" id="piBtn" style="background:var(--acc);color:white;border-color:var(--acc)">▶ Roll Circle</button>' +
     '<button class="cbtn" onclick="piReset()">↺ Reset</button>' +
@@ -6486,10 +6486,9 @@ SIM_REGISTRY['weather-instruments'] = function(c) {
   var sel = 0, val = 28, raf2, t2 = 0, spinning = 0;
 
   function draw() {
-    var cv = document.getElementById('weatherCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('weatherCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
     var inst = instruments[sel];
@@ -6741,9 +6740,7 @@ SIM_REGISTRY['shapes-hunt'] = function(c) {
 
   var raf2, t2 = 0;
   function animate() {
-    var cv = document.getElementById('shapeCanvas');
-    if (!cv) return;
-    drawShape(cv.getContext('2d'), cv.width, cv.height, shapes[sel], t2);
+    var _g=getCtx('shapeCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     t2 += 0.01;
     raf2 = requestAnimationFrame(animate);
   }
@@ -6782,10 +6779,9 @@ SIM_REGISTRY['push-pull'] = function(c) {
   }
 
   function draw() {
-    var cv = document.getElementById('ppCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var W = cv.width, H = cv.height;
+    var _g = getCtx('ppCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Floor */
@@ -6831,7 +6827,7 @@ SIM_REGISTRY['push-pull'] = function(c) {
     init();
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Push & Pull Forces</div>' +
-      '<canvas id="ppCanvas" width="300" height="210" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>' +
+      '<canvas id="ppCanvas" data-w="300" data-h="210" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<button class="cbtn" onclick="ppPush(0)" style="background:var(--sci);color:white;border-color:var(--sci)">📘 Push Book →</button>' +
       '<button class="cbtn" onclick="ppPush(1)" style="background:var(--math);color:white;border-color:var(--math)">🪑 Push Chair →</button>' +
@@ -7427,10 +7423,8 @@ SIM_REGISTRY['symmetry-nature'] = function(c) {
   };
 
   function draw() {
-    var cv=document.getElementById('symCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height,CX=W/2,CY=H/2;
+    var _g=getCtx('symCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    CX=W/2,CY=H/2;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -7466,7 +7460,7 @@ SIM_REGISTRY['symmetry-nature'] = function(c) {
   function render() {
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Lines of Symmetry</div>'+
-      '<canvas id="symCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="symCanvas" data-w="280" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<span style="font-size:11px;color:var(--muted)">Shape:</span>'+
       ['butterfly','leaf','star'].map(function(s){
@@ -7970,9 +7964,7 @@ SIM_REGISTRY['circle-theorems'] = function(c) {
 
   var raf2, t2=0;
   function animate(){
-    var cv=document.getElementById('circleCanvas');
-    if(!cv) return;
-    drawTheorem(cv.getContext('2d'),cv.width,cv.height,theorem,t2);
+    var _g=getCtx('circleCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     t2+=0.025;
     raf2=requestAnimationFrame(animate);
   }
@@ -7984,7 +7976,7 @@ SIM_REGISTRY['circle-theorems'] = function(c) {
       theorems.map(function(t2,i){
         return '<button onclick="circThm('+i+')" style="padding:4px 8px;border-radius:8px;font-size:10px;border:1.5px solid '+(i===theorem?t2.color:'var(--border)')+';background:'+(i===theorem?t2.color+'22':'var(--surface2)')+';color:'+(i===theorem?t2.color:'var(--muted)')+';cursor:pointer;font-weight:800">'+t2.name+'</button>';
       }).join('')+'</div>'+
-      '<canvas id="circleCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="circleCanvas" data-w="280" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">'+
       '<div style="font-size:13px;font-weight:800;color:'+th.color+';margin-bottom:4px">'+th.name+'</div>'+
       '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:4px">'+th.desc+'</div>'+
@@ -8524,9 +8516,7 @@ SIM_REGISTRY['congruence'] = function(c) {
   }
 
   function animate(){
-    var cv=document.getElementById('congCanvas');
-    if(!cv) return;
-    rules[rule].draw(cv.getContext('2d'),cv.width,cv.height,t2);
+    var _g=getCtx('congCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     t2+=0.02; raf2=requestAnimationFrame(animate);
   }
 
@@ -8535,7 +8525,7 @@ SIM_REGISTRY['congruence'] = function(c) {
     c.innerHTML=
       '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
       Object.keys(rules).map(function(k){return '<button onclick="congRule(\''+k+'\')" style="padding:4px 9px;border-radius:8px;font-size:11px;border:1.5px solid '+(k===rule?rules[k].color:'var(--border)')+';background:'+(k===rule?rules[k].color+'22':'var(--surface2)')+';color:'+(k===rule?rules[k].color:'var(--muted)')+';cursor:pointer;font-weight:800">'+k.toUpperCase()+'</button>';}).join('')+'</div>'+
-      '<canvas id="congCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="congCanvas" data-w="280" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">'+
       '<div style="font-size:13px;font-weight:900;color:'+r.color+';margin-bottom:4px">'+r.name+'</div>'+
       '<div style="font-size:12px;color:var(--text);line-height:1.7">'+r.desc+'</div>'+
@@ -8554,9 +8544,7 @@ SIM_REGISTRY['glacier-sea'] = function(c) {
   var raf2, t2=0, temp=0, running=true;
 
   function draw(){
-    var cv=document.getElementById('glacierCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    var _g=getCtx('glacierCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,W,H);
 
     var meltFrac=Math.max(0,Math.min(1,temp/6));
@@ -8629,7 +8617,7 @@ SIM_REGISTRY['glacier-sea'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Glaciers & Sea Level Rise</div>'+
-      '<canvas id="glacierCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="glacierCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<span style="font-size:11px;color:'+(temp>3?'#FF6B6B':temp>1.5?'#FFD93D':'#6BCB77')+'">🌡️ +'+temp.toFixed(1)+'°C</span>'+
       '<input type="range" class="slide" min="0" max="6" step="0.1" value="'+temp+'" oninput="glacierTemp(this.value)" style="flex:1">'+
@@ -8745,9 +8733,7 @@ SIM_REGISTRY['microplastics'] = function(c) {
   }
 
   function draw(){
-    var cv=document.getElementById('microCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    var _g=getCtx('microCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,W,H);
 
     /* Ocean */
@@ -8794,7 +8780,7 @@ SIM_REGISTRY['microplastics'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Microplastics in the Ocean</div>'+
-      '<canvas id="microCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="microCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<button class="cbtn" onclick="microToggle()" id="microBtn" style="background:var(--sci);color:white;border-color:var(--sci)">🏭 Add Pollution</button>'+
       '</div>'+
@@ -8941,9 +8927,7 @@ SIM_REGISTRY['water-quality'] = function(c) {
   }
 
   function draw(){
-    var cv=document.getElementById('waterCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    var _g=getCtx('waterCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,W,H);
     var q=getQuality();
     var total=pollutants.industrial*3+pollutants.agricultural*2+pollutants.domestic;
@@ -8992,7 +8976,7 @@ SIM_REGISTRY['water-quality'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Water Quality Monitor</div>'+
-      '<canvas id="waterCanvas" width="300" height="160" style="border-radius:12px;display:block;width:100%;margin-bottom:8px"></canvas>'+
+      '<canvas id="waterCanvas" data-w="300" data-h="160" style="border-radius:12px;display:block;width:100%;margin-bottom:8px"></canvas>'+
       '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">'+
       [{k:'industrial',label:'🏭 Industrial waste',max:40},{k:'agricultural',label:'🌾 Agricultural runoff',max:40},{k:'domestic',label:'🏠 Domestic sewage',max:40}].map(function(item){
         return '<div style="display:flex;align-items:center;gap:8px">'+
@@ -9122,9 +9106,7 @@ SIM_REGISTRY['electrolysis'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('elecCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('elecCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
     var sol = solutions[solution];
 
@@ -9197,7 +9179,7 @@ SIM_REGISTRY['electrolysis'] = function(c) {
       Object.keys(solutions).map(function(k) {
         return '<button onclick="elecSol(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === solution ? 'var(--acc)' : 'var(--border)') + ';background:' + (k === solution ? 'var(--acc-dim)' : 'var(--surface2)') + ';color:' + (k === solution ? 'var(--acc)' : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + solutions[k].name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="elecCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="elecCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<button class="cbtn" onclick="elecRun()" id="elecBtn" style="background:var(--math);color:white;border-color:var(--math)">⚡ Switch On</button>' +
       '</div>' +
@@ -9350,9 +9332,7 @@ SIM_REGISTRY['sound-vibration'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('vibCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('vibCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
 
@@ -9397,7 +9377,7 @@ SIM_REGISTRY['sound-vibration'] = function(c) {
       Object.keys(mediums).map(function(k) {
         return '<button onclick="vibMedium(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid ' + (k === medium ? mediums[k].color : 'var(--border)') + ';background:' + (k === medium ? mediums[k].color + '22' : 'var(--surface2)') + ';color:' + (k === medium ? mediums[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + mediums[k].name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="vibCanvas" width="300" height="160" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="vibCanvas" data-w="300" data-h="160" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<button class="cbtn" onclick="vibToggle()" id="vibBtn" style="background:var(--math);color:white;border-color:var(--math)">🔊 Vibrate!</button>' +
       '</div>' +
@@ -9618,9 +9598,7 @@ SIM_REGISTRY['geo-constructions'] = function(c) {
 
   var raf2, t2 = 0;
   function animate() {
-    var cv = document.getElementById('geoCanvas');
-    if (!cv) return;
-    drawConstruction(cv.getContext('2d'), cv.width, cv.height, construction, t2);
+    var _g=getCtx('geoCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     t2 += 0.02; raf2 = requestAnimationFrame(animate);
   }
 
@@ -9631,7 +9609,7 @@ SIM_REGISTRY['geo-constructions'] = function(c) {
       Object.keys(constructions).map(function(k) {
         return '<button onclick="geoConst(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === construction ? constructions[k].color : 'var(--border)') + ';background:' + (k === construction ? constructions[k].color + '22' : 'var(--surface2)') + ';color:' + (k === construction ? constructions[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + constructions[k].name + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="geoCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="geoCanvas" data-w="280" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">' +
       '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px">' + con.desc + '</div>' +
       '<div style="font-size:10px;font-weight:800;color:' + con.color + ';margin-bottom:4px">Steps:</div>' +
@@ -9659,9 +9637,7 @@ SIM_REGISTRY['compost-sim'] = function(c) {
   }
 
   function draw() {
-    var cv = document.getElementById('compCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('compCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
 
     /* Compost bin */
@@ -9705,7 +9681,7 @@ SIM_REGISTRY['compost-sim'] = function(c) {
     var q = quality();
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Composting Simulator</div>' +
-      '<canvas id="compCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="compCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-top:8px;border:1px solid var(--border)">' +
       '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">Add to your compost bin:</div>' +
       [
@@ -9875,9 +9851,7 @@ SIM_REGISTRY['deforestation-runoff'] = function(c) {
   var raf2, t2 = 0, rain = false, deforested = false, drops = [], soil = 100;
 
   function draw() {
-    var cv = document.getElementById('defCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('defCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
 
     /* Sky */
@@ -9945,7 +9919,7 @@ SIM_REGISTRY['deforestation-runoff'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Deforestation & Soil Erosion</div>' +
-      '<canvas id="defCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="defCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div class="ctrl-row" style="margin-top:8px">' +
       '<button class="cbtn" onclick="defRain()" id="defRainBtn" style="background:var(--life);color:white;border-color:var(--life)">🌧️ Start Rain</button>' +
       '<button class="cbtn" onclick="defForest()" id="defForestBtn" style="background:var(--evs);color:white;border-color:var(--evs)">' + (deforested ? '🌳 Replant' : '🪓 Deforest') + '</button>' +
@@ -10024,9 +9998,7 @@ SIM_REGISTRY['climate-weather'] = function(c) {
   };
 
   function draw() {
-    var cv = document.getElementById('climateCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('climateCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
     var s = seasons[season];
 
@@ -10091,7 +10063,7 @@ SIM_REGISTRY['climate-weather'] = function(c) {
       Object.keys(seasons).map(function(k) {
         return '<button onclick="climateSel(\'' + k + '\')" style="padding:5px 9px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k===season?seasons[k].color:'var(--border)') + ';background:' + (k===season?seasons[k].color+'22':'var(--surface2)') + ';color:' + (k===season?seasons[k].color:'var(--muted)') + ';cursor:pointer;font-weight:800">' + seasons[k].emoji + ' ' + k + '</button>';
       }).join('') + '</div>' +
-      '<canvas id="climateCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="climateCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">India\'s climate is controlled by monsoon winds from the Indian Ocean. Kerala gets the monsoon first — every June 1st, called the "Monsoon Onset"!</div>';
     cancelAnimationFrame(raf2); draw();
   }
@@ -10151,9 +10123,7 @@ SIM_REGISTRY['water-journey'] = function(c) {
   ];
 
   function draw() {
-    var cv = document.getElementById('waterJCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    var _g=getCtx('waterJCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
 
@@ -10191,7 +10161,7 @@ SIM_REGISTRY['water-journey'] = function(c) {
     var s = steps[step];
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Journey of Water — Source to Tap</div>' +
-      '<canvas id="waterJCanvas" width="300" height="100" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="waterJCanvas" data-w="300" data-h="100" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="background:' + s.color + '15;border:2px solid ' + s.color + '44;border-radius:12px;padding:14px;margin-top:8px;margin-bottom:8px">' +
       '<div style="font-size:15px;font-weight:900;color:' + s.color + ';margin-bottom:4px">Step ' + (step+1) + ': ' + s.emoji + ' ' + s.title + '</div>' +
       '<div style="font-size:12px;color:var(--text);line-height:1.7">' + s.desc + '</div>' +
@@ -10574,9 +10544,7 @@ SIM_REGISTRY['motor-model'] = function(c) {
   var raf2, t2=0, running=false, speed=1;
 
   function draw() {
-    var cv=document.getElementById('motorCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    var _g=getCtx('motorCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -10638,7 +10606,7 @@ SIM_REGISTRY['motor-model'] = function(c) {
   function render(){
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Electric Motor Model</div>'+
-      '<canvas id="motorCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="motorCanvas" data-w="280" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       '<button class="cbtn" onclick="motorRun()" id="motorBtn" style="background:var(--math);color:white;border-color:var(--math)">⚡ Power On</button>'+
       '<span style="font-size:11px;color:var(--muted)">Speed:</span>'+
@@ -11303,9 +11271,9 @@ SIM_REGISTRY['stress-tools'] = function(c) {
   }
 
   function drawAnim() {
-    var cv=document.getElementById('stressCanvas');
+    var _g=getCtx('stressCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
     if(!cv||tool!=='breathing') return;
-    drawBreathing(cv.getContext('2d'), cv.width, cv.height);
+    drawBreathing(cv.getContext('2d'), W, H);
     raf2=requestAnimationFrame(drawAnim);
   }
 
@@ -11753,10 +11721,8 @@ SIM_REGISTRY['teamwork-tower'] = function(c) {
   }
 
   function draw(){
-    var cv=document.getElementById('teamCanvas');
-    if(!cv) return;
-    var ctx=cv.getContext('2d');
-    var W=cv.width,H=cv.height;
+    var _g=getCtx('teamCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    /* W,H from getCtx */
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
 
@@ -11793,7 +11759,7 @@ SIM_REGISTRY['teamwork-tower'] = function(c) {
     init();
     c.innerHTML=
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Teamwork — Building Together</div>'+
-      '<canvas id="teamCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<canvas id="teamCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
       '<div class="ctrl-row" style="margin-top:8px">'+
       ['Remove Trust 😱','Remove Communication 🤐','Remove Respect 😤'].map(function(label,i){
         return '<button class="cbtn" onclick="teamRemove('+i+')" style="font-size:10px">'+label+'</button>';
