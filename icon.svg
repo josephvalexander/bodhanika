@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1b2a"/>
+      <stop offset="100%" stop-color="#1a2f4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Atom centred at 256,256 -->
+  <!-- Nucleus -->
+  <circle cx="256" cy="256" r="46" fill="#ffffff"/>
+  <circle cx="236" cy="236" r="14" fill="#A7F3D0" opacity="0.55"/>
+
+  <!-- Orbit 1: emerald (0°) -->
+  <ellipse cx="256" cy="256" rx="188" ry="74"
+    fill="none" stroke="#34D399" stroke-width="14"
+    stroke-linecap="round"
+    transform="rotate(0 256 256)"/>
+  <!-- Orbit 2: blue (60°) -->
+  <ellipse cx="256" cy="256" rx="188" ry="74"
+    fill="none" stroke="#60A5FA" stroke-width="11"
+    stroke-linecap="round"
+    transform="rotate(60 256 256)"/>
+  <!-- Orbit 3: amber (120°) -->
+  <ellipse cx="256" cy="256" rx="188" ry="74"
+    fill="none" stroke="#FCD34D" stroke-width="11"
+    stroke-linecap="round"
+    transform="rotate(120 256 256)"/>
+
+  <!-- Electrons -->
+  <!-- On orbit 1 at rightmost point (0°) -->
+  <circle cx="444" cy="256" r="24" fill="#34D399"/>
+  <!-- On orbit 2 at ~240° -->
+  <circle cx="162" cy="332" r="20" fill="#60A5FA"/>
+  <!-- On orbit 3 at ~120° -->
+  <circle cx="162" cy="180" r="20" fill="#FCD34D"/>
+</svg>
