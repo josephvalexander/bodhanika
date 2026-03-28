@@ -210,10 +210,6 @@
       }
     }
   }
-    if (defCurrent === steps.length-1) {
-      document.getElementById('defNext').textContent = '✅ Done!';
-    }
-  };
 
   /* ── Home mode ── */
   function renderHome(e) {
