@@ -1,39 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Background -->
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0d1b2a"/>
-      <stop offset="100%" stop-color="#1a2f4a"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-
-  <!-- Atom centred at 256,256 -->
-  <!-- Nucleus -->
-  <circle cx="256" cy="256" r="46" fill="#ffffff"/>
-  <circle cx="236" cy="236" r="14" fill="#A7F3D0" opacity="0.55"/>
-
-  <!-- Orbit 1: emerald (0°) -->
-  <ellipse cx="256" cy="256" rx="188" ry="74"
-    fill="none" stroke="#34D399" stroke-width="14"
-    stroke-linecap="round"
-    transform="rotate(0 256 256)"/>
-  <!-- Orbit 2: blue (60°) -->
-  <ellipse cx="256" cy="256" rx="188" ry="74"
-    fill="none" stroke="#60A5FA" stroke-width="11"
-    stroke-linecap="round"
-    transform="rotate(60 256 256)"/>
-  <!-- Orbit 3: amber (120°) -->
-  <ellipse cx="256" cy="256" rx="188" ry="74"
-    fill="none" stroke="#FCD34D" stroke-width="11"
-    stroke-linecap="round"
-    transform="rotate(120 256 256)"/>
-
-  <!-- Electrons -->
-  <!-- On orbit 1 at rightmost point (0°) -->
-  <circle cx="444" cy="256" r="24" fill="#34D399"/>
-  <!-- On orbit 2 at ~240° -->
-  <circle cx="162" cy="332" r="20" fill="#60A5FA"/>
-  <!-- On orbit 3 at ~120° -->
-  <circle cx="162" cy="180" r="20" fill="#FCD34D"/>
+  <!--
+    Bodhanika — Infinity Knot Icon
+    Two intertwined paths: curiosity + understanding
+    Transparent background — add dark bg only in app context
+  -->
+  <!-- Outer knot — solid emerald/teal -->
+  <path d="M 256,256
+    C 256,196 194,136 138,136
+    C 82,136  44,182  44,232
+    C 44,292  96,334  150,320
+    C 198,308 230,268 256,256
+    C 282,244 314,204 362,192
+    C 418,178 468,222 468,280
+    C 468,330 430,374 374,374
+    C 318,374 256,314 256,256 Z"
+    fill="none" stroke="#34D399" stroke-width="30"
+    stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Inner path — dashed blue -->
+  <path d="M 138,136
+    C 96,136  44,170  44,232
+    C 44,262  60,290  86,306
+    C 140,342 206,298 256,256
+    C 306,214 372,170 430,208
+    C 462,228 468,258 468,280
+    C 468,342 410,374 374,374
+    C 318,374 268,330 256,256"
+    fill="none" stroke="#60A5FA" stroke-width="18"
+    stroke-linecap="round" stroke-linejoin="round"
+    stroke-dasharray="40,26"/>
+  <!-- Centre node -->
+  <circle cx="256" cy="256" r="30" fill="#0d1b2a"/>
+  <circle cx="256" cy="256" r="22" fill="#FCD34D"/>
+  <circle cx="256" cy="256" r="11" fill="#FFFBEB"/>
+  <circle cx="248" cy="248" r="4.5" fill="white" opacity="0.55"/>
 </svg>

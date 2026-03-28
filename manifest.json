@@ -26,15 +26,7 @@
     }
   ],
   "shortcuts": [
-    {
-      "name": "Science Experiments",
-      "url": "/?sub=Science",
-      "description": "Browse Science experiments"
-    },
-    {
-      "name": "Maths Activities",
-      "url": "/?sub=Maths",
-      "description": "Browse Maths activities"
-    }
+    { "name": "Science", "url": "/?sub=Science" },
+    { "name": "Maths",   "url": "/?sub=Maths"   }
   ]
 }

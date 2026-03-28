@@ -20,20 +20,14 @@ header {
 
 .logo {
   font-family:'Fraunces',serif;
-  font-size:24px; font-weight:900;
-  line-height:1; letter-spacing:-1px;
-  background:linear-gradient(135deg, #C77DFF 0%, #4D96FF 60%, #6BCB77 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  background-clip:text;
-  filter:drop-shadow(0 0 20px rgba(199,125,255,0.3));
-}
-.logo-b {
-  /* slightly larger first letter */
-  font-size:28px;
+  font-size:22px; font-weight:900;
+  line-height:1; letter-spacing:-0.5px;
+  color:var(--text);
 }
 .logo-sub {
-  font-size:10px; color:var(--muted); font-weight:600;
-  letter-spacing:0.2px; font-style:italic;
+  font-size:9px; color:#34D399; font-weight:600;
+  letter-spacing:2px; text-transform:uppercase;
+  margin-top:1px;
 }
 
 /* ── Header right ── */
@@ -159,9 +153,7 @@ header {
 .footer-logo {
   font-family:'Fraunces',serif;
   font-size:20px; font-weight:900;
-  background:linear-gradient(135deg,var(--acc),var(--life));
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  background-clip:text;
+  color:var(--text);
   margin-bottom:4px;
 }
 .footer-tagline {
