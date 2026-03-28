@@ -5117,3 +5117,6891 @@ SIM_REGISTRY['linear-graph'] = function(c) {
   render();
 };
 
+
+/* ══════════════════════════════════════
+   BATCH 5 — 12 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. CELL VIEW (cell-view) ── */
+SIM_REGISTRY['cell-view'] = function(c) {
+  var type = 'plant';
+
+  var cells = {
+    plant: {
+      name: 'Plant Cell', color: '#6BCB77',
+      parts: [
+        { name:'Cell Wall',      desc:'Rigid outer layer made of cellulose. Gives shape and protection.',    color:'#4a7a30', emoji:'🔲' },
+        { name:'Cell Membrane',  desc:'Thin flexible layer inside wall. Controls what enters/exits.',        color:'#6BCB77', emoji:'🫧' },
+        { name:'Nucleus',        desc:'Control centre. Contains DNA and instructions for all cell activity.',color:'#C77DFF', emoji:'🔵' },
+        { name:'Chloroplast',    desc:'Makes food using sunlight (photosynthesis). Contains green chlorophyll.',color:'#2d7a1e', emoji:'🌿' },
+        { name:'Vacuole',        desc:'Large central vacuole stores water, gives the cell its shape.',       color:'#4D96FF', emoji:'💧' },
+        { name:'Mitochondria',   desc:'Powerhouse of the cell — produces energy (ATP) from food.',          color:'#FF8C42', emoji:'⚡' },
+      ]
+    },
+    animal: {
+      name: 'Animal Cell', color: '#FF6B6B',
+      parts: [
+        { name:'Cell Membrane',  desc:'Flexible boundary — no rigid wall. Allows cell to change shape.',    color:'#FF6B6B', emoji:'🫧' },
+        { name:'Nucleus',        desc:'Contains DNA. Directs all cell activities and reproduction.',         color:'#C77DFF', emoji:'🔵' },
+        { name:'Mitochondria',   desc:'Produces energy. Animal cells often have more — they are very active.',color:'#FF8C42', emoji:'⚡' },
+        { name:'Lysosome',       desc:'Digests waste and worn-out parts. The cell\'s garbage disposal.',    color:'#FFD93D', emoji:'♻️' },
+        { name:'Ribosome',       desc:'Makes proteins following DNA instructions.',                          color:'#C8945A', emoji:'⚙️' },
+        { name:'Centriole',      desc:'Unique to animal cells. Helps chromosomes separate during division.', color:'#4D96FF', emoji:'🔩' },
+      ]
+    }
+  };
+
+  var selected = null;
+
+  function render() {
+    var cell = cells[type];
+    var W = 260, CX = 130, CY = 110;
+
+    /* SVG cell diagram */
+    var organelles = '';
+    var positions = type === 'plant'
+      ? [[CX,CY-20,28],[CX-45,CY+15,12],[CX+35,CY-10,10],[CX-20,CY+30,8],[CX+40,CY+25,8],[CX-40,CY-30,9]]
+      : [[CX+10,CY-15,24],[CX-40,CY+10,10],[CX+40,CY+10,8],[CX-15,CY+32,7],[CX+20,CY-38,5],[CX+50,CY-20,6]];
+
+    cell.parts.forEach(function(p, i) {
+      var pos = positions[i] || [CX + Math.cos(i)*50, CY + Math.sin(i)*40, 8];
+      var isSel = selected === i;
+      organelles +=
+        '<circle cx="' + pos[0] + '" cy="' + pos[1] + '" r="' + (pos[2] + (isSel ? 3 : 0)) + '" ' +
+        'fill="' + p.color + '" opacity="' + (isSel ? 0.95 : 0.7) + '" ' +
+        'style="cursor:pointer" onclick="cellSel(' + i + ')"' +
+        (isSel ? ' stroke="white" stroke-width="2"' : '') + '/>';
+    });
+
+    c.innerHTML =
+      '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">' +
+      ['plant','animal'].map(function(t) {
+        return '<button onclick="cellType(\'' + t + '\')" style="padding:6px 14px;border-radius:10px;border:1.5px solid ' +
+          (t === type ? cells[t].color : 'var(--border)') + ';background:' +
+          (t === type ? cells[t].color + '22' : 'var(--surface2)') + ';color:' +
+          (t === type ? cells[t].color : 'var(--muted)') + ';font-size:12px;font-weight:800;cursor:pointer">' +
+          (t === 'plant' ? '🌿' : '🐾') + ' ' + cells[t].name + '</button>';
+      }).join('') + '</div>' +
+      '<svg width="' + W + '" height="220" style="display:block;background:#0a0a1a;border-radius:12px;width:100%">' +
+      /* Cell boundary */
+      (type === 'plant'
+        ? '<rect x="20" y="15" width="220" height="195" rx="8" fill="' + cell.color + '11" stroke="' + cell.color + '66" stroke-width="3"/>' +
+          '<rect x="26" y="21" width="208" height="183" rx="5" fill="' + cell.color + '08" stroke="' + cell.color + '33" stroke-width="1.5"/>'
+        : '<ellipse cx="' + CX + '" cy="' + CY + '" rx="105" ry="98" fill="' + cell.color + '11" stroke="' + cell.color + '55" stroke-width="2.5"/>') +
+      /* Large vacuole for plant */
+      (type === 'plant' ? '<ellipse cx="' + CX + '" cy="' + (CY + 20) + '" rx="55" ry="50" fill="rgba(77,150,255,.12)" stroke="rgba(77,150,255,.3)" stroke-width="1.5"/>' : '') +
+      organelles +
+      /* Labels */
+      cell.parts.map(function(p, i) {
+        var pos = positions[i] || [CX + Math.cos(i)*50, CY + Math.sin(i)*40, 8];
+        return '<text x="' + pos[0] + '" y="' + (pos[1] + pos[2] + 11) + '" fill="' + p.color + '" ' +
+          'font-size="7" text-anchor="middle" font-family="Nunito">' + p.name.split(' ')[0] + '</text>';
+      }).join('') +
+      '</svg>' +
+      /* Info panel */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:8px;border:1px solid var(--border);min-height:52px">' +
+      (selected !== null
+        ? '<div style="font-size:13px;font-weight:900;color:' + cell.parts[selected].color + '">' + cell.parts[selected].emoji + ' ' + cell.parts[selected].name + '</div>' +
+          '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-top:3px">' + cell.parts[selected].desc + '</div>'
+        : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px 0">☝️ Tap an organelle to learn about it</div>') +
+      '</div>';
+  }
+
+  window.cellType = function(t) { type = t; selected = null; render(); };
+  window.cellSel = function(i) { selected = selected === i ? null : i; render(); };
+  render();
+};
+
+/* ── 2. ENERGY TYPES (energy-types) ── */
+SIM_REGISTRY['energy-types'] = function(c) {
+  var scenario = 0;
+  var scenarios = [
+    {
+      name: '🎢 Roller Coaster', color: '#FF6B6B',
+      desc: 'At the top: maximum Potential Energy (PE). As it falls, PE converts to Kinetic Energy (KE). At bottom: maximum KE!',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Track */
+        ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(20, H*0.2);
+        ctx.bezierCurveTo(W*0.3, H*0.2, W*0.4, H*0.85, W*0.5, H*0.85);
+        ctx.bezierCurveTo(W*0.6, H*0.85, W*0.7, H*0.3, W*0.8, H*0.3);
+        ctx.stroke();
+        /* Cart position along track */
+        var pos = (Math.sin(t * 0.7) + 1) / 2;
+        var cartX = 20 + pos * (W - 40);
+        var trackY = pos < 0.5
+          ? H*0.2 + (pos/0.5) * (H*0.85 - H*0.2) * Math.sin(pos*Math.PI)
+          : H*0.85 - ((pos-0.5)/0.5) * (H*0.85 - H*0.3) * Math.sin((pos-0.5)*Math.PI);
+        var height = H*0.85 - trackY;
+        var peRatio = height / (H*0.65);
+        var keRatio = 1 - peRatio;
+        /* Cart */
+        ctx.fillStyle = '#FF6B6B'; ctx.shadowColor = '#FF6B6B'; ctx.shadowBlur = 10;
+        ctx.fillRect(cartX - 12, trackY - 10, 24, 12);
+        ctx.shadowBlur = 0;
+        /* Energy bars */
+        ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(8, H*0.05, 18, H*0.88);
+        ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(30, H*0.05, 18, H*0.88);
+        ctx.fillStyle = '#FFD93D'; ctx.fillRect(8, H*0.05 + (1-peRatio)*H*0.88, 18, peRatio*H*0.88);
+        ctx.fillStyle = '#4D96FF'; ctx.fillRect(30, H*0.05 + (1-keRatio)*H*0.88, 18, keRatio*H*0.88);
+        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '8px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('PE', 17, H*0.05 - 4);
+        ctx.fillText('KE', 39, H*0.05 - 4);
+        ctx.fillText((peRatio*100).toFixed(0)+'%', 17, H*0.93);
+        ctx.fillText((keRatio*100).toFixed(0)+'%', 39, H*0.93);
+      }
+    },
+    {
+      name: '☀️ Solar Panel', color: '#FFD93D',
+      desc: 'Light energy → Electrical energy → Heat/Light/Kinetic. Each conversion loses some energy as heat (2nd law of thermodynamics).',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Sun */
+        ctx.beginPath(); ctx.arc(W*0.15, H*0.15, 20, 0, Math.PI*2);
+        ctx.fillStyle = '#FFD93D'; ctx.shadowColor = '#FFD93D'; ctx.shadowBlur = 15; ctx.fill(); ctx.shadowBlur = 0;
+        /* Rays */
+        for (var r = 0; r < 8; r++) {
+          var ra = r/8*Math.PI*2 + t*0.5;
+          ctx.strokeStyle = 'rgba(255,217,61,' + (0.4 + Math.sin(t*2+r)*0.2) + ')'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(W*0.15 + Math.cos(ra)*22, H*0.15 + Math.sin(ra)*22);
+          ctx.lineTo(W*0.15 + Math.cos(ra)*32, H*0.15 + Math.sin(ra)*32); ctx.stroke();
+        }
+        /* Solar panel */
+        ctx.fillStyle = '#1a3a6a'; ctx.fillRect(W*0.3, H*0.1, W*0.35, H*0.25);
+        ctx.strokeStyle = 'rgba(77,150,255,.5)'; ctx.lineWidth = 1;
+        for (var row = 0; row < 3; row++) for (var col = 0; col < 4; col++) {
+          ctx.strokeRect(W*0.3 + col*(W*0.35/4), H*0.1 + row*(H*0.25/3), W*0.35/4, H*0.25/3);
+        }
+        /* Light beam to panel */
+        var glowAlpha = 0.4 + Math.sin(t*2)*0.2;
+        ctx.strokeStyle = 'rgba(255,217,61,' + glowAlpha + ')'; ctx.lineWidth = 3; ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.moveTo(W*0.15+18, H*0.15); ctx.lineTo(W*0.3, H*0.22); ctx.stroke();
+        ctx.setLineDash([]);
+        /* Conversion chain */
+        var boxes = [{x:W*0.05,y:H*0.5,label:'☀️ Light',color:'#FFD93D'},{x:W*0.35,y:H*0.5,label:'⚡ Electric',color:'#4D96FF'},{x:W*0.65,y:H*0.5,label:'💡 Output',color:'#6BCB77'}];
+        boxes.forEach(function(b,i) {
+          ctx.fillStyle = b.color + '33'; ctx.fillRect(b.x, b.y, W*0.26, 35);
+          ctx.strokeStyle = b.color; ctx.lineWidth = 1.5; ctx.strokeRect(b.x, b.y, W*0.26, 35);
+          ctx.fillStyle = b.color; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(b.label, b.x + W*0.13, b.y + 22);
+          if (i < 2) {
+            ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '14px sans-serif';
+            ctx.fillText('→', b.x + W*0.26 + 4, b.y + 22);
+          }
+        });
+        /* Heat lost */
+        ctx.fillStyle = 'rgba(255,107,107,.4)'; ctx.font = '9px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('🔥 heat lost', W*0.46, H*0.75);
+        ctx.fillText('~30% lost', W*0.46, H*0.85);
+      }
+    },
+    {
+      name: '🍎 Chemical Energy', color: '#6BCB77',
+      desc: 'Food stores chemical energy. Digestion releases it. Cells use it for movement, growth, heat. Energy is never created or destroyed — only converted!',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Apple */
+        ctx.fillStyle = '#CC3333'; ctx.beginPath(); ctx.arc(W*0.18, H*0.28, 28, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#22aa22'; ctx.fillRect(W*0.18-3, H*0.28-34, 6, 16);
+        ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(W*0.1, H*0.2, 8, 0, Math.PI*2); ctx.fill();
+        /* Energy label */
+        ctx.fillStyle = '#FFD93D'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('⚡ 52 kcal', W*0.18, H*0.56);
+        /* Flowing energy particles */
+        for (var p = 0; p < 8; p++) {
+          var prog = ((t*0.8 + p/8) % 1);
+          var px = W*0.28 + prog*(W*0.55); var py = H*0.28 + Math.sin(prog*Math.PI*3)*20;
+          ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(255,217,61,' + (0.8 - prog*0.6) + ')';
+          ctx.shadowColor = '#FFD93D'; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowBlur = 0;
+        }
+        /* Output boxes */
+        var outputs = [{y:H*0.12,label:'🏃 Movement',color:'#FF6B6B'},{y:H*0.38,label:'🔥 Heat',color:'#FF8C42'},{y:H*0.62,label:'🧬 Growth',color:'#6BCB77'}];
+        outputs.forEach(function(o) {
+          ctx.fillStyle = o.color + '22'; ctx.fillRect(W*0.72, o.y, W*0.26, 28);
+          ctx.strokeStyle = o.color; ctx.lineWidth = 1; ctx.strokeRect(W*0.72, o.y, W*0.26, 28);
+          ctx.fillStyle = o.color; ctx.font = '10px Nunito,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(o.label, W*0.85, o.y + 18);
+        });
+      }
+    }
+  ];
+
+  var raf2, t2 = 0;
+
+  function draw() {
+    var cv = document.getElementById('energyCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    scenarios[scenario].animate(ctx, cv.width, cv.height, t2);
+    t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var s = scenarios[scenario];
+    c.innerHTML =
+      '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px">' +
+      scenarios.map(function(s2, i) {
+        return '<button onclick="energySel(' + i + ')" style="padding:5px 10px;border-radius:9px;border:1.5px solid ' +
+          (i === scenario ? s2.color : 'var(--border)') + ';background:' +
+          (i === scenario ? s2.color + '22' : 'var(--surface2)') + ';color:' +
+          (i === scenario ? s2.color : 'var(--muted)') + ';font-size:11px;font-weight:800;cursor:pointer">' + s2.name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="energyCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' + s.desc + '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.energySel = function(i) { cancelAnimationFrame(raf2); scenario = i; render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 3. FIRE TRIANGLE (fire-triangle) ── */
+SIM_REGISTRY['fire-triangle'] = function(c) {
+  var heat = true, fuel = true, oxygen = true;
+
+  function render() {
+    var burning = heat && fuel && oxygen;
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">The Fire Triangle</div>' +
+      '<svg width="280" height="200" style="display:block;background:#0a0a1a;border-radius:12px;width:100%">' +
+      /* Triangle */
+      '<polygon points="140,20 260,190 20,190" fill="' + (burning ? 'rgba(255,107,107,.12)' : 'rgba(255,255,255,.03)') + '" ' +
+        'stroke="' + (burning ? '#FF6B6B' : 'rgba(255,255,255,.15)') + '" stroke-width="2"/>' +
+      /* Sides labels */
+      '<text x="72" y="120" fill="' + (heat ? '#FF8C42' : 'rgba(255,255,255,.2)') + '" font-size="12" font-weight="bold" text-anchor="middle" font-family="Nunito" transform="rotate(-60,72,120)">🔥 HEAT</text>' +
+      '<text x="208" y="120" fill="' + (oxygen ? '#4D96FF' : 'rgba(255,255,255,.2)') + '" font-size="12" font-weight="bold" text-anchor="middle" font-family="Nunito" transform="rotate(60,208,120)">💨 OXYGEN</text>' +
+      '<text x="140" y="195" fill="' + (fuel ? '#FFD93D' : 'rgba(255,255,255,.2)') + '" font-size="12" font-weight="bold" text-anchor="middle" font-family="Nunito">🪵 FUEL</text>' +
+      /* Flame or X in centre */
+      '<text x="140" y="120" font-size="' + (burning ? '36' : '28') + '" text-anchor="middle">' + (burning ? '🔥' : '❌') + '</text>' +
+      '<text x="140" y="142" fill="' + (burning ? '#FF6B6B' : 'rgba(255,255,255,.3)') + '" font-size="10" font-weight="bold" text-anchor="middle" font-family="Nunito">' +
+        (burning ? 'FIRE!' : 'No fire') + '</text>' +
+      '</svg>' +
+      '<div class="ctrl-row" style="margin-top:10px">' +
+      [['heat','🔥 Heat','#FF8C42'], ['fuel','🪵 Fuel','#FFD93D'], ['oxygen','💨 Oxygen','#4D96FF']].map(function(item) {
+        var on = eval(item[0]);
+        return '<button onclick="fireToggle(\'' + item[0] + '\')" style="padding:8px 12px;border-radius:10px;border:2px solid ' +
+          (on ? item[2] : 'var(--border)') + ';background:' + (on ? item[2] + '22' : 'var(--surface2)') +
+          ';color:' + (on ? item[2] : 'var(--muted)') + ';font-size:12px;font-weight:800;cursor:pointer;transition:all .2s">' +
+          item[1] + ' ' + (on ? 'ON' : 'OFF') + '</button>';
+      }).join('') + '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      (burning ? '🔥 All three present — fire burns! Remove any one element to extinguish it.' :
+        !heat ? '❄️ No heat source — fire cannot ignite. Water/CO₂ extinguishers remove heat!' :
+        !fuel ? '🚫 No fuel — nothing to burn. Firebreaks in forests work this way!' :
+        '🌬️ No oxygen — fire goes out. CO₂ extinguishers smother the fire!') +
+      '</div>';
+  }
+
+  window.fireToggle = function(item) {
+    if (item === 'heat') heat = !heat;
+    else if (item === 'fuel') fuel = !fuel;
+    else oxygen = !oxygen;
+    render();
+  };
+  render();
+};
+
+/* ── 4. MEAN/AVERAGE (mean-sim) ── */
+SIM_REGISTRY['mean-sim'] = function(c) {
+  var data = [4, 7, 3, 9, 5, 6, 8, 2];
+
+  function render() {
+    var mean = data.reduce(function(a,b){return a+b;},0) / data.length;
+    var sorted = data.slice().sort(function(a,b){return a-b;});
+    var mid = Math.floor(data.length/2);
+    var median = data.length%2===0 ? (sorted[mid-1]+sorted[mid])/2 : sorted[mid];
+    var freq = {}; data.forEach(function(v){freq[v]=(freq[v]||0)+1;});
+    var maxF = Math.max.apply(null,Object.values(freq));
+    var mode = Object.keys(freq).filter(function(k){return freq[k]===maxF;}).join(', ');
+    var max = Math.max.apply(null,data), min = Math.min.apply(null,data);
+
+    var bars = data.map(function(v, i) {
+      var h = (v/max)*80;
+      var isMean = Math.abs(v-mean) < 0.01;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">' +
+        '<div style="font-size:10px;font-weight:800;color:var(--text)">' + v + '</div>' +
+        '<div style="width:100%;background:' + (isMean?'var(--math)':'var(--acc)') + ';border-radius:4px 4px 0 0;height:' + h + 'px;cursor:pointer;transition:height .3s" ' +
+        'onclick="meanRemove(' + i + ')"></div>' +
+        '<div style="font-size:9px;color:var(--muted)">' + (i+1) + '</div>' +
+        '</div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Mean, Median & Mode</div>' +
+      /* Bar chart */
+      '<div style="display:flex;align-items:flex-end;height:100px;gap:4px;padding:4px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">' +
+      bars + '</div>' +
+      /* Mean line indicator */
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">Click a bar to remove it · Add values below</div>' +
+      /* Stats */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
+      [
+        {label:'📊 Mean (Average)', val: mean.toFixed(2), color:'var(--math)', formula:'Sum ÷ Count = ' + data.reduce(function(a,b){return a+b;},0) + ' ÷ ' + data.length},
+        {label:'📍 Median (Middle)', val: median, color:'var(--acc)', formula:'Middle value of sorted data'},
+        {label:'🔄 Mode (Most frequent)', val: mode, color:'var(--evs)', formula:'Appears ' + maxF + ' time(s)'},
+        {label:'📏 Range', val: (max-min), color:'var(--sci)', formula:'Max(' + max + ') − Min(' + min + ')'},
+      ].map(function(s) {
+        return '<div style="background:var(--surface2);border-radius:10px;padding:8px;border:1px solid var(--border)">' +
+          '<div style="font-size:10px;color:var(--muted)">' + s.label + '</div>' +
+          '<div style="font-size:20px;font-weight:900;color:' + s.color + '">' + s.val + '</div>' +
+          '<div style="font-size:9px;color:var(--muted);margin-top:2px">' + s.formula + '</div>' +
+          '</div>';
+      }).join('') + '</div>' +
+      /* Add value */
+      '<div class="ctrl-row">' +
+      '<input id="meanInput" type="number" min="1" max="20" placeholder="Add value (1-20)" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:13px">' +
+      '<button class="cbtn" onclick="meanAdd()" style="background:var(--acc);color:white;border-color:var(--acc)">+ Add</button>' +
+      '<button class="cbtn" onclick="meanReset()">↺ Reset</button>' +
+      '</div>';
+  }
+
+  window.meanRemove = function(i) { if(data.length > 2) { data.splice(i,1); render(); } };
+  window.meanAdd = function() {
+    var v = parseInt(document.getElementById('meanInput').value);
+    if(v >= 1 && v <= 20 && data.length < 12) { data.push(v); render(); }
+  };
+  window.meanReset = function() { data = [4,7,3,9,5,6,8,2]; render(); };
+  render();
+};
+
+/* ── 5. PULLEY SYSTEM (pulley-sim) ── */
+SIM_REGISTRY['pulley-sim'] = function(c) {
+  var type = 'fixed'; var load = 50; var raf2, t2 = 0;
+
+  var systems = {
+    fixed:    { name:'Fixed Pulley',    wheels:1, MA:1, effort:function(l){return l;}, desc:'Changes direction of force only. MA=1, effort = load.' },
+    movable:  { name:'Movable Pulley',  wheels:1, MA:2, effort:function(l){return l/2;}, desc:'Halves the effort needed! MA=2. Used in cranes.' },
+    compound: { name:'Compound Pulley', wheels:2, MA:4, effort:function(l){return l/4;}, desc:'4× mechanical advantage. MA=4. Lifts very heavy loads easily.' },
+  };
+
+  function draw() {
+    var cv = document.getElementById('pulleyCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    var sys = systems[type];
+    var effort = sys.effort(load);
+    var bob = (Math.sin(t2) + 1) / 2;
+
+    /* Ceiling */
+    ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(0,0,W,14);
+    for (var i = 0; i < W/12; i++) {
+      ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(i*12,0); ctx.lineTo(i*12-10,14); ctx.stroke();
+    }
+
+    if (type === 'fixed') {
+      /* Single fixed pulley */
+      var py = 50, px = W/2;
+      ctx.beginPath(); ctx.arc(px, py, 20, 0, Math.PI*2);
+      ctx.fillStyle = '#888'; ctx.fill();
+      ctx.strokeStyle = '#aaa'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI*2);
+      ctx.fillStyle = '#555'; ctx.fill();
+      /* Ropes */
+      var loadY = 80 + bob*60;
+      ctx.strokeStyle = '#C8945A'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(px-2, py+20); ctx.lineTo(px-2, loadY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px+2, py+20); ctx.lineTo(px+2, loadY+100); ctx.stroke();
+      /* Load */
+      ctx.fillStyle = '#FF6B6B'; ctx.fillRect(px-20, loadY, 40, 30);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(load+'kg', px, loadY+19);
+      /* Effort arrow */
+      ctx.fillStyle = '#6BCB77'; ctx.font = '10px Nunito,sans-serif';
+      ctx.fillText('↓ ' + effort+'N effort', px+50, loadY+130);
+    } else if (type === 'movable') {
+      var py2 = 45, px2 = W/2;
+      var loadY2 = 100 + bob * 40;
+      /* Fixed pulley top */
+      ctx.beginPath(); ctx.arc(px2, py2, 18, 0, Math.PI*2);
+      ctx.fillStyle = '#888'; ctx.fill(); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2; ctx.stroke();
+      /* Movable pulley with load */
+      var mpy = loadY2;
+      ctx.beginPath(); ctx.arc(px2, mpy, 18, 0, Math.PI*2);
+      ctx.fillStyle = '#666'; ctx.fill(); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2; ctx.stroke();
+      /* Ropes */
+      ctx.strokeStyle = '#C8945A'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(px2-2,py2+18); ctx.lineTo(px2-2,mpy-18); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px2+2,py2+18); ctx.lineTo(px2+2,14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px2-18,mpy); ctx.lineTo(20,mpy); ctx.stroke();
+      /* Load */
+      ctx.fillStyle = '#FF6B6B'; ctx.fillRect(px2-22, mpy+18, 44, 30);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(load+'kg', px2, mpy+36);
+      /* Labels */
+      ctx.fillStyle = '#6BCB77'; ctx.font = '10px Nunito,sans-serif';
+      ctx.fillText('↙ '+effort+'N', 55, mpy+10);
+    } else {
+      /* Compound: 2 fixed + 2 movable */
+      var topY = 40;
+      [[W*0.35, topY],[W*0.65, topY]].forEach(function(p) {
+        ctx.beginPath(); ctx.arc(p[0], p[1], 16, 0, Math.PI*2);
+        ctx.fillStyle = '#888'; ctx.fill(); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2; ctx.stroke();
+      });
+      var mobY = 110 + bob*30;
+      [[W*0.35, mobY],[W*0.65, mobY]].forEach(function(p) {
+        ctx.beginPath(); ctx.arc(p[0], p[1], 16, 0, Math.PI*2);
+        ctx.fillStyle = '#666'; ctx.fill(); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2; ctx.stroke();
+      });
+      /* Ropes simplified */
+      ctx.strokeStyle = '#C8945A'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(W*0.35,topY+16); ctx.lineTo(W*0.35,mobY-16); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.65,topY+16); ctx.lineTo(W*0.65,mobY-16); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.35,mobY); ctx.lineTo(W*0.65,mobY); ctx.stroke();
+      /* Load bar */
+      ctx.fillStyle = '#FF6B6B'; ctx.fillRect(W*0.25, mobY+16, W*0.5, 28);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(load+'kg load', W/2, mobY+34);
+      ctx.fillStyle = '#6BCB77'; ctx.font = '11px Nunito,sans-serif';
+      ctx.fillText('Only ' + effort.toFixed(1) + 'N needed!', W/2, H-10);
+    }
+
+    /* MA badge */
+    ctx.fillStyle = 'rgba(199,125,255,.9)'; ctx.font = 'bold 11px Nunito,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('MA = ' + sys.MA, 8, H-8);
+
+    t2 += 0.03;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var sys = systems[type];
+    c.innerHTML =
+      '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px">' +
+      Object.keys(systems).map(function(k) {
+        return '<button onclick="pulleySel(\'' + k + '\')" style="padding:5px 9px;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid ' +
+          (k===type?'var(--acc)':'var(--border)') + ';background:' + (k===type?'var(--acc-dim)':'var(--surface2)') + ';color:' + (k===type?'var(--acc)':'var(--muted)') + '">' +
+          systems[k].name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="pulleyCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Load: <b style="color:var(--sci)">' + load + 'kg</b></span>' +
+      '<input type="range" class="slide" min="10" max="100" step="10" value="' + load + '" oninput="pulleyLoad(this.value)" style="width:120px">' +
+      '<span style="font-size:12px;font-weight:800;color:var(--evs)">Effort: ' + sys.effort(load).toFixed(1) + 'N</span>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' + sys.desc + '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.pulleySel = function(k) { cancelAnimationFrame(raf2); type = k; render(); };
+  window.pulleyLoad = function(v) { load = parseInt(v); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 6. ACID RAIN (acid-rain) ── */
+SIM_REGISTRY['acid-rain'] = function(c) {
+  var raf2, t2 = 0, drops = [], damage = 0, running = false;
+
+  function draw() {
+    var cv = document.getElementById('acidCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    /* Sky */
+    ctx.fillStyle = 'rgba(60,40,80,0.95)'; ctx.fillRect(0,0,W,H*0.5);
+    /* Pollution clouds */
+    ctx.fillStyle = 'rgba(80,60,60,0.8)';
+    [[W*0.2,H*0.1,50,20],[W*0.55,H*0.08,65,24],[W*0.82,H*0.12,45,18]].forEach(function(cl) {
+      ctx.beginPath(); ctx.ellipse(cl[0],cl[1],cl[2],cl[3],0,0,Math.PI*2); ctx.fill();
+    });
+    /* SO2/NOx labels */
+    ctx.fillStyle = 'rgba(255,150,50,.5)'; ctx.font = '9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('SO₂ + NOₓ', W*0.5, H*0.04);
+
+    /* Ground */
+    var dmgColor = 'rgba(' + Math.min(255,80+damage*2) + ',' + Math.max(40,120-damage) + ',40,0.9)';
+    ctx.fillStyle = dmgColor; ctx.fillRect(0,H*0.5,W,H*0.5);
+
+    /* Buildings / forest */
+    [[W*0.1,H*0.5,30,60,'#555'],[W*0.25,H*0.5,25,80,'#666'],[W*0.7,H*0.5,40,50,'#4a7a30']].forEach(function(b,i) {
+      var corrosion = Math.min(1, damage/60);
+      ctx.fillStyle = i<2 ? 'rgba(' + Math.round(100-corrosion*60) + ',' + Math.round(100-corrosion*60) + ',' + Math.round(120-corrosion*60) + ',0.9)' : 'rgba(' + Math.round(74-corrosion*40) + ',' + Math.round(122-corrosion*60) + ',48,0.9)';
+      ctx.fillRect(b[0]-b[2]/2, b[1]-b[3], b[2], b[3]);
+    });
+
+    /* pH meter */
+    var ph = Math.max(3, 7 - damage/12);
+    ctx.fillStyle = ph < 5 ? '#FF6B6B' : ph < 6 ? '#FFD93D' : '#6BCB77';
+    ctx.font = 'bold 12px Nunito,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('pH: ' + ph.toFixed(1) + (ph < 5 ? ' ⚠️ Acid Rain!' : ph < 6 ? ' Slightly acidic' : ' Normal'), 8, H-8);
+
+    /* Raindrops */
+    if (running) {
+      if (Math.random() < 0.3) drops.push({x: Math.random()*W, y: 0, speed: 3+Math.random()*2});
+      drops = drops.filter(function(d) {
+        d.y += d.speed;
+        ctx.strokeStyle = 'rgba(180,100,200,0.7)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x-1,d.y-7); ctx.stroke();
+        if (d.y > H*0.5) { damage = Math.min(100, damage+0.3); return false; }
+        return true;
+      });
+    }
+
+    t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  c.innerHTML =
+    '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Acid Rain Simulation</div>' +
+    '<canvas id="acidCanvas" width="300" height="210" style="border-radius:12px;display:block;width:100%"></canvas>' +
+    '<div class="ctrl-row" style="margin-top:8px">' +
+    '<button class="cbtn" onclick="acidRain()" id="acidBtn" style="background:var(--acc);color:white;border-color:var(--acc)">🌧️ Start Acid Rain</button>' +
+    '<button class="cbtn" onclick="acidReset()">↺ Reset</button>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">' +
+    'SO₂ + NOₓ from factories → mix with water vapour → H₂SO₄ and HNO₃ → acid rain (pH < 5.6). Damages forests, buildings, and lakes.' +
+    '</div>';
+
+  window.acidRain = function() {
+    running = !running;
+    document.getElementById('acidBtn').textContent = running ? '⏸ Stop' : '🌧️ Start Acid Rain';
+    if (running) draw();
+  };
+  window.acidReset = function() { damage = 0; drops = []; };
+  window.simCleanup = function() { running = false; cancelAnimationFrame(raf2); };
+  draw();
+};
+
+/* ── 7. MONEY MATHS (money-maths) ── */
+SIM_REGISTRY['money-maths'] = function(c) {
+  var price = 85, paid = 100;
+
+  function render() {
+    var change = paid - price;
+    var valid = paid >= price;
+
+    /* Make change breakdown */
+    var denominations = [50,20,10,5,2,1];
+    var remaining = Math.max(0, change);
+    var coins = [];
+    denominations.forEach(function(d) {
+      var count = Math.floor(remaining/d);
+      if (count > 0) { coins.push({val:d,count:count}); remaining -= count*d; }
+    });
+
+    var coinEmojis = {50:'🟡',20:'🟠',10:'🟡',5:'⚪',2:'🪙',1:'🔴'};
+    var noteEmojis = {50:'💵',20:'💴',10:'💶'};
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">💰 Money & Change Calculator</div>' +
+      /* Price tag */
+      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">' +
+      '<div style="flex:1;background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border);text-align:center">' +
+      '<div style="font-size:11px;color:var(--muted)">🏷️ Price</div>' +
+      '<div style="font-size:28px;font-weight:900;color:var(--sci)">₹' + price + '</div>' +
+      '<input type="range" class="slide" min="1" max="200" value="' + price + '" oninput="moneyPrice(this.value)" style="width:100%;margin-top:4px">' +
+      '</div>' +
+      '<div style="font-size:28px;font-weight:900;color:var(--muted)">→</div>' +
+      '<div style="flex:1;background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border);text-align:center">' +
+      '<div style="font-size:11px;color:var(--muted)">💳 Paid</div>' +
+      '<div style="font-size:28px;font-weight:900;color:var(--math)">₹' + paid + '</div>' +
+      '<input type="range" class="slide" min="1" max="500" step="5" value="' + paid + '" oninput="moneyPaid(this.value)" style="width:100%;margin-top:4px">' +
+      '</div>' +
+      '</div>' +
+      /* Change display */
+      '<div style="background:' + (valid ? 'var(--evs-dim)' : 'var(--sci-dim)') + ';border:1.5px solid ' + (valid?'var(--evs)':'var(--sci)') + ';border-radius:12px;padding:12px;text-align:center;margin-bottom:10px">' +
+      '<div style="font-size:13px;color:var(--muted)">' + (valid ? '💚 Change to return' : '❌ Not enough money!') + '</div>' +
+      '<div style="font-size:36px;font-weight:900;color:' + (valid?'var(--evs)':'var(--sci)') + '">₹' + Math.abs(change) + '</div>' +
+      (change < 0 ? '<div style="font-size:12px;color:var(--sci)">Need ₹' + Math.abs(change) + ' more</div>' : '') +
+      '</div>' +
+      /* Coin breakdown */
+      (valid && change > 0 ?
+        '<div style="background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border)">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">Break it down:</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+        coins.map(function(coin) {
+          return '<div style="background:var(--surface);border-radius:8px;padding:5px 8px;border:1px solid var(--border);text-align:center">' +
+            '<div style="font-size:14px">' + (coinEmojis[coin.val]||'🪙') + '</div>' +
+            '<div style="font-size:10px;font-weight:800;color:var(--text)">₹' + coin.val + ' × ' + coin.count + '</div>' +
+            '</div>';
+        }).join('') + '</div></div>' : '') +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Change = Amount paid − Price = ₹' + paid + ' − ₹' + price + ' = ₹' + change + '</div>';
+  }
+
+  window.moneyPrice = function(v) { price = parseInt(v); render(); };
+  window.moneyPaid = function(v) { paid = parseInt(v); render(); };
+  render();
+};
+
+/* ── 8. LAND FORMS (landforms-model) ── */
+SIM_REGISTRY['landforms-model'] = function(c) {
+  var landforms = [
+    { name:'🏔️ Mountain', color:'#8B7355',
+      desc:'Formed by tectonic plate collision pushing land upward (folding) or volcanic activity. Himalayas formed 50 million years ago when India collided with Asia.',
+      example:'Himalayas, Andes, Alps' },
+    { name:'🏜️ Desert', color:'#C8A96A',
+      desc:'Less than 250mm rain per year. Not always hot — Antarctica is the world\'s largest cold desert. Sand dunes form from wind erosion.',
+      example:'Thar Desert (India), Sahara, Gobi' },
+    { name:'🌊 Ocean Floor', color:'#1a4a6a',
+      desc:'Contains mid-ocean ridges, trenches, and abyssal plains. Mariana Trench (11km deep) could fit Everest inside it!',
+      example:'Mariana Trench, Mid-Atlantic Ridge' },
+    { name:'🏕️ Plateau', color:'#7a5a2a',
+      desc:'Flat-topped elevated land. The Deccan Plateau covers most of peninsular India, formed by ancient lava flows.',
+      example:'Deccan Plateau, Tibetan Plateau' },
+    { name:'🌾 Plains', color:'#4a8a3a',
+      desc:'Flat, low-lying land. Often formed by river deposition. The most fertile land — the Indo-Gangetic Plain feeds over a billion people.',
+      example:'Indo-Gangetic Plain, Great Plains (USA)' },
+    { name:'🏖️ Coastal', color:'#4D96FF',
+      desc:'Where land meets sea. Kerala has 590km of coastline! Coastal landforms include beaches, cliffs, estuaries, and deltas.',
+      example:'Kerala coast, Goa beaches, Sundarbans delta' },
+  ];
+
+  var sel = 0;
+
+  function render() {
+    var l = landforms[sel];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Major Landforms of the World</div>' +
+      /* Visual */
+      '<div style="background:linear-gradient(135deg,' + l.color + '33,var(--surface2));border-radius:12px;padding:20px;text-align:center;margin-bottom:8px;border:1.5px solid ' + l.color + '44;position:relative;overflow:hidden">' +
+      '<div style="font-size:64px;filter:drop-shadow(0 4px 12px ' + l.color + '66)">' + l.name.split(' ')[0] + '</div>' +
+      '<div style="font-size:16px;font-weight:900;color:' + l.color + ';margin-top:6px">' + l.name.split(' ').slice(1).join(' ') + '</div>' +
+      '</div>' +
+      /* Selector */
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      landforms.map(function(lf,i) {
+        return '<button onclick="landSel(' + i + ')" style="padding:5px 9px;border-radius:8px;font-size:13px;border:1.5px solid ' +
+          (i===sel?lf.color:'var(--border)') + ';background:' + (i===sel?lf.color+'22':'var(--surface2)') + ';cursor:pointer">' + lf.name.split(' ')[0] + '</button>';
+      }).join('') + '</div>' +
+      /* Info */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;border:1px solid var(--border)">' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px">' + l.desc + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">📍 Examples: <b style="color:var(--text)">' + l.example + '</b></div>' +
+      '</div>';
+  }
+
+  window.landSel = function(i) { sel = i; render(); };
+  render();
+};
+
+/* ── 9. SEPARATION METHODS (separation-sim) ── */
+SIM_REGISTRY['separation-sim'] = function(c) {
+  var method = 'filtration';
+  var raf2, t2 = 0;
+
+  var methods = {
+    filtration: {
+      name:'🔬 Filtration', color:'#4D96FF',
+      mixtures:'Sand + Water, Mud + Water',
+      desc:'Filter paper traps solid particles. Liquid (filtrate) passes through. Used to purify water.',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Funnel */
+        ctx.fillStyle='rgba(255,255,255,.08)';
+        ctx.beginPath(); ctx.moveTo(W*0.25,20); ctx.lineTo(W*0.75,20); ctx.lineTo(W*0.55,H*0.55); ctx.lineTo(W*0.45,H*0.55); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1.5; ctx.stroke();
+        /* Filter paper */
+        ctx.fillStyle='rgba(200,180,150,.2)';
+        ctx.beginPath(); ctx.moveTo(W*0.27,22); ctx.lineTo(W*0.73,22); ctx.lineTo(W*0.54,H*0.53); ctx.lineTo(W*0.46,H*0.53); ctx.closePath(); ctx.fill();
+        /* Sand particles in top */
+        for(var i=0;i<12;i++) {
+          ctx.beginPath(); ctx.arc(W*0.3+i*12+Math.sin(t+i)*3,H*0.2+i*5,3+i%3,0,Math.PI*2);
+          ctx.fillStyle='rgba(180,140,80,0.7)'; ctx.fill();
+        }
+        /* Water dripping through */
+        var dropY = (t*60)%(H*0.5-H*0.55+H);
+        ctx.beginPath(); ctx.arc(W*0.5, H*0.55+dropY*0.4, 4, 0, Math.PI*2);
+        ctx.fillStyle='rgba(77,150,255,0.8)'; ctx.fill();
+        /* Beaker below */
+        ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
+        ctx.strokeRect(W*0.35,H*0.6,W*0.3,H*0.3);
+        var waterH = Math.min(H*0.28, t*3);
+        ctx.fillStyle='rgba(77,150,255,0.3)'; ctx.fillRect(W*0.36,H*0.6+H*0.3-waterH,W*0.28,waterH);
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('Clear filtrate',W*0.5,H*0.97);
+      }
+    },
+    evaporation: {
+      name:'☀️ Evaporation', color:'#FFD93D',
+      mixtures:'Salt + Water, Sugar + Water',
+      desc:'Heating causes liquid to evaporate, leaving dissolved solid behind. Used to get salt from seawater.',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Evaporating dish */
+        ctx.fillStyle='rgba(255,255,255,.08)';
+        ctx.beginPath(); ctx.ellipse(W/2,H*0.6,W*0.35,H*0.15,0,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2; ctx.stroke();
+        /* Saltwater level decreasing */
+        var level = Math.max(0, 1 - t/60);
+        ctx.fillStyle='rgba(100,180,255,' + (0.3+level*0.2) + ')';
+        ctx.beginPath(); ctx.ellipse(W/2,H*0.6,W*0.35*level,H*0.15*level,0,0,Math.PI*2); ctx.fill();
+        /* Salt crystals appearing */
+        if(level < 0.7) {
+          for(var s=0;s<Math.floor((1-level)*15);s++) {
+            ctx.fillStyle='rgba(255,255,255,0.9)';
+            ctx.fillRect(W*0.35+s*13,H*0.6-4,8,8);
+          }
+        }
+        /* Steam */
+        for(var sv=0;sv<5;sv++) {
+          var sy = H*0.45 - ((t*30+sv*20)%80);
+          ctx.strokeStyle='rgba(77,150,255,' + Math.max(0,(sy-H*0.2)/(H*0.25)*0.5) + ')';
+          ctx.lineWidth=2; ctx.setLineDash([3,4]);
+          ctx.beginPath(); ctx.moveTo(W*0.35+sv*25,H*0.5); ctx.quadraticCurveTo(W*0.35+sv*25+(sv%2===0?8:-8),sy+20,W*0.35+sv*25,sy); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        /* Heat source */
+        ctx.fillStyle='rgba(255,107,107,.4)';
+        ctx.fillRect(W*0.2,H*0.72,W*0.6,12);
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('🔥 Heat source',W/2,H*0.84);
+        ctx.fillText('Salt crystals remain after water evaporates',W/2,H*0.96);
+      }
+    },
+    magnetism: {
+      name:'🧲 Magnetism', color:'#FF6B6B',
+      mixtures:'Iron filings + Sand, Iron + Sawdust',
+      desc:'Magnets attract iron but not non-magnetic materials like sand or wood. Quick and clean separation.',
+      animate: function(ctx, W, H, t) {
+        ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+        /* Mixed pile */
+        var mx = W*0.2, my = H*0.6;
+        for(var p=0;p<20;p++) {
+          var px = mx + Math.cos(p)*30, py = my + Math.sin(p)*15;
+          ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2);
+          ctx.fillStyle=p%3===0?'rgba(180,180,180,0.8)':'rgba(180,140,80,0.5)'; ctx.fill();
+        }
+        ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('Iron+Sand mix',mx,my+28);
+        /* Magnet */
+        var magX = W*0.5 + Math.sin(t)*W*0.15;
+        ctx.fillStyle='#FF6B6B'; ctx.fillRect(magX-15,H*0.15,30,20);
+        ctx.fillStyle='#4D96FF'; ctx.fillRect(magX-15,H*0.15+20,30,20);
+        ctx.fillStyle='white'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('N',magX,H*0.15+13); ctx.fillText('S',magX,H*0.15+33);
+        /* Iron filings attracted to magnet */
+        for(var f=0;f<8;f++) {
+          var dist = Math.abs(magX - (mx + Math.cos(f)*30));
+          if(dist < 80) {
+            var fx = mx + Math.cos(f)*30 + (magX - mx - Math.cos(f)*30)*Math.max(0,(80-dist)/80)*0.8;
+            var fy = my + Math.sin(f)*15 - Math.max(0,(80-dist)/80)*30;
+            ctx.beginPath(); ctx.arc(fx,fy,3,0,Math.PI*2);
+            ctx.fillStyle='rgba(180,180,180,0.9)'; ctx.fill();
+          }
+        }
+        ctx.fillStyle='rgba(255,255,255,.3)'; ctx.textAlign='center';
+        ctx.fillText('Sand stays behind',W*0.2,H*0.9);
+        ctx.fillText('Iron clings to magnet',W*0.75,H*0.9);
+      }
+    }
+  };
+
+  function draw() {
+    var cv = document.getElementById('sepCanvas');
+    if(!cv) return;
+    var ctx = cv.getContext('2d');
+    methods[method].animate(ctx, cv.width, cv.height, t2);
+    t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var m = methods[method];
+    c.innerHTML =
+      '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px">' +
+      Object.keys(methods).map(function(k) {
+        return '<button onclick="sepMethod(\'' + k + '\')" style="padding:5px 9px;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid ' +
+          (k===method?methods[k].color:'var(--border)') + ';background:' + (k===method?methods[k].color+'22':'var(--surface2)') +
+          ';color:' + (k===method?methods[k].color:'var(--muted)') + '">' + methods[k].name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="sepCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">🧪 Used for: <b style="color:var(--text)">' + m.mixtures + '</b></div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">' + m.desc + '</div>' +
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.sepMethod = function(k) { cancelAnimationFrame(raf2); method = k; t2 = 0; render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 10. PI MEASUREMENT (pi-measure) ── */
+SIM_REGISTRY['pi-measure'] = function(c) {
+  var raf2, t2 = 0, rolling = false;
+
+  function draw() {
+    var cv = document.getElementById('piCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    var r = 40;
+    var circumference = 2 * Math.PI * r;
+    var rotations = rolling ? t2 * 0.3 : 0;
+    var circleX = 60 + (rolling ? (rotations * circumference) % (W - 120) : 0);
+    var circleY = H * 0.5;
+
+    /* Ground line */
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(20, circleY + r); ctx.lineTo(W-20, circleY + r); ctx.stroke();
+
+    /* Distance markers */
+    var totalDist = rotations * circumference;
+    var diameters = totalDist / (2*r);
+    for (var d = 0; d <= Math.min(diameters, 4); d += 0.5) {
+      var mx = 60 + d * 2 * r;
+      if (mx < W - 20) {
+        ctx.strokeStyle = d % 1 === 0 ? 'rgba(255,217,61,.5)' : 'rgba(255,255,255,.15)';
+        ctx.lineWidth = d % 1 === 0 ? 2 : 1;
+        ctx.beginPath(); ctx.moveTo(mx, circleY + r); ctx.lineTo(mx, circleY + r + 10); ctx.stroke();
+        if (d % 1 === 0 && d > 0) {
+          ctx.fillStyle = 'rgba(255,217,61,.7)'; ctx.font = '9px Nunito,sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText(d + 'd', mx, circleY + r + 22);
+        }
+      }
+    }
+
+    /* Circle */
+    ctx.beginPath(); ctx.arc(circleX, circleY, r, 0, Math.PI*2);
+    ctx.strokeStyle = '#4D96FF'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = 'rgba(77,150,255,.1)'; ctx.fill();
+
+    /* Diameter line */
+    ctx.strokeStyle = '#FFD93D'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(circleX + Math.cos(rotations) * r, circleY + Math.sin(rotations) * r);
+    ctx.lineTo(circleX - Math.cos(rotations) * r, circleY - Math.sin(rotations) * r);
+    ctx.stroke();
+
+    /* Red dot on circumference */
+    var dotAngle = rotations - Math.PI/2;
+    ctx.beginPath(); ctx.arc(circleX + Math.cos(dotAngle)*r, circleY + Math.sin(dotAngle)*r, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#FF6B6B'; ctx.shadowColor = '#FF6B6B'; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+
+    /* PI readout */
+    var measuredPi = diameters > 0 ? (totalDist / (diameters * 2 * r) * diameters / diameters * Math.PI).toFixed(4) : '?';
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = 'bold 11px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Diameter = ' + (2*r) + 'px  ·  Circumference ≈ ' + circumference.toFixed(1) + 'px', W/2, 16);
+    ctx.fillStyle = '#C77DFF'; ctx.font = 'bold 13px Nunito,sans-serif';
+    ctx.fillText('C ÷ d = ' + circumference.toFixed(1) + ' ÷ ' + (2*r) + ' = π = 3.14159...', W/2, H - 10);
+
+    if (rolling) t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  c.innerHTML =
+    '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Discovering π — Roll a Circle!</div>' +
+    '<canvas id="piCanvas" width="300" height="170" style="border-radius:12px;display:block;width:100%"></canvas>' +
+    '<div class="ctrl-row" style="margin-top:8px">' +
+    '<button class="cbtn" onclick="piRoll()" id="piBtn" style="background:var(--acc);color:white;border-color:var(--acc)">▶ Roll Circle</button>' +
+    '<button class="cbtn" onclick="piReset()">↺ Reset</button>' +
+    '</div>' +
+    '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+    'No matter how big or small the circle, C ÷ d is <b style="color:#C77DFF">always π = 3.14159...</b> — that\'s why π is irrational and magical! Archimedes first calculated it over 2,200 years ago.' +
+    '</div>';
+
+  window.piRoll = function() {
+    rolling = !rolling;
+    document.getElementById('piBtn').textContent = rolling ? '⏸ Pause' : '▶ Roll Circle';
+    if (rolling) draw();
+  };
+  window.piReset = function() { rolling = false; t2 = 0; document.getElementById('piBtn').textContent = '▶ Roll Circle'; };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); rolling = false; };
+  draw();
+};
+
+/* ── 11. WEATHER INSTRUMENTS (weather-instruments) ── */
+SIM_REGISTRY['weather-instruments'] = function(c) {
+  var instruments = [
+    { name:'🌡️ Thermometer', color:'#FF6B6B',
+      desc:'Measures air temperature in °C. Mercury or alcohol expands when heated. Digital thermometers use sensors.',
+      interactive:'Drag the slider to simulate temperature change:',
+      type:'thermometer' },
+    { name:'🌬️ Anemometer', color:'#4D96FF',
+      desc:'Measures wind speed in km/h or knots. Cups spin faster in stronger wind. Named after Greek god Anemos.',
+      interactive:'Click to simulate wind:',
+      type:'anemometer' },
+    { name:'🌧️ Rain Gauge', color:'#6BCB77',
+      desc:'Measures rainfall in mm. A cylinder collects rain. 1mm rain = 1 litre of water per sq metre of ground.',
+      interactive:'Adjust rainfall collected:',
+      type:'raingauge' },
+    { name:'🧭 Barometer', color:'#FFD93D',
+      desc:'Measures atmospheric pressure in hPa. High pressure = clear weather. Low pressure = rain coming!',
+      interactive:'Set pressure reading:',
+      type:'barometer' },
+  ];
+  var sel = 0, val = 28, raf2, t2 = 0, spinning = 0;
+
+  function draw() {
+    var cv = document.getElementById('weatherCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+    var inst = instruments[sel];
+
+    if (inst.type === 'thermometer') {
+      var temp = val;
+      var fillH = ((temp + 10) / 60) * (H*0.7);
+      var tempColor = temp < 0 ? '#4D96FF' : temp < 20 ? '#6BCB77' : temp < 35 ? '#FFD93D' : '#FF6B6B';
+      /* Tube */
+      ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(W/2-10, H*0.1, 20, H*0.75);
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2; ctx.strokeRect(W/2-10, H*0.1, 20, H*0.75);
+      /* Mercury */
+      ctx.fillStyle = tempColor; ctx.fillRect(W/2-8, H*0.1+H*0.75-fillH, 16, fillH);
+      /* Bulb */
+      ctx.beginPath(); ctx.arc(W/2, H*0.85+12, 16, 0, Math.PI*2);
+      ctx.fillStyle = tempColor; ctx.shadowColor = tempColor; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+      /* Scale */
+      for (var tk = -10; tk <= 50; tk += 10) {
+        var ty = H*0.85 - ((tk+10)/60)*(H*0.75);
+        ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(W/2+10, ty); ctx.lineTo(W/2+20, ty); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '9px Nunito,sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(tk+'°', W/2+22, ty+3);
+      }
+      ctx.fillStyle = tempColor; ctx.font = 'bold 18px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(temp + '°C', W/2, H*0.05);
+      ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '10px Nunito,sans-serif';
+      ctx.fillText(temp < 15 ? 'Cold ❄️' : temp < 25 ? 'Comfortable 🌤️' : temp < 35 ? 'Warm ☀️' : 'Hot 🔥', W/2, H*0.13);
+
+    } else if (inst.type === 'anemometer') {
+      spinning += val * 0.005;
+      var cx2 = W/2, cy2 = H/2;
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx2,H*0.1); ctx.lineTo(cx2,H*0.9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.1,cy2); ctx.lineTo(W*0.9,cy2); ctx.stroke();
+      /* 3 cups */
+      [0,1,2].forEach(function(i) {
+        var a = spinning + i*(Math.PI*2/3);
+        var ex = cx2 + Math.cos(a)*55, ey = cy2 + Math.sin(a)*55;
+        ctx.strokeStyle = '#4D96FF'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(ex,ey); ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex,ey,12,a,a+Math.PI);
+        ctx.fillStyle = '#4D96FF'; ctx.fill(); ctx.strokeStyle = '#4D96FF'; ctx.stroke();
+      });
+      /* Centre */
+      ctx.beginPath(); ctx.arc(cx2,cy2,8,0,Math.PI*2);
+      ctx.fillStyle = '#888'; ctx.fill();
+      ctx.fillStyle = '#4D96FF'; ctx.font = 'bold 16px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(val + ' km/h', W/2, H*0.06);
+      ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '10px Nunito,sans-serif';
+      ctx.fillText(val < 20 ? 'Light breeze 🍃' : val < 50 ? 'Moderate wind 💨' : 'Strong wind 🌬️', W/2, H*0.14);
+      raf2 = requestAnimationFrame(draw);
+
+    } else if (inst.type === 'raingauge') {
+      var rainmm = val;
+      var fillFrac = rainmm / 100;
+      ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(W/2-25, H*0.1, 50, H*0.7);
+      ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.strokeRect(W/2-25, H*0.1, 50, H*0.7);
+      ctx.fillStyle = 'rgba(77,150,255,0.5)'; ctx.fillRect(W/2-23, H*0.1+H*0.7*(1-fillFrac), 46, H*0.7*fillFrac);
+      for (var mk = 0; mk <= 100; mk += 20) {
+        var my = H*0.1+H*0.7*(1-mk/100);
+        ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(W/2+25,my); ctx.lineTo(W/2+32,my); ctx.stroke();
+        ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='8px Nunito,sans-serif'; ctx.textAlign='left';
+        ctx.fillText(mk+'mm',W/2+34,my+3);
+      }
+      ctx.fillStyle='#6BCB77'; ctx.font='bold 18px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(rainmm+'mm',W/2,H*0.06);
+      ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='10px Nunito,sans-serif';
+      ctx.fillText(rainmm<10?'Light rain 🌦️':rainmm<50?'Moderate rain 🌧️':'Heavy rain ⛈️',W/2,H*0.14);
+
+    } else if (inst.type === 'barometer') {
+      var pressure = 950 + val * 1.5;
+      ctx.beginPath(); ctx.arc(W/2,H/2,70,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=3; ctx.stroke();
+      /* Scale markings */
+      for(var deg=0;deg<=270;deg+=30){
+        var rad=(deg-225)*Math.PI/180;
+        var x1=W/2+Math.cos(rad)*58, y1=H/2+Math.sin(rad)*58;
+        var x2=W/2+Math.cos(rad)*68, y2=H/2+Math.sin(rad)*68;
+        ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+        var hPa=950+deg/270*100;
+        ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='7px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText(Math.round(hPa),W/2+Math.cos(rad)*78,H/2+Math.sin(rad)*78+3);
+      }
+      /* Needle */
+      var needleAngle=((pressure-950)/100*270-225)*Math.PI/180;
+      ctx.strokeStyle='#FFD93D'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(W/2,H/2); ctx.lineTo(W/2+Math.cos(needleAngle)*52,H/2+Math.sin(needleAngle)*52); ctx.stroke();
+      ctx.beginPath(); ctx.arc(W/2,H/2,6,0,Math.PI*2); ctx.fillStyle='#FFD93D'; ctx.fill();
+      ctx.fillStyle='#FFD93D'; ctx.font='bold 14px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(Math.round(pressure)+'hPa',W/2,H/2+28);
+      ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='10px Nunito,sans-serif';
+      ctx.fillText(pressure<980?'Low pressure — rain likely 🌧️':pressure<1010?'Normal pressure ⛅':'High pressure — fair weather ☀️',W/2,H*0.92);
+    }
+
+    if (inst.type !== 'anemometer') raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var inst = instruments[sel];
+    c.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      instruments.map(function(ins, i) {
+        return '<button onclick="weatherSel(' + i + ')" style="padding:5px 9px;border-radius:9px;font-size:12px;border:1.5px solid ' +
+          (i===sel?ins.color:'var(--border)') + ';background:' + (i===sel?ins.color+'22':'var(--surface2)') +
+          ';color:' + (i===sel?ins.color:'var(--muted)') + ';cursor:pointer;font-weight:800">' + ins.name + '</button>';
+      }).join('') + '</div>' +
+      '<div style="display:flex;gap:10px;align-items:stretch">' +
+      '<canvas id="weatherCanvas" width="180" height="200" style="border-radius:12px;flex-shrink:0"></canvas>' +
+      '<div style="flex:1">' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:8px">' + inst.desc + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' + inst.interactive + '</div>' +
+      '<input type="range" class="slide" min="0" max="' + (inst.type==='thermometer'?'50':inst.type==='anemometer'?'100':inst.type==='raingauge'?'100':'66') +
+      '" value="' + val + '" oninput="weatherVal(this.value)" style="width:100%">' +
+      '</div></div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.weatherSel = function(i) { cancelAnimationFrame(raf2); sel = i; val = 28; t2 = 0; spinning = 0; render(); };
+  window.weatherVal = function(v) { val = parseInt(v); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 12. MULTIPLICATION INTRO (multiplication-intro) ── */
+SIM_REGISTRY['multiplication-intro'] = function(c) {
+  var rows = 3, cols = 4;
+
+  function render() {
+    var total = rows * cols;
+    var grid = '';
+    for (var r = 0; r < rows; r++) {
+      for (var col = 0; col < cols; col++) {
+        var idx = r * cols + col;
+        grid += '<div style="width:36px;height:36px;border-radius:8px;background:var(--acc);' +
+          'display:flex;align-items:center;justify-content:center;font-size:18px;' +
+          'animation:fadeUp .3s ease ' + (idx*30) + 'ms both">⭐</div>';
+      }
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Multiplication as Arrays</div>' +
+      '<div style="text-align:center;margin-bottom:10px">' +
+      '<span style="font-size:28px;font-weight:900;color:var(--math)">' + rows + '</span>' +
+      '<span style="font-size:24px;color:var(--muted);margin:0 6px">×</span>' +
+      '<span style="font-size:28px;font-weight:900;color:var(--acc)">' + cols + '</span>' +
+      '<span style="font-size:24px;color:var(--muted);margin:0 6px">=</span>' +
+      '<span style="font-size:32px;font-weight:900;color:var(--evs)">' + total + '</span>' +
+      '</div>' +
+      /* Grid */
+      '<div style="display:inline-grid;grid-template-columns:repeat(' + cols + ',36px);gap:5px;margin:0 auto 10px;display:grid;justify-content:center">' +
+      grid + '</div>' +
+      /* Row label */
+      '<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:10px">' +
+      rows + ' rows of ' + cols + ' stars = ' + total + ' stars total' +
+      '</div>' +
+      /* Sliders */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--math)">Rows: <b>' + rows + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="10" value="' + rows + '" oninput="multiRows(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--acc)">Columns: <b>' + cols + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="10" value="' + cols + '" oninput="multiCols(this.value)" style="width:100px">' +
+      '</div>' +
+      /* Times table */
+      '<div style="background:var(--surface2);border-radius:10px;padding:8px;margin-top:8px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px">Times table for ' + rows + ':</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
+      Array.from({length:10},function(_,i){
+        return '<span style="background:' + ((i+1)===cols?'var(--acc)':'var(--surface)') + ';color:' +
+          ((i+1)===cols?'white':'var(--muted)') + ';padding:3px 7px;border-radius:6px;font-size:11px;font-weight:700">' +
+          rows + '×' + (i+1) + '=' + (rows*(i+1)) + '</span>';
+      }).join('') +
+      '</div></div>';
+  }
+
+  window.multiRows = function(v) { rows = parseInt(v); render(); };
+  window.multiCols = function(v) { cols = parseInt(v); render(); };
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 6 — 14 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. SHAPES HUNT (shapes-hunt) ── */
+SIM_REGISTRY['shapes-hunt'] = function(c) {
+  var shapes = [
+    {name:'Circle',    sides:0,  emoji:'⚪', color:'#FF6B6B', formula:'Area = πr²',        realWorld:'Wheels, coins, sun, pizza'},
+    {name:'Triangle',  sides:3,  emoji:'🔺', color:'#FFD93D', formula:'Area = ½ × b × h',  realWorld:'Pyramids, road signs, sandwiches'},
+    {name:'Square',    sides:4,  emoji:'🟥', color:'#4D96FF', formula:'Area = s²',          realWorld:'Tiles, chessboard, windows'},
+    {name:'Rectangle', sides:4,  emoji:'📱', color:'#6BCB77', formula:'Area = l × w',       realWorld:'Books, doors, screens, bricks'},
+    {name:'Pentagon',  sides:5,  emoji:'⭐', color:'#C77DFF', formula:'Area = ½ × P × a',  realWorld:'Home plate in baseball, okra cross-section'},
+    {name:'Hexagon',   sides:6,  emoji:'🔷', color:'#FF8C42', formula:'Area = (3√3/2) × s²',realWorld:'Honeycomb, snowflakes, nuts & bolts'},
+  ];
+  var sel = 0;
+
+  function drawShape(ctx, W, H, s, t) {
+    var cx = W/2, cy = H/2, r = Math.min(W,H)*0.32;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Rotating glow */
+    var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,r+20);
+    grad.addColorStop(0, s.color+'33');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = s.color; ctx.lineWidth = 3;
+    ctx.fillStyle = s.color + '22';
+    ctx.shadowColor = s.color; ctx.shadowBlur = 15;
+
+    if (s.sides === 0) {
+      /* Circle */
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+      /* Radius line */
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.5; ctx.shadowBlur = 0;
+      ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+r,cy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('r', cx+r/2, cy-6);
+    } else {
+      /* Polygon */
+      ctx.beginPath();
+      for (var i = 0; i <= s.sides; i++) {
+        var a = (i/s.sides)*Math.PI*2 - Math.PI/2 + t*0.3;
+        var x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
+        i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      }
+      ctx.fill(); ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+
+    /* Side count dots */
+    if (s.sides > 0) {
+      ctx.fillStyle = s.color; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+      for (var i = 0; i < s.sides; i++) {
+        var a = (i/s.sides + 0.5/s.sides)*Math.PI*2 - Math.PI/2 + t*0.3;
+        var mx = cx + Math.cos(a)*(r+16), my = cy + Math.sin(a)*(r+16);
+        ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2); ctx.fill();
+      }
+    }
+  }
+
+  var raf2, t2 = 0;
+  function animate() {
+    var cv = document.getElementById('shapeCanvas');
+    if (!cv) return;
+    drawShape(cv.getContext('2d'), cv.width, cv.height, shapes[sel], t2);
+    t2 += 0.01;
+    raf2 = requestAnimationFrame(animate);
+  }
+
+  function render() {
+    var s = shapes[sel];
+    c.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      shapes.map(function(sh,i) {
+        return '<button onclick="shapeSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===sel?sh.color:'var(--border)')+';background:'+(i===sel?sh.color+'22':'var(--surface2)')+';cursor:pointer">' + sh.emoji + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="shapeCanvas" width="220" height="180" style="border-radius:12px;display:block;margin:0 auto"></canvas>' +
+      '<div style="text-align:center;margin-top:8px">' +
+      '<div style="font-size:18px;font-weight:900;color:'+s.color+'">'+s.name+(s.sides>0?' ('+s.sides+' sides)':' (curved)')+' </div>' +
+      '<div style="font-size:12px;color:var(--acc);margin:3px 0">📐 '+s.formula+'</div>' +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.7">🌍 Found in: '+s.realWorld+'</div>' +
+      '</div>';
+    cancelAnimationFrame(raf2); animate();
+  }
+  window.shapeSel = function(i) { sel=i; cancelAnimationFrame(raf2); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 2. PUSH AND PULL (push-pull) ── */
+SIM_REGISTRY['push-pull'] = function(c) {
+  var raf2, t2=0, boxes=[];
+  var action = null;
+
+  function init() {
+    boxes = [
+      {x:140, y:80, w:50, h:40, color:'#FF6B6B', label:'Book',   mass:1, vx:0},
+      {x:80,  y:160,w:65, h:50, color:'#FFD93D', label:'Chair',  mass:3, vx:0},
+      {x:200, y:155,w:45, h:35, color:'#6BCB77', label:'Ball',   mass:0.5,vx:0},
+    ];
+  }
+
+  function draw() {
+    var cv = document.getElementById('ppCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    /* Floor */
+    ctx.fillStyle = '#1a2a1a'; ctx.fillRect(0, H*0.85, W, H*0.15);
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0,H*0.85); ctx.lineTo(W,H*0.85); ctx.stroke();
+
+    /* Boxes */
+    boxes.forEach(function(b) {
+      b.vx *= 0.92;
+      b.x += b.vx;
+      if (b.x < 10) { b.x = 10; b.vx = Math.abs(b.vx)*0.5; }
+      if (b.x + b.w > W-10) { b.x = W-10-b.w; b.vx = -Math.abs(b.vx)*0.5; }
+
+      ctx.fillStyle = b.color + '33';
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(b.x, b.y, b.w, b.h, 6); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'white'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(b.label, b.x+b.w/2, b.y+b.h/2+4);
+
+      /* Show velocity arrows */
+      if (Math.abs(b.vx) > 0.5) {
+        var dir = b.vx > 0 ? 1 : -1;
+        ctx.strokeStyle = '#FFD93D'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(b.x + b.w/2, b.y - 10);
+        ctx.lineTo(b.x + b.w/2 + dir*20, b.y - 10);
+        ctx.stroke();
+        ctx.fillStyle = '#FFD93D'; ctx.font = '14px sans-serif';
+        ctx.fillText(dir > 0 ? '→' : '←', b.x + b.w/2 + dir*25, b.y-6);
+      }
+    });
+
+    /* Force labels */
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '11px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Click a box to PUSH it! Or pull it back.', W/2, H*0.92);
+
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    init();
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Push & Pull Forces</div>' +
+      '<canvas id="ppCanvas" width="300" height="210" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="ppPush(0)" style="background:var(--sci);color:white;border-color:var(--sci)">📘 Push Book →</button>' +
+      '<button class="cbtn" onclick="ppPush(1)" style="background:var(--math);color:white;border-color:var(--math)">🪑 Push Chair →</button>' +
+      '<button class="cbtn" onclick="ppPush(2)" style="background:var(--evs);color:white;border-color:var(--evs)">⚽ Kick Ball →</button>' +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-top:6px">' +
+      '<button class="cbtn" onclick="ppReset()">↺ Reset</button>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '⬛ Heavier objects need more force to move (Newton\'s 2nd Law: F = ma). The ball moves fastest — least mass!' +
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+
+    document.getElementById('ppCanvas').addEventListener('click', function(e) {
+      var rect = e.target.getBoundingClientRect();
+      var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      boxes.forEach(function(b) {
+        if (mx > b.x && mx < b.x+b.w && my > b.y && my < b.y+b.h) {
+          b.vx += (mx > b.x+b.w/2 ? 1 : -1) * (8/b.mass);
+        }
+      });
+    });
+  }
+
+  window.ppPush = function(i) { boxes[i].vx += 8/boxes[i].mass; };
+  window.ppReset = function() { init(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 3. ADDITION OBJECTS (addition-objects) ── */
+SIM_REGISTRY['addition-objects'] = function(c) {
+  var a=4, b=3, emoji='🍎';
+  var emojiOptions = ['🍎','🍌','⭐','🔵','🎈','🐾','🌸','🍕'];
+
+  function render() {
+    var total = a + b;
+    var groupA = Array.from({length:a}, function() { return '<span style="font-size:28px;animation:fadeUp .3s ease">' + emoji + '</span>'; }).join('');
+    var groupB = Array.from({length:b}, function() { return '<span style="font-size:28px;animation:fadeUp .3s ease">' + emoji + '</span>'; }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Addition — Counting Objects</div>' +
+      /* Equation */
+      '<div style="text-align:center;font-size:32px;font-weight:900;margin-bottom:10px">' +
+      '<span style="color:var(--sci)">' + a + '</span>' +
+      '<span style="color:var(--muted);margin:0 8px">+</span>' +
+      '<span style="color:var(--math)">' + b + '</span>' +
+      '<span style="color:var(--muted);margin:0 8px">=</span>' +
+      '<span style="color:var(--evs)">' + total + '</span>' +
+      '</div>' +
+      /* Object groups */
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;justify-content:center">' +
+      '<div style="background:var(--sci-dim);border:2px solid var(--sci);border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:4px;min-width:80px;justify-content:center">' + groupA + '</div>' +
+      '<div style="font-size:28px;color:var(--muted)">+</div>' +
+      '<div style="background:var(--math-dim);border:2px solid var(--math);border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:4px;min-width:80px;justify-content:center">' + groupB + '</div>' +
+      '<div style="font-size:28px;color:var(--muted)">=</div>' +
+      '<div style="background:var(--evs-dim);border:2px solid var(--evs);border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:4px;min-width:80px;justify-content:center">' +
+      Array.from({length:total}, function() { return '<span style="font-size:28px">' + emoji + '</span>'; }).join('') +
+      '</div></div>' +
+      /* Controls */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      '<span style="font-size:11px;color:var(--sci)">Group A: <b>' + a + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="10" value="' + a + '" oninput="addA(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--math)">Group B: <b>' + b + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="10" value="' + b + '" oninput="addB(this.value)" style="width:100px">' +
+      '</div>' +
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center">' +
+      emojiOptions.map(function(e) {
+        return '<button onclick="addEmoji(\'' + e + '\')" style="font-size:20px;width:36px;height:36px;border-radius:8px;border:2px solid '+(e===emoji?'var(--acc)':'var(--border)')+';background:'+(e===emoji?'var(--acc-dim)':'var(--surface2)')+';cursor:pointer">' + e + '</button>';
+      }).join('') + '</div>';
+  }
+
+  window.addA = function(v) { a=parseInt(v); render(); };
+  window.addB = function(v) { b=parseInt(v); render(); };
+  window.addEmoji = function(e) { emoji=e; render(); };
+  render();
+};
+
+/* ── 4. SUBTRACTION OBJECTS (subtraction-objects) ── */
+SIM_REGISTRY['subtraction-objects'] = function(c) {
+  var total=8, take=3;
+
+  function render() {
+    var left = total - take;
+    var items = Array.from({length:total}, function(_,i) {
+      var taken = i < take;
+      return '<span style="font-size:26px;opacity:'+(taken?0.2:1)+';position:relative">' +
+        '🍪' + (taken ? '<span style="position:absolute;top:0;left:0;font-size:22px;opacity:0.8">❌</span>' : '') +
+        '</span>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Subtraction — Taking Away</div>' +
+      '<div style="text-align:center;font-size:32px;font-weight:900;margin-bottom:10px">' +
+      '<span style="color:var(--math)">' + total + '</span>' +
+      '<span style="color:var(--sci);margin:0 8px">−</span>' +
+      '<span style="color:var(--sci)">' + take + '</span>' +
+      '<span style="color:var(--muted);margin:0 8px">=</span>' +
+      '<span style="color:var(--evs)">' + left + '</span>' +
+      '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">' +
+      items + '</div>' +
+      '<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px">' +
+      take + ' cookies eaten ❌ · ' + left + ' cookies left 🍪' +
+      '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--math)">Total: <b>' + total + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="12" value="' + total + '" oninput="subTotal(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--sci)">Take away: <b>' + take + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="' + total + '" value="' + take + '" oninput="subTake(this.value)" style="width:100px">' +
+      '</div>' +
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:8px;margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7">' +
+      '💡 Subtraction checks: ' + left + ' + ' + take + ' = ' + total + ' ✅ Addition and subtraction are opposites!' +
+      '</div>';
+  }
+
+  window.subTotal = function(v) { total=parseInt(v); take=Math.min(take,total); render(); };
+  window.subTake = function(v) { take=Math.min(parseInt(v),total); render(); };
+  render();
+};
+
+/* ── 5. DIVISION SHARING (division-sharing) ── */
+SIM_REGISTRY['division-sharing'] = function(c) {
+  var total=12, groups=3;
+
+  function render() {
+    var perGroup = Math.floor(total/groups);
+    var remainder = total % groups;
+    var cols = Math.min(groups, 4);
+    var groupDivs = Array.from({length:groups}, function(_,g) {
+      var items = Array.from({length:perGroup + (g < remainder ? 1 : 0)}, function() {
+        return '<span style="font-size:22px">🍬</span>';
+      }).join('');
+      return '<div style="background:var(--surface2);border:1.5px solid var(--acc)44;border-radius:10px;padding:8px;text-align:center;min-width:60px">' +
+        '<div style="font-size:10px;font-weight:800;color:var(--muted);margin-bottom:4px">Group ' + (g+1) + '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">' + items + '</div>' +
+        '<div style="font-size:11px;font-weight:800;color:var(--acc);margin-top:4px">' + (perGroup + (g<remainder?1:0)) + '</div>' +
+        '</div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Division — Sharing Equally</div>' +
+      '<div style="text-align:center;font-size:30px;font-weight:900;margin-bottom:10px">' +
+      '<span style="color:var(--math)">' + total + '</span>' +
+      '<span style="color:var(--muted);margin:0 8px">÷</span>' +
+      '<span style="color:var(--sci)">' + groups + '</span>' +
+      '<span style="color:var(--muted);margin:0 8px">=</span>' +
+      '<span style="color:var(--evs)">' + perGroup + '</span>' +
+      (remainder > 0 ? '<span style="color:var(--muted);margin:0 4px;font-size:18px"> remainder </span><span style="color:var(--sci);font-size:22px">' + remainder + '</span>' : '') +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:10px">' + groupDivs + '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--math)">Total sweets: <b>' + total + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="20" value="' + total + '" oninput="divTotal(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--sci)">Groups: <b>' + groups + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="6" value="' + groups + '" oninput="divGroups(this.value)" style="width:80px">' +
+      '</div>' +
+      (remainder > 0 ? '<div style="background:var(--sci-dim);border:1px solid var(--sci)44;border-radius:10px;padding:8px;margin-top:8px;font-size:12px;color:var(--text);text-align:center">Remainder ' + remainder + ' — ' + total + ' does not divide evenly into ' + groups + ' groups</div>' : '');
+  }
+
+  window.divTotal = function(v) { total=parseInt(v); render(); };
+  window.divGroups = function(v) { groups=Math.max(1,parseInt(v)); render(); };
+  render();
+};
+
+/* ── 6. COUNT OBJECTS (count-objects) ── */
+SIM_REGISTRY['count-objects'] = function(c) {
+  var count=5, mode='count', userAnswer='', revealed=false;
+  var emojis = ['🐸','🦋','🌟','🐠','🐶','🐱','🐻','🐼'];
+  var currentEmoji = '🐸';
+  var positions = [];
+
+  function generatePositions(n) {
+    positions = [];
+    for (var i = 0; i < n; i++) {
+      positions.push({
+        x: 10 + Math.random()*78,
+        y: 10 + Math.random()*78,
+        size: 22 + Math.random()*12,
+      });
+    }
+  }
+
+  function render() {
+    if (!positions.length || positions.length !== count) generatePositions(count);
+    var items = positions.map(function(p) {
+      return '<span style="position:absolute;left:'+p.x+'%;top:'+p.y+'%;font-size:'+p.size+'px;transform:translate(-50%,-50%)">' + currentEmoji + '</span>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Counting Fun!</div>' +
+      /* Emoji selector */
+      '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:8px">' +
+      emojis.map(function(e) {
+        return '<button onclick="countEmoji(\'' + e + '\')" style="font-size:18px;width:32px;height:32px;border-radius:8px;border:1.5px solid '+(e===currentEmoji?'var(--acc)':'var(--border)')+';background:'+(e===currentEmoji?'var(--acc-dim)':'var(--surface2)')+';cursor:pointer">' + e + '</button>';
+      }).join('') + '</div>' +
+      /* Scatter field */
+      '<div style="position:relative;width:100%;height:140px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:8px">' +
+      items + '</div>' +
+      /* Answer area */
+      (revealed
+        ? '<div style="text-align:center;font-size:24px;font-weight:900;color:var(--evs);margin-bottom:8px">There are <span style="font-size:36px">' + count + '</span> ' + currentEmoji + '</div>'
+        : '<div class="ctrl-row" style="margin-bottom:8px">' +
+          '<span style="font-size:13px;color:var(--text)">How many ' + currentEmoji + ' do you count?</span>' +
+          '<input id="countAnswer" type="number" min="0" max="20" style="width:60px;background:var(--surface);border:1.5px solid var(--acc);border-radius:8px;padding:6px;color:var(--text);font-size:16px;font-weight:900;text-align:center">' +
+          '<button class="cbtn" onclick="countCheck()" style="background:var(--acc);color:white;border-color:var(--acc)">Check!</button>' +
+          '</div>'
+      ) +
+      '<div class="ctrl-row">' +
+      '<button class="cbtn" onclick="countNew()" style="background:var(--evs);color:white;border-color:var(--evs)">🔀 New Game</button>' +
+      '<button class="cbtn" onclick="countReveal()">👁️ Reveal</button>' +
+      '<span style="font-size:11px;color:var(--muted)">Number: <b>' + count + '</b></span>' +
+      '<input type="range" class="slide" min="1" max="15" value="' + count + '" oninput="countSet(this.value)" style="width:80px">' +
+      '</div>';
+  }
+
+  window.countEmoji = function(e) { currentEmoji=e; generatePositions(count); revealed=false; render(); };
+  window.countNew = function() { count=3+Math.floor(Math.random()*10); generatePositions(count); revealed=false; render(); };
+  window.countReveal = function() { revealed=true; render(); };
+  window.countSet = function(v) { count=parseInt(v); generatePositions(count); revealed=false; render(); };
+  window.countCheck = function() {
+    var ans = parseInt(document.getElementById('countAnswer').value);
+    if (ans === count) {
+      alert('✅ Correct! There are ' + count + ' ' + currentEmoji);
+    } else {
+      alert('❌ Not quite! Try counting again carefully.');
+    }
+  };
+  generatePositions(count);
+  render();
+};
+
+/* ── 7. PLACE VALUE (place-value) ── */
+SIM_REGISTRY['place-value'] = function(c) {
+  var number = 346;
+
+  function render() {
+    var n = Math.max(0, Math.min(9999, number));
+    var thousands = Math.floor(n/1000);
+    var hundreds = Math.floor((n%1000)/100);
+    var tens = Math.floor((n%100)/10);
+    var ones = n%10;
+
+    function blocks(count, color, label, size) {
+      return '<div style="text-align:center">' +
+        '<div style="font-size:9px;font-weight:800;color:'+color+';margin-bottom:4px;text-transform:uppercase">'+label+'</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:30px;align-items:center">' +
+        (count > 0 ? Array.from({length:count}, function() {
+          return '<div style="width:'+size+'px;height:'+size+'px;background:'+color+';border-radius:2px;opacity:0.85"></div>';
+        }).join('') : '<span style="color:var(--muted);font-size:11px">0</span>') +
+        '</div>' +
+        '<div style="font-size:20px;font-weight:900;color:'+color+';margin-top:4px">'+count+'</div>' +
+        '</div>';
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Place Value</div>' +
+      /* Large number display */
+      '<div style="text-align:center;margin-bottom:10px;display:flex;justify-content:center;gap:4px">' +
+      [
+        {d:thousands, color:'#C77DFF', place:'Thousands'},
+        {d:hundreds,  color:'#FF6B6B', place:'Hundreds'},
+        {d:tens,      color:'#FFD93D', place:'Tens'},
+        {d:ones,      color:'#6BCB77', place:'Ones'},
+      ].filter(function(_,i){ return n >= [1000,100,10,1][i]; }).map(function(p) {
+        return '<div style="text-align:center">' +
+          '<div style="font-size:42px;font-weight:900;color:'+p.color+';line-height:1;border-bottom:3px solid '+p.color+'22">'+p.d+'</div>' +
+          '<div style="font-size:8px;color:'+p.color+';opacity:.7">'+p.place+'</div>' +
+          '</div>';
+      }).join('<div style="font-size:32px;font-weight:900;color:var(--border);align-self:center;margin-bottom:12px">,</div>') +
+      '</div>' +
+      /* Block grid */
+      '<div style="display:flex;gap:10px;justify-content:center;background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border);flex-wrap:wrap">' +
+      (thousands > 0 ? blocks(thousands,'#C77DFF','Thousands',18) : '') +
+      blocks(hundreds,'#FF6B6B','Hundreds',14) +
+      blocks(tens,'#FFD93D','Tens',10) +
+      blocks(ones,'#6BCB77','Ones',8) +
+      '</div>' +
+      /* Expanded form */
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:12px;color:var(--text);text-align:center;line-height:1.8;margin-bottom:10px">' +
+      (thousands>0?'<span style="color:#C77DFF">'+thousands+'×1000</span> + ':'') +
+      (hundreds>0?'<span style="color:#FF6B6B">'+hundreds+'×100</span> + ':'') +
+      (tens>0?'<span style="color:#FFD93D">'+tens+'×10</span> + ':'') +
+      '<span style="color:#6BCB77">'+ones+'×1</span> = <b>'+n+'</b>' +
+      '</div>' +
+      '<div class="ctrl-row">' +
+      '<span style="font-size:11px;color:var(--muted)">Number:</span>' +
+      '<input type="number" min="0" max="9999" value="'+n+'" onchange="placeVal(this.value)" style="width:80px;background:var(--surface);border:1.5px solid var(--acc);border-radius:8px;padding:6px;color:var(--text);font-size:16px;font-weight:900;text-align:center">' +
+      '<input type="range" class="slide" min="0" max="999" value="'+Math.min(n,999)+'" oninput="placeVal(this.value)" style="width:120px">' +
+      '</div>';
+  }
+
+  window.placeVal = function(v) { number=parseInt(v)||0; render(); };
+  render();
+};
+
+/* ── 8. DECIMAL INTRO (decimal-intro) ── */
+SIM_REGISTRY['decimal-intro'] = function(c) {
+  var whole=1, tenths=3, hundredths=5;
+
+  function render() {
+    var value = whole + tenths/10 + hundredths/100;
+
+    /* 10×10 grid for 1 whole */
+    var gridCells = '';
+    var filledCount = Math.round(value * 100);
+    for (var i = 0; i < 100; i++) {
+      var color = i < whole*100 ? 'var(--acc)' : i < filledCount ? 'var(--math)' : 'var(--surface2)';
+      gridCells += '<div style="width:18px;height:18px;background:'+color+';border:1px solid var(--bg);border-radius:2px;transition:background .2s"></div>';
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Understanding Decimals</div>' +
+      '<div style="text-align:center;font-size:40px;font-weight:900;margin-bottom:8px">' +
+      '<span style="color:var(--acc)">' + whole + '</span>' +
+      '<span style="color:var(--muted)">.</span>' +
+      '<span style="color:var(--math)">' + tenths + '</span>' +
+      '<span style="color:var(--evs)">' + hundredths + '</span>' +
+      '</div>' +
+      /* Place value labels */
+      '<div style="display:flex;justify-content:center;gap:4px;margin-bottom:10px;font-size:10px">' +
+      '<div style="text-align:center;padding:4px 10px;background:var(--acc-dim);border-radius:6px;color:var(--acc);font-weight:800">'+whole+'<br>Ones</div>' +
+      '<div style="text-align:center;padding:4px 10px;font-size:16px;font-weight:900;color:var(--muted);align-self:center">.</div>' +
+      '<div style="text-align:center;padding:4px 10px;background:var(--math-dim);border-radius:6px;color:var(--math);font-weight:800">'+tenths+'<br>Tenths</div>' +
+      '<div style="text-align:center;padding:4px 10px;background:var(--evs-dim);border-radius:6px;color:var(--evs);font-weight:800">'+hundredths+'<br>Hundredths</div>' +
+      '</div>' +
+      /* 100-cell grid */
+      '<div style="display:grid;grid-template-columns:repeat(10,18px);gap:2px;margin:0 auto 8px;width:200px">' + gridCells + '</div>' +
+      '<div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:8px">' +
+      '<span style="color:var(--acc)">■ ' + whole*100 + ' whole cells</span> + <span style="color:var(--math)">■ ' + (filledCount-whole*100) + ' decimal cells</span> out of 100' +
+      '</div>' +
+      /* Sliders */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--acc)">Ones: <b>' + whole + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="1" value="' + whole + '" oninput="decWhole(this.value)" style="width:60px">' +
+      '<span style="font-size:11px;color:var(--math)">Tenths: <b>' + tenths + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="9" value="' + tenths + '" oninput="decTenths(this.value)" style="width:80px">' +
+      '<span style="font-size:11px;color:var(--evs)">Hundredths: <b>' + hundredths + '</b></span>' +
+      '<input type="range" class="slide" min="0" max="9" value="' + hundredths + '" oninput="decHundredths(this.value)" style="width:80px">' +
+      '</div>';
+  }
+
+  window.decWhole = function(v) { whole=parseInt(v); render(); };
+  window.decTenths = function(v) { tenths=parseInt(v); render(); };
+  window.decHundredths = function(v) { hundredths=parseInt(v); render(); };
+  render();
+};
+
+/* ── 9. SOIL PROFILE (soil-profile) ── */
+SIM_REGISTRY['soil-profile'] = function(c) {
+  var selectedLayer = null;
+  var layers = [
+    { name:'O — Organic Horizon', depth:'0–5 cm',  color:'#2d1f0e', textColor:'#C8945A',
+      desc:'Decomposing leaves, twigs, and organic matter. Rich in fungi and bacteria. Provides nutrients to plants below.', emoji:'🍂' },
+    { name:'A — Topsoil',         depth:'5–30 cm', color:'#3a2a14', textColor:'#8B6914',
+      desc:'Dark, rich in humus and minerals. Where most plant roots grow. Most fertile layer — farming depends on it!', emoji:'🌱' },
+    { name:'B — Subsoil',         depth:'30–60 cm',color:'#7a5a2a', textColor:'#FFD93D',
+      desc:'Contains clay, iron oxides, and leached minerals from above. Fewer roots. Less organic matter.', emoji:'🪨' },
+    { name:'C — Parent Material', depth:'60–100 cm',color:'#9a8060', textColor:'#E8D4A0',
+      desc:'Partially weathered rock. The original material from which soil forms over thousands of years.', emoji:'🗿' },
+    { name:'R — Bedrock',         depth:'>100 cm', color:'#555',    textColor:'#aaa',
+      desc:'Solid unweathered rock. Granite, limestone, basalt etc. The foundation of all soil above it.', emoji:'⛰️' },
+  ];
+
+  function render() {
+    var profileSVG = '<svg width="130" height="260" style="flex-shrink:0;border-radius:8px;overflow:hidden">';
+    var hs = [28,60,55,55,52];
+    var y = 0;
+    layers.forEach(function(l,i) {
+      profileSVG +=
+        '<rect x="0" y="' + y + '" width="130" height="' + hs[i] + '" fill="' + l.color + '" ' +
+        'style="cursor:pointer" onclick="soilSel(' + i + ')"/>' +
+        (selectedLayer===i ? '<rect x="0" y="'+y+'" width="4" height="'+hs[i]+'" fill="'+l.textColor+'"/>' : '') +
+        '<text x="10" y="' + (y+hs[i]/2+4) + '" fill="' + l.textColor + '" font-size="10" font-weight="bold" font-family="Nunito">' + l.emoji + ' ' + l.name.split('—')[0] + '</text>' +
+        '<text x="10" y="' + (y+hs[i]/2+16) + '" fill="rgba(255,255,255,.3)" font-size="8" font-family="Nunito">' + l.depth + '</text>';
+      y += hs[i];
+    });
+    profileSVG += '</svg>';
+
+    var info = selectedLayer !== null
+      ? '<div style="background:'+layers[selectedLayer].color+'33;border:1.5px solid '+layers[selectedLayer].textColor+'44;border-radius:12px;padding:12px 14px">' +
+        '<div style="font-size:15px;font-weight:900;color:'+layers[selectedLayer].textColor+'">'+layers[selectedLayer].emoji+' '+layers[selectedLayer].name+'</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin:3px 0">Depth: '+layers[selectedLayer].depth+'</div>' +
+        '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-top:5px">'+layers[selectedLayer].desc+'</div>' +
+        '</div>'
+      : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">☝️ Tap a layer to learn about it</div>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Soil Profile — Layers of the Earth</div>' +
+      '<div style="display:flex;gap:10px;align-items:flex-start">' + profileSVG +
+      '<div style="flex:1">' + info + '</div></div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">' +
+      '1cm of topsoil takes ~500 years to form! Erosion can destroy it in minutes. The basis of all food we eat.' +
+      '</div>';
+  }
+
+  window.soilSel = function(i) { selectedLayer = selectedLayer===i?null:i; render(); };
+  render();
+};
+
+/* ── 10. PRESSURE AND DEPTH (pressure-depth) ── */
+SIM_REGISTRY['pressure-depth'] = function(c) {
+  var depth = 10;
+
+  function render() {
+    var pressure = 1 + depth * 0.1; /* atmospheres, approx 1 atm per 10m */
+    var pressurePa = Math.round(pressure * 101325);
+    var W = 280, H = 200;
+
+    /* Color based on depth */
+    var waterColor = depth < 20 ? 'rgba(77,180,255,' : depth < 100 ? 'rgba(40,120,200,' : 'rgba(20,60,140,';
+    var crushLevel = Math.min(100, depth/5);
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Water Pressure vs Depth</div>' +
+      '<svg width="' + W + '" height="' + H + '" style="display:block;background:#0a0a1a;border-radius:12px;width:100%">' +
+      /* Ocean gradient */
+      '<defs><linearGradient id="oceanG" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="rgba(77,180,255,0.6)"/>' +
+      '<stop offset="100%" stop-color="rgba(10,30,80,0.9)"/>' +
+      '</linearGradient></defs>' +
+      '<rect x="30" y="10" width="' + (W-60) + '" height="' + (H-20) + '" fill="url(#oceanG)" rx="8"/>' +
+      /* Surface */
+      '<rect x="30" y="10" width="' + (W-60) + '" height="8" fill="rgba(77,200,255,0.4)" rx="4"/>' +
+      '<text x="' + W/2 + '" y="8" fill="rgba(255,255,255,.5)" font-size="9" text-anchor="middle" font-family="Nunito">Sea surface — 1 atm</text>' +
+      /* Depth marker */
+      '<line x1="32" y1="18" x2="32" y2="' + (10+depth/200*(H-30)) + '" stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="3,4"/>' +
+      '<circle cx="60" cy="' + (10+depth/200*(H-30)) + '" r="' + Math.max(6,12-crushLevel*0.08) + '" fill="rgba(255,107,107,0.8)"/>' +
+      '<text x="80" y="' + (13+depth/200*(H-30)) + '" fill="rgba(255,107,107,.9)" font-size="10" font-weight="bold" font-family="Nunito">📍 ' + depth + 'm deep</text>' +
+      /* Pressure label */
+      '<text x="' + W/2 + '" y="' + (H-22) + '" fill="rgba(255,255,255,.7)" font-size="11" font-weight="bold" text-anchor="middle" font-family="Nunito">Pressure: ' + pressure.toFixed(1) + ' atm (' + (pressurePa/1000).toFixed(0) + ' kPa)</text>' +
+      /* Known depths */
+      '<text x="' + (W-35) + '" y="' + (10+10/200*(H-30)+4) + '" fill="rgba(255,255,255,.3)" font-size="7" text-anchor="middle" font-family="Nunito">10m</text>' +
+      '<text x="' + (W-35) + '" y="' + (10+40/200*(H-30)+4) + '" fill="rgba(255,255,255,.3)" font-size="7" text-anchor="middle" font-family="Nunito">40m</text>' +
+      '</svg>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<span style="font-size:11px;color:#4D96FF">Depth: <b>' + depth + 'm</b></span>' +
+      '<input type="range" class="slide" min="0" max="200" value="' + depth + '" oninput="pressureDepth(this.value)" style="width:140px">' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      (depth < 5 ? '🏊 Safe for swimmers!' :
+       depth < 20 ? '🤿 Scuba diving depth. Ear pressure noticeable.' :
+       depth < 100 ? '🐠 Most fish live here. ' + pressure.toFixed(1) + '× surface pressure.' :
+       depth < 1000 ? '🦑 Deep sea zone. Special submarines needed.' :
+       '⬛ Abyssal zone. Mariana Trench is 11,000m — pressure there is 1,100 atm!') +
+      '</div>';
+  }
+
+  window.pressureDepth = function(v) { depth=parseInt(v); render(); };
+  render();
+};
+
+/* ── 11. VOLUME VISUALISER (volume-sim) ── */
+SIM_REGISTRY['volume-sim'] = function(c) {
+  var shape = 'cube', l=4, w=3, h=5, r=3;
+
+  function render() {
+    var vol, formula, dims;
+    if (shape==='cube') { vol=l*l*l; formula='V = s³ = '+l+'³ = '+vol+' cm³'; dims='Side: '+l+' cm'; }
+    else if (shape==='cuboid') { vol=l*w*h; formula='V = l × w × h = '+l+'×'+w+'×'+h+' = '+vol+' cm³'; dims='L:'+l+' W:'+w+' H:'+h; }
+    else { vol=Math.round(Math.PI*r*r*h); formula='V = πr²h = π×'+r+'²×'+h+' = '+vol+' cm³'; dims='r:'+r+' h:'+h; }
+
+    /* 3D isometric drawing */
+    var W=200, H=160, CX=W/2, CY=H/2;
+    var scale = Math.min(W,H)/(Math.max(l,w,h,r*2)+4);
+    var lx=l*scale, wx=w*scale, hx=h*scale, rx=r*scale;
+
+    var isoSVG = '<svg width="'+W+'" height="'+H+'" style="display:block;margin:0 auto;overflow:visible">';
+    var ox=CX, oy=CY+hx/2;
+
+    if (shape==='cube' || shape==='cuboid') {
+      var sl=shape==='cube'?lx:lx, sw=shape==='cube'?lx:wx, sh=shape==='cube'?lx:hx;
+      /* Front face */
+      isoSVG += '<rect x="'+(ox-sl/2)+'" y="'+(oy-sh)+'" width="'+sl+'" height="'+sh+'" fill="rgba(77,150,255,.3)" stroke="#4D96FF" stroke-width="2"/>';
+      /* Right face (parallelogram) */
+      isoSVG += '<polygon points="'+(ox+sl/2)+','+(oy-sh)+' '+(ox+sl/2+sw*0.5)+','+(oy-sh-sw*0.3)+' '+(ox+sl/2+sw*0.5)+','+(oy-sw*0.3)+' '+(ox+sl/2)+','+oy+'" fill="rgba(77,150,255,.2)" stroke="#4D96FF" stroke-width="2"/>';
+      /* Top face (parallelogram) */
+      isoSVG += '<polygon points="'+(ox-sl/2)+','+(oy-sh)+' '+(ox+sl/2)+','+(oy-sh)+' '+(ox+sl/2+sw*0.5)+','+(oy-sh-sw*0.3)+' '+(ox-sl/2+sw*0.5)+','+(oy-sh-sw*0.3)+'" fill="rgba(77,150,255,.4)" stroke="#4D96FF" stroke-width="2"/>';
+      /* Dimension labels */
+      isoSVG += '<text x="'+(ox)+'" y="'+(oy+14)+'" fill="var(--math)" font-size="10" text-anchor="middle" font-family="Nunito">'+(shape==='cube'?l+'cm':l+'cm')+'</text>';
+      isoSVG += '<text x="'+(ox+sl/2+sw*0.3)+'" y="'+(oy-sh/2)+'" fill="var(--evs)" font-size="10" text-anchor="start" font-family="Nunito">'+(shape==='cube'?'':w+'cm')+'</text>';
+      isoSVG += '<text x="'+(ox-sl/2-8)+'" y="'+(oy-sh/2)+'" fill="var(--sci)" font-size="10" text-anchor="end" font-family="Nunito">'+h+'cm</text>';
+    } else {
+      /* Cylinder */
+      isoSVG += '<ellipse cx="'+ox+'" cy="'+oy+'" rx="'+rx+'" ry="'+rx*0.35+'" fill="rgba(255,107,107,.25)" stroke="var(--sci)" stroke-width="2"/>';
+      isoSVG += '<rect x="'+(ox-rx)+'" y="'+(oy-hx)+'" width="'+(rx*2)+'" height="'+hx+'" fill="rgba(255,107,107,.15)" stroke="var(--sci)" stroke-width="2"/>';
+      isoSVG += '<ellipse cx="'+ox+'" cy="'+(oy-hx)+'" rx="'+rx+'" ry="'+rx*0.35+'" fill="rgba(255,107,107,.4)" stroke="var(--sci)" stroke-width="2"/>';
+      /* Radius line */
+      isoSVG += '<line x1="'+ox+'" y1="'+(oy-hx)+'" x2="'+(ox+rx)+'" y2="'+(oy-hx)+'" stroke="rgba(255,255,255,.4)" stroke-width="1.5" stroke-dasharray="3,3"/>';
+      isoSVG += '<text x="'+(ox+rx/2)+'" y="'+(oy-hx-5)+'" fill="var(--sci)" font-size="10" text-anchor="middle" font-family="Nunito">r='+r+'</text>';
+    }
+    isoSVG += '</svg>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Volume Calculator</div>' +
+      /* Shape selector */
+      '<div class="ctrl-row" style="margin-bottom:8px">' +
+      ['cube','cuboid','cylinder'].map(function(s) {
+        return '<button onclick="volShape(\''+s+'\')" style="padding:5px 10px;border-radius:9px;font-size:11px;font-weight:800;border:1.5px solid '+(s===shape?'var(--acc)':'var(--border)')+';background:'+(s===shape?'var(--acc-dim)':'var(--surface2)')+';color:'+(s===shape?'var(--acc)':'var(--muted)')+';cursor:pointer">'+(s==='cube'?'🧊 Cube':s==='cuboid'?'📦 Cuboid':'🥫 Cylinder')+'</button>';
+      }).join('') + '</div>' +
+      /* 3D shape */
+      isoSVG +
+      /* Volume display */
+      '<div style="text-align:center;font-size:22px;font-weight:900;color:var(--acc);margin:6px 0">V = '+vol+' cm³</div>' +
+      '<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:8px">'+formula+'</div>' +
+      /* Sliders */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      (shape==='cylinder'
+        ? '<span style="font-size:11px;color:var(--sci)">r: <b>'+r+'</b></span><input type="range" class="slide" min="1" max="8" value="'+r+'" oninput="volR(this.value)" style="width:100px">' +
+          '<span style="font-size:11px;color:var(--evs)">h: <b>'+h+'</b></span><input type="range" class="slide" min="1" max="10" value="'+h+'" oninput="volH(this.value)" style="width:100px">'
+        : shape==='cube'
+        ? '<span style="font-size:11px;color:var(--math)">Side: <b>'+l+'</b></span><input type="range" class="slide" min="1" max="8" value="'+l+'" oninput="volL(this.value)" style="width:140px">'
+        : '<span style="font-size:11px;color:var(--math)">L:<b>'+l+'</b></span><input type="range" class="slide" min="1" max="8" value="'+l+'" oninput="volL(this.value)" style="width:70px">' +
+          '<span style="font-size:11px;color:var(--sci)">W:<b>'+w+'</b></span><input type="range" class="slide" min="1" max="8" value="'+w+'" oninput="volW(this.value)" style="width:70px">' +
+          '<span style="font-size:11px;color:var(--evs)">H:<b>'+h+'</b></span><input type="range" class="slide" min="1" max="10" value="'+h+'" oninput="volH(this.value)" style="width:70px">'
+      ) + '</div>';
+  }
+
+  window.volShape=function(s){shape=s;render();};
+  window.volL=function(v){l=parseInt(v);render();};
+  window.volW=function(v){w=parseInt(v);render();};
+  window.volH=function(v){h=parseInt(v);render();};
+  window.volR=function(v){r=parseInt(v);render();};
+  render();
+};
+
+/* ── 12. FRACTION EQUIVALENCE (fraction-equiv) ── */
+SIM_REGISTRY['fraction-equiv'] = function(c) {
+  var num=1, den=2;
+
+  function gcd(a,b){return b===0?a:gcd(b,a%b);}
+
+  function equivalents(n,d) {
+    var result=[];
+    for(var m=1;m<=6;m++) result.push({n:n*m,d:d*m,m:m});
+    return result;
+  }
+
+  function render() {
+    var eqs = equivalents(num,den);
+    var simplified = gcd(num,den);
+    var sn=num/simplified, sd=den/simplified;
+
+    var bars = eqs.map(function(eq) {
+      var cells='';
+      for(var i=0;i<eq.d;i++){
+        cells += '<div style="flex:1;height:30px;background:'+(i<eq.n?'var(--acc)':'var(--surface2)')+';border:1px solid var(--bg);border-radius:2px;transition:background .2s"></div>';
+      }
+      return '<div style="margin-bottom:6px">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--acc);margin-bottom:3px">×'+eq.m+': '+eq.n+'/'+eq.d+'</div>' +
+        '<div style="display:flex;gap:1px;height:30px;border-radius:6px;overflow:hidden;border:1px solid var(--border)">'+cells+'</div>' +
+        '</div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Equivalent Fractions</div>' +
+      '<div style="text-align:center;font-size:32px;font-weight:900;margin-bottom:8px">' +
+      '<span style="color:var(--acc)">'+num+'</span><span style="display:block;font-size:14px;color:var(--muted)">───</span><span style="color:var(--acc)">'+den+'</span>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' + bars + '</div>' +
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px;font-size:12px;color:var(--text);text-align:center;margin-bottom:10px;line-height:1.8">' +
+      '✅ All these fractions equal <b style="color:var(--evs)">'+num+'/'+den+' = '+(num/den).toFixed(3)+'</b> — they\'re all equivalent!<br>' +
+      (num!==sn?'Simplest form: <b style="color:var(--math)">'+sn+'/'+sd+'</b>':'This is already in simplest form!') +
+      '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--acc)">Numerator: <b>'+num+'</b></span>' +
+      '<input type="range" class="slide" min="1" max="5" value="'+num+'" oninput="feNum(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--muted)">Denominator: <b>'+den+'</b></span>' +
+      '<input type="range" class="slide" min="1" max="8" value="'+den+'" oninput="feDen(this.value)" style="width:100px">' +
+      '</div>';
+  }
+
+  window.feNum=function(v){num=parseInt(v);render();};
+  window.feDen=function(v){den=parseInt(v);if(num>den)num=den;render();};
+  render();
+};
+
+/* ── 13. SYMMETRY (symmetry-nature) ── */
+SIM_REGISTRY['symmetry-nature'] = function(c) {
+  var raf2, mode='draw', points=[], mirror='vertical', dragging=false;
+  var shapes = {
+    butterfly: [[0,-40],[10,-30],[20,-15],[25,0],[20,15],[10,30],[0,40],[-10,30],[-20,15],[-25,0],[-20,-15],[-10,-30]],
+    leaf: [[0,-50],[15,-30],[20,-10],[15,10],[0,30],[-15,10],[-20,-10],[-15,-30]],
+    star: function() {
+      var pts=[];
+      for(var i=0;i<10;i++){
+        var a=i/10*Math.PI*2-Math.PI/2;
+        var r=i%2===0?40:18;
+        pts.push([Math.cos(a)*r,Math.sin(a)*r]);
+      }
+      return pts;
+    }(),
+  };
+
+  function draw() {
+    var cv=document.getElementById('symCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d');
+    var W=cv.width,H=cv.height,CX=W/2,CY=H/2;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Mirror axis */
+    ctx.strokeStyle='rgba(255,217,61,.3)'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+    if(mirror==='vertical') { ctx.beginPath(); ctx.moveTo(CX,0); ctx.lineTo(CX,H); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.moveTo(0,CY); ctx.lineTo(W,CY); ctx.stroke(); }
+    ctx.setLineDash([]);
+
+    var allPts = points.length>0?points:shapes.butterfly;
+
+    /* Original */
+    ctx.beginPath();
+    ctx.strokeStyle='var(--acc)'; ctx.lineWidth=2; ctx.fillStyle='rgba(199,125,255,.15)';
+    allPts.forEach(function(p,i){ i===0?ctx.moveTo(CX+p[0],CY+p[1]):ctx.lineTo(CX+p[0],CY+p[1]); });
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    /* Reflection */
+    ctx.beginPath();
+    ctx.strokeStyle='var(--evs)'; ctx.lineWidth=2; ctx.fillStyle='rgba(107,203,119,.1)'; ctx.setLineDash([4,3]);
+    allPts.forEach(function(p,i){
+      var rx=mirror==='vertical'?-p[0]:p[0];
+      var ry=mirror==='horizontal'?-p[1]:p[1];
+      i===0?ctx.moveTo(CX+rx,CY+ry):ctx.lineTo(CX+rx,CY+ry);
+    });
+    ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+
+    /* Axis label */
+    ctx.fillStyle='rgba(255,217,61,.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(mirror+' axis of symmetry', CX, H-6);
+  }
+
+  function render() {
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Lines of Symmetry</div>'+
+      '<canvas id="symCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<span style="font-size:11px;color:var(--muted)">Shape:</span>'+
+      ['butterfly','leaf','star'].map(function(s){
+        return '<button onclick="symShape(\''+s+'\')" style="padding:4px 8px;border-radius:8px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">'+s+'</button>';
+      }).join('')+
+      '</div>'+
+      '<div class="ctrl-row" style="margin-top:6px">'+
+      '<button class="cbtn" onclick="symMirror()" style="font-size:11px">🔄 Toggle Axis</button>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      '<span style="color:var(--acc)">■ Original</span> · <span style="color:var(--evs)">■ Mirror image</span> · Both together = symmetrical shape! Found in leaves, butterflies, snowflakes.'+
+      '</div>';
+    draw();
+  }
+
+  window.symShape=function(s){points=shapes[s]||[];render();};
+  window.symMirror=function(){mirror=mirror==='vertical'?'horizontal':'vertical';draw();};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 14. TESSELLATION (tessellation-sim) ── */
+SIM_REGISTRY['tessellation-sim'] = function(c) {
+  var shape='square', colorScheme=0;
+  var schemes=[['#FF6B6B','#FFD93D','#6BCB77','#4D96FF'],['#C77DFF','#FF8C42','#6BCB77','#4D96FF'],['#FF6B6B','#4D96FF','#FF6B6B','#4D96FF']];
+
+  function render() {
+    var W=280,H=200;
+    var colors=schemes[colorScheme];
+    var svg='<svg width="'+W+'" height="'+H+'" style="display:block;border-radius:12px;background:#0a0a1a;width:100%">';
+
+    if(shape==='square'){
+      var sz=36;
+      for(var row=0;row<Math.ceil(H/sz)+1;row++)for(var col=0;col<Math.ceil(W/sz)+1;col++){
+        var x=col*sz,y=row*sz;
+        var color=colors[(row+col)%colors.length];
+        svg+='<rect x="'+x+'" y="'+y+'" width="'+sz+'" height="'+sz+'" fill="'+color+'" stroke="#0a0a1a" stroke-width="1.5" opacity="0.85"/>';
+      }
+    } else if(shape==='triangle'){
+      var sz2=44;
+      for(var row2=0;row2<Math.ceil(H/(sz2*0.87))+1;row2++)for(var col2=0;col2<Math.ceil(W/(sz2/2))+1;col2++){
+        var x2=col2*(sz2/2),y2=row2*(sz2*0.87);
+        var flip=(col2+row2)%2===0;
+        var pts=flip?[[x2,y2+sz2*0.87],[x2+sz2/2,y2],[x2+sz2,y2+sz2*0.87]]:[[x2,y2],[x2+sz2/2,y2+sz2*0.87],[x2+sz2,y2]];
+        var color2=colors[(col2+row2*3)%colors.length];
+        svg+='<polygon points="'+pts.map(function(p){return p[0]+','+p[1];}).join(' ')+'" fill="'+color2+'" stroke="#0a0a1a" stroke-width="1.5" opacity="0.85"/>';
+      }
+    } else if(shape==='hexagon'){
+      var sz3=28,hx=sz3*Math.sqrt(3);
+      for(var row3=0;row3<Math.ceil(H/(sz3*1.5))+1;row3++)for(var col3=0;col3<Math.ceil(W/hx)+1;col3++){
+        var cx2=col3*hx+(row3%2?hx/2:0),cy2=row3*sz3*1.5;
+        var pts2=[];
+        for(var a=0;a<6;a++){var ag=a*60*Math.PI/180;pts2.push([cx2+Math.cos(ag)*sz3,cy2+Math.sin(ag)*sz3]);}
+        var color3=colors[(col3+row3)%colors.length];
+        svg+='<polygon points="'+pts2.map(function(p){return p[0]+','+p[1];}).join(' ')+'" fill="'+color3+'" stroke="#0a0a1a" stroke-width="1.5" opacity="0.85"/>';
+      }
+    }
+    svg+='</svg>';
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Tessellations — Tiling the Plane</div>'+
+      svg+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<span style="font-size:11px;color:var(--muted)">Shape:</span>'+
+      [['square','🟥'],['triangle','🔺'],['hexagon','⬡']].map(function(s){
+        return '<button onclick="tessShape(\''+s[0]+'\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(s[0]===shape?'var(--acc)':'var(--border)')+';background:'+(s[0]===shape?'var(--acc-dim)':'var(--surface2)')+';color:'+(s[0]===shape?'var(--acc)':'var(--muted)')+';cursor:pointer">'+s[1]+' '+s[0]+'</button>';
+      }).join('')+
+      '<button class="cbtn" onclick="tessColor()" style="font-size:11px">🎨 Colors</button>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      'Only 3 regular polygons can tessellate: equilateral triangle (6 at each vertex), square (4), hexagon (3). Bees naturally use hexagons — they need the least wax!'+
+      '</div>';
+  }
+
+  window.tessShape=function(s){shape=s;render();};
+  window.tessColor=function(){colorScheme=(colorScheme+1)%schemes.length;render();};
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 7 — 14 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. MORE OR LESS (more-less) ── */
+SIM_REGISTRY['more-less'] = function(c) {
+  var a = 7, b = 5, emoji = '🍎';
+  var emojis = ['🍎','⭐','🐸','🐧','🎈','🌸'];
+
+  function render() {
+    var sign = a > b ? '>' : a < b ? '<' : '=';
+    var signColor = a > b ? 'var(--sci)' : a < b ? 'var(--acc)' : 'var(--evs)';
+    var groupA = Array.from({length:a}, function(){return '<span style="font-size:24px">'+emoji+'</span>';}).join('');
+    var groupB = Array.from({length:b}, function(){return '<span style="font-size:24px">'+emoji+'</span>';}).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">More, Less or Equal?</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center">' +
+      '<div style="background:var(--sci-dim);border:2px solid var(--sci);border-radius:12px;padding:10px;min-width:90px;text-align:center">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--sci);margin-bottom:4px">Group A: '+a+'</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">'+groupA+'</div></div>' +
+      '<div style="font-size:52px;font-weight:900;color:'+signColor+';text-align:center;min-width:50px;line-height:1">'+sign+'</div>' +
+      '<div style="background:var(--acc-dim);border:2px solid var(--acc);border-radius:12px;padding:10px;min-width:90px;text-align:center">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--acc);margin-bottom:4px">Group B: '+b+'</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">'+groupB+'</div></div>' +
+      '</div>' +
+      '<div style="text-align:center;font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px">' +
+      a + ' is ' + (a>b?'MORE than':a<b?'LESS than':'EQUAL to') + ' ' + b +
+      '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      '<span style="font-size:11px;color:var(--sci)">A: <b>'+a+'</b></span>' +
+      '<input type="range" class="slide" min="0" max="10" value="'+a+'" oninput="mlA(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--acc)">B: <b>'+b+'</b></span>' +
+      '<input type="range" class="slide" min="0" max="10" value="'+b+'" oninput="mlB(this.value)" style="width:100px">' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;justify-content:center">' +
+      emojis.map(function(e){return '<button onclick="mlEmoji(\''+e+'\')" style="font-size:18px;width:32px;height:32px;border-radius:8px;border:1.5px solid '+(e===emoji?'var(--acc)':'var(--border)')+';background:'+(e===emoji?'var(--acc-dim)':'var(--surface2)')+';cursor:pointer">'+e+'</button>';}).join('') +
+      '</div>';
+  }
+  window.mlA = function(v){a=parseInt(v);render();};
+  window.mlB = function(v){b=parseInt(v);render();};
+  window.mlEmoji = function(e){emoji=e;render();};
+  render();
+};
+
+/* ── 2. BAR GRAPH BUILDER (bar-graph) ── */
+SIM_REGISTRY['bar-graph'] = function(c) {
+  var data = [
+    {label:'Mon', val:6, color:'#FF6B6B'},
+    {label:'Tue', val:8, color:'#FFD93D'},
+    {label:'Wed', val:4, color:'#6BCB77'},
+    {label:'Thu', val:9, color:'#4D96FF'},
+    {label:'Fri', val:7, color:'#C77DFF'},
+  ];
+  var title = 'Hours of Study per Day';
+  var editing = null;
+
+  function render() {
+    var maxVal = Math.max.apply(null, data.map(function(d){return d.val;}));
+    var bars = data.map(function(d,i) {
+      var pct = (d.val/maxVal)*100;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">' +
+        '<div style="font-size:12px;font-weight:800;color:'+d.color+'">'+d.val+'</div>' +
+        '<div style="width:100%;height:'+Math.round(pct*1.2)+'px;background:'+d.color+';border-radius:4px 4px 0 0;cursor:pointer;transition:height .3s" ' +
+        'onclick="bgEdit('+i+')" title="Click to edit"></div>' +
+        '<div style="font-size:11px;font-weight:700;color:var(--muted)">'+d.label+'</div>' +
+        '</div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;text-align:center">Bar Graph Builder</div>' +
+      '<div style="font-size:13px;font-weight:800;color:var(--text);text-align:center;margin-bottom:8px">'+title+'</div>' +
+      '<div style="display:flex;align-items:flex-end;height:130px;gap:6px;padding:0 4px;border-bottom:2px solid var(--border);border-left:2px solid var(--border);margin-bottom:6px">' +
+      bars + '</div>' +
+      (editing !== null ?
+        '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid var(--border)">' +
+        '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">Edit "'+data[editing].label+'" value:</div>' +
+        '<div class="ctrl-row">' +
+        '<input type="range" class="slide" min="1" max="20" value="'+data[editing].val+'" oninput="bgVal(this.value)" style="width:140px">' +
+        '<span style="font-size:16px;font-weight:900;color:'+data[editing].color+'">'+data[editing].val+'</span>' +
+        '<button class="cbtn" onclick="bgEdit(null)" style="font-size:11px">✓ Done</button>' +
+        '</div></div>' : '') +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px">Click any bar to edit its value</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+      [
+        {label:'📊 Mean',   val:(data.reduce(function(s,d){return s+d.val;},0)/data.length).toFixed(1)},
+        {label:'📈 Max',    val:Math.max.apply(null,data.map(function(d){return d.val;}))},
+        {label:'📉 Min',    val:Math.min.apply(null,data.map(function(d){return d.val;}))},
+        {label:'➕ Total',  val:data.reduce(function(s,d){return s+d.val;},0)},
+      ].map(function(s){
+        return '<div style="background:var(--surface2);border-radius:8px;padding:7px 10px;border:1px solid var(--border);display:flex;justify-content:space-between">' +
+          '<span style="font-size:11px;color:var(--muted)">'+s.label+'</span>' +
+          '<span style="font-size:13px;font-weight:900;color:var(--text)">'+s.val+'</span></div>';
+      }).join('') + '</div>';
+  }
+
+  window.bgEdit = function(i) { editing=i; render(); };
+  window.bgVal  = function(v) { if(editing!==null) { data[editing].val=parseInt(v); render(); } };
+  render();
+};
+
+/* ── 3. MEASUREMENT COMPARE (measurement-compare) ── */
+SIM_REGISTRY['measurement-compare'] = function(c) {
+  var category = 'length';
+  var value = 1, fromUnit = 0, toUnit = 1;
+
+  var units = {
+    length: {
+      name:'📏 Length', emoji:'📏',
+      units:['mm','cm','m','km'],
+      base:[0.001,0.01,1,1000],
+      facts:['Width of a pencil tip','Width of your finger','Length of one big step','About 10 minutes walking']
+    },
+    mass: {
+      name:'⚖️ Mass', emoji:'⚖️',
+      units:['mg','g','kg','tonne'],
+      base:[0.000001,0.001,1,1000],
+      facts:['A grain of rice','A paperclip','A bag of flour','A small car']
+    },
+    time: {
+      name:'⏱️ Time', emoji:'⏱️',
+      units:['second','minute','hour','day'],
+      base:[1,60,3600,86400],
+      facts:['One heartbeat','One minute of play','One lesson period','Full day of school']
+    },
+    capacity: {
+      name:'💧 Capacity', emoji:'💧',
+      units:['ml','cl','litre','kl'],
+      base:[0.001,0.01,1,1000],
+      facts:['One teaspoon','A small shot','A water bottle','A small water tank']
+    }
+  };
+
+  function convert(val, from, to, cat) {
+    var u = units[cat];
+    return val * u.base[from] / u.base[to];
+  }
+
+  function render() {
+    var u = units[category];
+    var result = convert(value, fromUnit, toUnit, category);
+    var resultStr = result >= 1000 ? result.toExponential(2) : result < 0.001 ? result.toExponential(2) : parseFloat(result.toFixed(6)).toString();
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Unit Conversion</div>' +
+      /* Category tabs */
+      '<div style="display:flex;gap:5px;justify-content:center;margin-bottom:10px;flex-wrap:wrap">' +
+      Object.keys(units).map(function(k){
+        return '<button onclick="measCat(\''+k+'\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(k===category?'var(--acc)':'var(--border)')+';background:'+(k===category?'var(--acc-dim)':'var(--surface2)')+';color:'+(k===category?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">'+units[k].emoji+' '+k+'</button>';
+      }).join('') + '</div>' +
+      /* Conversion display */
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center">' +
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;border:1px solid var(--border);text-align:center;min-width:100px">' +
+      '<input type="number" value="'+value+'" onchange="measVal(this.value)" style="width:70px;background:transparent;border:none;color:var(--acc);font-size:24px;font-weight:900;text-align:center">' +
+      '<div style="margin-top:4px">' +
+      '<select onchange="measFrom(this.value)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px;color:var(--text);font-size:12px">' +
+      u.units.map(function(un,i){return '<option value="'+i+'"'+(i===fromUnit?' selected':'')+'>'+un+'</option>';}).join('') +
+      '</select></div></div>' +
+      '<div style="font-size:28px;color:var(--muted)">=</div>' +
+      '<div style="background:var(--acc-dim);border-radius:12px;padding:12px;border:1.5px solid var(--acc);text-align:center;min-width:100px">' +
+      '<div style="font-size:24px;font-weight:900;color:var(--acc)">'+resultStr+'</div>' +
+      '<div style="margin-top:4px">' +
+      '<select onchange="measTo(this.value)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px;color:var(--text);font-size:12px">' +
+      u.units.map(function(un,i){return '<option value="'+i+'"'+(i===toUnit?' selected':'')+'>'+un+'</option>';}).join('') +
+      '</select></div></div>' +
+      '</div>' +
+      /* Visual scale comparison */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">Scale reference:</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+      u.units.map(function(un,i){
+        return '<div style="background:var(--surface);border-radius:8px;padding:5px 8px;border:1px solid '+(i===fromUnit?'var(--acc)':i===toUnit?'var(--acc)44':'var(--border)')+'">' +
+          '<div style="font-size:11px;font-weight:800;color:'+(i===fromUnit||i===toUnit?'var(--acc)':'var(--muted)')+'">1 '+un+'</div>' +
+          '<div style="font-size:9px;color:var(--muted)">'+u.facts[i]+'</div>' +
+          '</div>';
+      }).join('') +
+      '</div></div>';
+  }
+
+  window.measCat  = function(k){category=k;fromUnit=0;toUnit=1;render();};
+  window.measVal  = function(v){value=parseFloat(v)||1;render();};
+  window.measFrom = function(v){fromUnit=parseInt(v);render();};
+  window.measTo   = function(v){toUnit=parseInt(v);render();};
+  render();
+};
+
+/* ── 4. PERIMETER SIM (perimeter-sim) ── */
+SIM_REGISTRY['perimeter-sim'] = function(c) {
+  var shape='rectangle', l=6, w=4, s=5;
+
+  function render() {
+    var W=280, H=160;
+    var perim, area, formula, aformula;
+    if(shape==='rectangle'){perim=2*(l+w);area=l*w;formula='P = 2×(l+w) = 2×('+l+'+'+w+') = '+perim;aformula='A = l×w = '+l+'×'+w+' = '+area;}
+    else if(shape==='square'){perim=4*s;area=s*s;formula='P = 4×s = 4×'+s+' = '+perim;aformula='A = s² = '+s+'² = '+area;}
+    else{perim=Math.round(3*s);area=Math.round(Math.sqrt(3)/4*s*s*10)/10;formula='P = 3×s = 3×'+s+' = '+perim;aformula='A = (√3/4)×s² ≈ '+area;}
+
+    /* Shape drawing */
+    var shapeHTML='';
+    var cx=W/2,cy=H/2,scale=Math.min(W,H)/(Math.max(l,w,s)+4)/10*30;
+
+    if(shape==='rectangle'){
+      var rw=l*scale,rh=w*scale;
+      shapeHTML='<svg width="'+W+'" height="'+H+'" style="display:block">' +
+        '<rect x="'+(cx-rw/2)+'" y="'+(cy-rh/2)+'" width="'+rw+'" height="'+rh+'" fill="rgba(77,150,255,.15)" stroke="#4D96FF" stroke-width="3"/>' +
+        '<text x="'+cx+'" y="'+(cy-rh/2-6)+'" fill="#4D96FF" font-size="11" text-anchor="middle" font-family="Nunito">l='+l+' cm</text>' +
+        '<text x="'+(cx-rw/2-6)+'" y="'+cy+'" fill="#6BCB77" font-size="11" text-anchor="end" font-family="Nunito" transform="rotate(-90,'+(cx-rw/2-6)+','+cy+')">w='+w+' cm</text>' +
+        '<!-- Walking ant around perimeter -->' +
+        '<circle cx="'+(cx-rw/2)+'" cy="'+(cy-rh/2)+'" r="5" fill="#FFD93D"><animateMotion dur="4s" repeatCount="indefinite" path="M0,0 L'+rw+',0 L'+rw+','+rh+' L0,'+rh+' Z"/></circle>' +
+        '</svg>';
+    } else if(shape==='square'){
+      var sw=s*scale;
+      shapeHTML='<svg width="'+W+'" height="'+H+'" style="display:block">' +
+        '<rect x="'+(cx-sw/2)+'" y="'+(cy-sw/2)+'" width="'+sw+'" height="'+sw+'" fill="rgba(199,125,255,.15)" stroke="#C77DFF" stroke-width="3"/>' +
+        '<text x="'+cx+'" y="'+(cy-sw/2-6)+'" fill="#C77DFF" font-size="11" text-anchor="middle" font-family="Nunito">s='+s+' cm</text>' +
+        '<circle cx="'+(cx-sw/2)+'" cy="'+(cy-sw/2)+'" r="5" fill="#FFD93D"><animateMotion dur="3s" repeatCount="indefinite" path="M0,0 L'+sw+',0 L'+sw+','+sw+' L0,'+sw+' Z"/></circle>' +
+        '</svg>';
+    } else {
+      var th=s*scale, tx=cx, ty=cy+th*0.3;
+      var p1x=tx,p1y=ty-th*0.7,p2x=tx-th/2,p2y=ty+th*0.3,p3x=tx+th/2,p3y=ty+th*0.3;
+      shapeHTML='<svg width="'+W+'" height="'+H+'" style="display:block">' +
+        '<polygon points="'+p1x+','+p1y+' '+p2x+','+p2y+' '+p3x+','+p3y+'" fill="rgba(255,107,107,.15)" stroke="#FF6B6B" stroke-width="3"/>' +
+        '<text x="'+cx+'" y="'+(p1y-8)+'" fill="#FF6B6B" font-size="11" text-anchor="middle" font-family="Nunito">s='+s+' cm each side</text>' +
+        '<circle cx="'+p1x+'" cy="'+p1y+'" r="5" fill="#FFD93D"><animateMotion dur="3s" repeatCount="indefinite" path="M0,0 L'+(p2x-p1x)+','+(p2y-p1y)+' L'+(p3x-p1x)+','+(p3y-p1y)+' Z"/></circle>' +
+        '</svg>';
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Perimeter & Area</div>' +
+      '<div class="ctrl-row" style="margin-bottom:6px">' +
+      [['rectangle','📱'],['square','🟥'],['triangle','🔺']].map(function(s2){
+        return '<button onclick="perimShape(\''+s2[0]+'\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(s2[0]===shape?'var(--acc)':'var(--border)')+';background:'+(s2[0]===shape?'var(--acc-dim)':'var(--surface2)')+';cursor:pointer;font-weight:800">'+s2[1]+' '+s2[0]+'</button>';
+      }).join('') + '</div>' +
+      '<div style="background:#0a0a1a;border-radius:12px;overflow:hidden;margin-bottom:8px">'+shapeHTML+'</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">' +
+      '<div style="background:var(--life-dim);border:1px solid rgba(77,150,255,.3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;color:var(--muted)">Perimeter</div><div style="font-size:22px;font-weight:900;color:var(--life)">'+perim+' cm</div><div style="font-size:9px;color:var(--muted)">'+formula+'</div></div>' +
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;color:var(--muted)">Area</div><div style="font-size:22px;font-weight:900;color:var(--evs)">'+area+' cm²</div><div style="font-size:9px;color:var(--muted)">'+aformula+'</div></div>' +
+      '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      (shape==='square'
+        ? '<span style="font-size:11px;color:var(--acc)">Side: <b>'+s+'</b></span><input type="range" class="slide" min="1" max="8" value="'+s+'" oninput="perimS(this.value)" style="width:120px">'
+        : shape==='rectangle'
+        ? '<span style="font-size:11px;color:#4D96FF">L: <b>'+l+'</b></span><input type="range" class="slide" min="1" max="10" value="'+l+'" oninput="perimL(this.value)" style="width:90px"><span style="font-size:11px;color:#6BCB77">W: <b>'+w+'</b></span><input type="range" class="slide" min="1" max="10" value="'+w+'" oninput="perimW(this.value)" style="width:90px">'
+        : '<span style="font-size:11px;color:#FF6B6B">Side: <b>'+s+'</b></span><input type="range" class="slide" min="1" max="8" value="'+s+'" oninput="perimS(this.value)" style="width:120px">'
+      ) + '</div>';
+  }
+
+  window.perimShape=function(sh){shape=sh;render();};
+  window.perimL=function(v){l=parseInt(v);render();};
+  window.perimW=function(v){w=parseInt(v);render();};
+  window.perimS=function(v){s=parseInt(v);render();};
+  render();
+};
+
+/* ── 5. CYLINDER AREA (cylinder-area) ── */
+SIM_REGISTRY['cylinder-area'] = function(c) {
+  var r=4, h=6;
+
+  function render() {
+    var pi=Math.PI;
+    var baseArea=Math.round(pi*r*r*100)/100;
+    var lateralArea=Math.round(2*pi*r*h*100)/100;
+    var totalSA=Math.round(2*pi*r*(r+h)*100)/100;
+    var vol=Math.round(pi*r*r*h*100)/100;
+
+    var W=260,H=180,cx=W/2,cy=H/2;
+    var rx=r*12,rh=h*12;
+    var unrolledW=Math.round(2*pi*r);
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Cylinder — Surface Area & Volume</div>'+
+      '<svg width="'+W+'" height="'+H+'" style="display:block;background:#0a0a1a;border-radius:12px;width:100%;margin-bottom:8px">'+
+      /* Bottom ellipse */
+      '<ellipse cx="'+cx+'" cy="'+(cy+rh/2)+'" rx="'+rx+'" ry="'+(rx*0.35)+'" fill="rgba(255,107,107,.3)" stroke="#FF6B6B" stroke-width="2"/>'+
+      /* Cylinder body */
+      '<rect x="'+(cx-rx)+'" y="'+(cy-rh/2)+'" width="'+(rx*2)+'" height="'+rh+'" fill="rgba(77,150,255,.15)" stroke="#4D96FF" stroke-width="0"/>'+
+      /* Side lines */
+      '<line x1="'+(cx-rx)+'" y1="'+(cy-rh/2)+'" x2="'+(cx-rx)+'" y2="'+(cy+rh/2)+'" stroke="#4D96FF" stroke-width="2"/>'+
+      '<line x1="'+(cx+rx)+'" y1="'+(cy-rh/2)+'" x2="'+(cx+rx)+'" y2="'+(cy+rh/2)+'" stroke="#4D96FF" stroke-width="2"/>'+
+      /* Top ellipse */
+      '<ellipse cx="'+cx+'" cy="'+(cy-rh/2)+'" rx="'+rx+'" ry="'+(rx*0.35)+'" fill="rgba(255,107,107,.4)" stroke="#FF6B6B" stroke-width="2"/>'+
+      /* Radius line */
+      '<line x1="'+cx+'" y1="'+(cy-rh/2)+'" x2="'+(cx+rx)+'" y2="'+(cy-rh/2)+'" stroke="rgba(255,217,61,.6)" stroke-width="1.5" stroke-dasharray="4,3"/>'+
+      '<text x="'+(cx+rx/2)+'" y="'+(cy-rh/2-6)+'" fill="rgba(255,217,61,.8)" font-size="10" text-anchor="middle" font-family="Nunito">r='+r+'</text>'+
+      /* Height */
+      '<line x1="'+(cx+rx+14)+'" y1="'+(cy-rh/2)+'" x2="'+(cx+rx+14)+'" y2="'+(cy+rh/2)+'" stroke="rgba(107,203,119,.6)" stroke-width="1.5" stroke-dasharray="4,3"/>'+
+      '<text x="'+(cx+rx+22)+'" y="'+cy+'" fill="rgba(107,203,119,.8)" font-size="10" text-anchor="start" font-family="Nunito">h='+h+'</text>'+
+      '</svg>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      [
+        {label:'Base Area (×2)',color:'#FF6B6B',val:baseArea+' cm²',formula:'πr² = π×'+r+'²'},
+        {label:'Lateral Area',  color:'#4D96FF',val:lateralArea+' cm²',formula:'2πrh = 2π×'+r+'×'+h},
+        {label:'Total Surface', color:'#FFD93D',val:totalSA+' cm²',formula:'2πr(r+h)'},
+        {label:'Volume',        color:'#6BCB77',val:vol+' cm³',formula:'πr²h = π×'+r+'²×'+h},
+      ].map(function(s){
+        return '<div style="background:var(--surface2);border-radius:10px;padding:8px;border:1px solid var(--border)">'+
+          '<div style="font-size:10px;color:var(--muted)">'+s.label+'</div>'+
+          '<div style="font-size:16px;font-weight:900;color:'+s.color+'">'+s.val+'</div>'+
+          '<div style="font-size:9px;color:var(--muted)">'+s.formula+'</div>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">'+
+      '<span style="font-size:11px;color:#FFD93D">r: <b>'+r+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="8" value="'+r+'" oninput="cylR(this.value)" style="width:100px">'+
+      '<span style="font-size:11px;color:#6BCB77">h: <b>'+h+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="12" value="'+h+'" oninput="cylH(this.value)" style="width:100px">'+
+      '</div>';
+  }
+
+  window.cylR=function(v){r=parseInt(v);render();};
+  window.cylH=function(v){h=parseInt(v);render();};
+  render();
+};
+
+/* ── 6. CIRCLE THEOREMS (circle-theorems) ── */
+SIM_REGISTRY['circle-theorems'] = function(c) {
+  var theorem=0;
+  var theorems=[
+    {name:'Angle at Centre',color:'#FF6B6B',
+     desc:'The angle at the centre is twice the angle at the circumference subtended by the same arc.',
+     example:'If angle at circumference = 35°, angle at centre = 70°'},
+    {name:'Angles in Semicircle',color:'#FFD93D',
+     desc:'The angle in a semicircle (angle subtended by a diameter) is always 90°.',
+     example:'Any triangle drawn in a semicircle has a right angle at the circumference!'},
+    {name:'Angles in Same Segment',color:'#6BCB77',
+     desc:'Angles subtended by the same chord in the same segment are equal.',
+     example:'All angles looking at chord AB from the same side are equal.'},
+    {name:'Opposite Angles (Cyclic Quad)',color:'#4D96FF',
+     desc:'Opposite angles of a cyclic quadrilateral add up to 180°.',
+     example:'In a quadrilateral inscribed in a circle: ∠A + ∠C = 180°, ∠B + ∠D = 180°'},
+  ];
+
+  function drawTheorem(ctx,W,H,idx,t) {
+    var cx=W/2,cy=H/2,r=Math.min(W,H)*0.38;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+    /* Circle */
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.03)'; ctx.fill();
+
+    var thm=theorems[idx];
+    ctx.strokeStyle=thm.color; ctx.fillStyle=thm.color;
+
+    if(idx===0){
+      var a=t*0.5-Math.PI/2, b=a+Math.PI*0.8;
+      var p1x=cx+Math.cos(a)*r,p1y=cy+Math.sin(a)*r;
+      var p2x=cx+Math.cos(b)*r,p2y=cy+Math.sin(b)*r;
+      var pm=(a+b)/2, pmx=cx+Math.cos(pm)*r, pmy=cy+Math.sin(pm)*r;
+      ctx.lineWidth=2;
+      /* Angle at centre */
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(p1x,p1y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(p2x,p2y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx,cy,20,a,b); ctx.stroke();
+      ctx.fillStyle='white'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('2θ',cx+Math.cos((a+b)/2)*30,cy+Math.sin((a+b)/2)*30+3);
+      /* Angle at circumference */
+      ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(pmx,pmy); ctx.lineTo(p1x,p1y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pmx,pmy); ctx.lineTo(p2x,p2y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pmx,pmy,14,Math.atan2(p1y-pmy,p1x-pmx),Math.atan2(p2y-pmy,p2x-pmx)); ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='bold 9px Nunito,sans-serif';
+      ctx.fillText('θ',pmx+Math.cos((Math.atan2(p1y-pmy,p1x-pmx)+Math.atan2(p2y-pmy,p2x-pmx))/2)*22,pmy+Math.sin((Math.atan2(p1y-pmy,p1x-pmx)+Math.atan2(p2y-pmy,p2x-pmx))/2)*22+3);
+      ctx.fillStyle=thm.color;
+      [p1x,p1y,p2x,p2y,pmx,pmy,cx,cy].forEach(function(_,i,arr){if(i%2===0){ctx.beginPath();ctx.arc(arr[i],arr[i+1],4,0,Math.PI*2);ctx.fill();}});
+    } else if(idx===1){
+      var ax=cx-r,ay=cy,bx=cx+r,by=cy;
+      var px=cx+Math.cos(t*0.4-0.2)*r,py=cy-Math.abs(Math.sin(t*0.4-0.2))*r;
+      /* Diameter */
+      ctx.strokeStyle='rgba(255,217,61,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+      ctx.strokeStyle=thm.color; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(px,py); ctx.lineTo(bx,by); ctx.stroke();
+      /* Right angle marker */
+      var ang1=Math.atan2(ay-py,ax-px), ang2=Math.atan2(by-py,bx-px);
+      ctx.strokeStyle='white'; ctx.lineWidth=1.5;
+      var sz=12;
+      ctx.beginPath();
+      ctx.moveTo(px+Math.cos(ang1)*sz,py+Math.sin(ang1)*sz);
+      ctx.lineTo(px+Math.cos(ang1)*sz+Math.cos(ang2)*sz,py+Math.sin(ang1)*sz+Math.sin(ang2)*sz);
+      ctx.lineTo(px+Math.cos(ang2)*sz,py+Math.sin(ang2)*sz);
+      ctx.stroke();
+      ctx.fillStyle='white'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('90°',px+5,py-15);
+      [[ax,ay],[bx,by],[px,py]].forEach(function(p){ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fillStyle=thm.color;ctx.fill();});
+      ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='9px Nunito,sans-serif';
+      ctx.fillText('A',ax-10,ay+4); ctx.fillText('B',bx+6,by+4); ctx.fillText('P',px,py-12);
+    } else if(idx===2){
+      var angles=[t*0.3,t*0.3+1.8,t*0.3+3.2,t*0.3+4.8];
+      var pts=angles.map(function(a){return[cx+Math.cos(a)*r,cy+Math.sin(a)*r];});
+      ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); ctx.lineTo(pts[2][0],pts[2][1]); ctx.stroke();
+      var arcColors=[thm.color,'rgba(255,255,255,.6)',thm.color];
+      [pts[1],pts[3]].forEach(function(p,i){
+        ctx.strokeStyle=arcColors[i*2]; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(pts[0][0],pts[0][1]); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(pts[2][0],pts[2][1]); ctx.stroke();
+        ctx.fillStyle=arcColors[i*2]; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('α',p[0]+(p[0]>cx?12:-12),p[1]+(p[1]>cy?12:-8));
+      });
+      pts.forEach(function(p,i){ctx.beginPath();ctx.arc(p[0],p[1],4,0,Math.PI*2);ctx.fillStyle=i%2===0?'rgba(255,255,255,.5)':thm.color;ctx.fill();});
+    } else {
+      var qa=[t*0.2,t*0.2+Math.PI*0.6,t*0.2+Math.PI,t*0.2+Math.PI*1.6];
+      var qpts=qa.map(function(a){return[cx+Math.cos(a)*r,cy+Math.sin(a)*r];});
+      ctx.strokeStyle=thm.color; ctx.lineWidth=2;
+      ctx.beginPath();
+      qpts.forEach(function(p,i){i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);});
+      ctx.closePath(); ctx.stroke();
+      ctx.fillStyle='rgba(77,150,255,.1)'; ctx.fill();
+      qpts.forEach(function(p,i){
+        ctx.fillStyle=thm.color; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+        var labels=['A','B','C','D'];
+        ctx.fillText(labels[i],p[0]+(p[0]>cx?14:-14),p[1]+(p[1]>cy?14:-10));
+        ctx.beginPath();ctx.arc(p[0],p[1],4,0,Math.PI*2);ctx.fill();
+      });
+      ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('∠A+∠C = 180°',cx,H-12);
+    }
+  }
+
+  var raf2, t2=0;
+  function animate(){
+    var cv=document.getElementById('circleCanvas');
+    if(!cv) return;
+    drawTheorem(cv.getContext('2d'),cv.width,cv.height,theorem,t2);
+    t2+=0.025;
+    raf2=requestAnimationFrame(animate);
+  }
+
+  function render(){
+    var th=theorems[theorem];
+    c.innerHTML=
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      theorems.map(function(t2,i){
+        return '<button onclick="circThm('+i+')" style="padding:4px 8px;border-radius:8px;font-size:10px;border:1.5px solid '+(i===theorem?t2.color:'var(--border)')+';background:'+(i===theorem?t2.color+'22':'var(--surface2)')+';color:'+(i===theorem?t2.color:'var(--muted)')+';cursor:pointer;font-weight:800">'+t2.name+'</button>';
+      }).join('')+'</div>'+
+      '<canvas id="circleCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">'+
+      '<div style="font-size:13px;font-weight:800;color:'+th.color+';margin-bottom:4px">'+th.name+'</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:4px">'+th.desc+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);font-style:italic">Example: '+th.example+'</div>'+
+      '</div>';
+    cancelAnimationFrame(raf2); animate();
+  }
+
+  window.circThm=function(i){cancelAnimationFrame(raf2);theorem=i;render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 7. ALGEBRA INTRO (algebra-intro) ── */
+SIM_REGISTRY['algebra-intro'] = function(c) {
+  var a=3, b=5, op='+', showX=true;
+
+  function render(){
+    var result=op==='+'?a+b:op==='-'?a-b:op==='×'?a*b:b!==0?Math.round(a/b*100)/100:'∞';
+    /* Build equation: x op b = result, solve for x */
+    var x_val=op==='+'?result-b:op==='-'?result+b:op==='×'&&b!==0?result/b:op==='÷'&&b!==0?result*b:'?';
+    var balanced=Math.abs(x_val-a)<0.01;
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Algebra — Find the Mystery Number!</div>'+
+      /* Balance scale visual */
+      '<div style="background:#0a0a1a;border-radius:12px;padding:16px;margin-bottom:10px;text-align:center">'+
+      '<div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:8px">Solve for <b style="color:var(--acc)">x</b>:</div>'+
+      '<div style="font-size:32px;font-weight:900">'+
+      '<span style="color:var(--acc)">'+(showX?'x':a)+'</span>'+
+      '<span style="color:var(--muted);margin:0 8px">'+op+'</span>'+
+      '<span style="color:var(--math)">'+b+'</span>'+
+      '<span style="color:var(--muted);margin:0 8px">=</span>'+
+      '<span style="color:var(--evs)">'+result+'</span>'+
+      '</div>'+
+      /* Guess area */
+      '<div style="margin-top:12px">' +
+      '<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:8px">What is x?</div>'+
+      '<div class="ctrl-row" style="justify-content:center">' +
+      '<input id="algebraGuess" type="number" placeholder="x = ?" style="width:80px;background:var(--surface);border:2px solid var(--acc);border-radius:10px;padding:8px;color:var(--acc);font-size:18px;font-weight:900;text-align:center">' +
+      '<button class="cbtn" onclick="algebraCheck()" style="background:var(--acc);color:white;border-color:var(--acc);font-size:13px">Check!</button>' +
+      '</div></div>' +
+      '<div id="algebraResult" style="min-height:24px;margin-top:8px;font-size:14px;font-weight:800"></div>'+
+      '</div>'+
+      /* Explanation */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.8">'+
+      '💡 To find x, do the <b style="color:var(--text)">opposite operation</b>:<br>'+
+      (op==='+'?'x = '+result+' − '+b+' = <b style="color:var(--acc)">'+x_val+'</b>':
+       op==='-'?'x = '+result+' + '+b+' = <b style="color:var(--acc)">'+x_val+'</b>':
+       op==='×'?'x = '+result+' ÷ '+b+' = <b style="color:var(--acc)">'+x_val+'</b>':
+       'x = '+result+' × '+b+' = <b style="color:var(--acc)">'+x_val+'</b>')+
+      '</div>'+
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">'+
+      '<span style="font-size:11px;color:var(--acc)">x (hidden): <b>'+a+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="12" value="'+a+'" oninput="algA(this.value)" style="width:90px">'+
+      '<span style="font-size:11px;color:var(--math)">Other: <b>'+b+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="12" value="'+b+'" oninput="algB(this.value)" style="width:90px">'+
+      '</div>'+
+      '<div class="ctrl-row" style="margin-top:6px">'+
+      ['+','-','×','÷'].map(function(o){return '<button class="cbtn" onclick="algOp(\''+o+'\')" style="'+(o===op?'background:var(--acc);color:white;border-color:var(--acc)':'')+';font-size:14px;font-weight:900">'+o+'</button>';}).join('')+
+      '</div>';
+
+    window.algebraCheck=function(){
+      var guess=parseFloat(document.getElementById('algebraGuess').value);
+      var el=document.getElementById('algebraResult');
+      if(Math.abs(guess-x_val)<0.01){el.innerHTML='✅ Correct! x = '+x_val;el.style.color='var(--evs)';}
+      else{el.innerHTML='❌ Try again! Hint: use the opposite of '+op;el.style.color='var(--sci)';}
+    };
+  }
+
+  window.algA=function(v){a=parseInt(v);render();};
+  window.algB=function(v){b=parseInt(v);render();};
+  window.algOp=function(o){op=o;render();};
+  render();
+};
+
+/* ── 8. CARBON FOOTPRINT (carbon-footprint) ── */
+SIM_REGISTRY['carbon-footprint'] = function(c) {
+  var activities={
+    transport:{car:0,bike:0,flight:0,walk:0},
+    food:{meat:0,dairy:0,veg:0},
+    energy:{electricity:0,gas:0},
+  };
+  var inputs={car:10,bike:2,flight:0,walk:0,meat:2,dairy:3,veg:5,electricity:100,gas:0};
+  var factors={car:0.21,bike:0,flight:0.255,walk:0,meat:7.2,dairy:3.2,veg:0.4,electricity:0.82,gas:2.04};
+  var labels={car:'🚗 Car (km/day)',bike:'🚲 Bike (km)',flight:'✈️ Flights/yr',walk:'🚶 Walk (km)',meat:'🥩 Meat meals/wk',dairy:'🥛 Dairy servings/day',veg:'🥦 Veg meals/wk',electricity:'💡 kWh/month',gas:'🔥 Gas units/month'};
+  var tips=['🚲 Cycling instead of driving 5km saves ~380kg CO₂/year','🥦 Going vegetarian one day a week saves ~84kg CO₂/year','💡 Switching to LED bulbs cuts electricity CO₂ by 75%','✈️ One long-haul flight = 6 months of driving','🌳 One tree absorbs ~21kg CO₂/year — plant more!'];
+
+  function render(){
+    var total=0;
+    Object.keys(inputs).forEach(function(k){total+=inputs[k]*factors[k]/52;});
+    total=Math.round(total*10)/10;
+    var annualKg=Math.round(total*52);
+    var level=total<5?'🌿 Low':total<15?'⚠️ Medium':'🔴 High';
+    var avgIndian=5.5;
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Carbon Footprint Calculator</div>'+
+      /* Big readout */
+      '<div style="text-align:center;background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;color:var(--muted)">Your weekly CO₂</div>'+
+      '<div style="font-size:36px;font-weight:900;color:'+(total<5?'var(--evs)':total<15?'var(--math)':'var(--sci)')+'">'+total+' kg</div>'+
+      '<div style="font-size:13px;color:var(--muted)">'+level+' · ~'+annualKg+' kg/year</div>'+
+      '<div style="height:8px;background:var(--surface);border-radius:4px;margin-top:8px">'+
+      '<div style="height:8px;width:'+Math.min(100,total/20*100)+'%;background:'+(total<5?'var(--evs)':total<15?'var(--math)':'var(--sci)')+';border-radius:4px;transition:width .4s"></div></div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:4px">Avg Indian: '+avgIndian+' kg/week</div>'+
+      '</div>'+
+      /* Sliders */
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
+      Object.keys(inputs).map(function(k){
+        return '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:11px;color:var(--muted);min-width:120px">'+labels[k]+'</span>'+
+          '<input type="range" class="slide" min="0" max="'+(k==='flight'?10:k==='electricity'?300:k==='gas'?20:k==='meat'||k==='veg'?14:k==='dairy'?10:30)+'" value="'+inputs[k]+'" oninput="cfSet(\''+k+'\',this.value)" style="flex:1">'+
+          '<span style="font-size:11px;font-weight:800;color:var(--text);min-width:28px">'+inputs[k]+'</span>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      /* Tip */
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:9px 12px;font-size:11px;color:var(--text);line-height:1.7">'+
+      tips[Math.floor(total/4)%tips.length]+
+      '</div>';
+  }
+
+  window.cfSet=function(k,v){inputs[k]=parseFloat(v);render();};
+  render();
+};
+
+/* ── 9. HAND WASH STEPS (hand-wash) ── */
+SIM_REGISTRY['hand-wash'] = function(c) {
+  var step=0, raf2, t2=0;
+  var steps=[
+    {emoji:'💧',title:'Wet your hands',desc:'Use clean running water (warm or cold). Turn off the tap to save water while washing.',time:5,color:'#4D96FF'},
+    {emoji:'🧴',title:'Apply soap',desc:'Apply enough soap to cover all hand surfaces. Bar soap or liquid soap both work equally well.',time:3,color:'#C77DFF'},
+    {emoji:'🤲',title:'Lather palms together',desc:'Rub hands palm to palm vigorously. The friction helps remove germs.',time:4,color:'#6BCB77'},
+    {emoji:'🖐️',title:'Scrub back of hands',desc:'Right palm over left hand, fingers interlaced. Then left palm over right. Don\'t forget the back!',time:4,color:'#FFD93D'},
+    {emoji:'🤞',title:'Clean between fingers',desc:'Fingers interlaced, rub vigorously. Germs love to hide between fingers!',time:4,color:'#FF8C42'},
+    {emoji:'👍',title:'Scrub thumbs',desc:'Rotational rubbing of right thumb clasped in left palm. Then vice versa. Thumbs touch everything!',time:4,color:'#FF6B6B'},
+    {emoji:'🫙',title:'Clean fingernails',desc:'Rotational rubbing of fingers of right hand clasped in left palm. Get under the nails!',time:4,color:'#6BCB77'},
+    {emoji:'🚿',title:'Rinse thoroughly',desc:'Rinse hands under clean running water. Hold hands downward so dirty water drips away.',time:5,color:'#4D96FF'},
+    {emoji:'🧻',title:'Dry completely',desc:'Dry hands with a clean towel or air dry. Wet hands spread more germs than dry hands!',time:5,color:'#C8945A'},
+  ];
+  var totalTime=steps.reduce(function(s,st){return s+st.time;},0);
+  var timer=null, timerCount=0, running=false;
+
+  function render(){
+    var s=steps[step];
+    var progress=(step/steps.length)*100;
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">🧼 Proper Hand Washing — WHO Method</div>'+
+      /* Progress */
+      '<div style="height:6px;background:var(--surface2);border-radius:3px;margin-bottom:10px">'+
+      '<div style="height:6px;width:'+progress+'%;background:var(--evs);border-radius:3px;transition:width .4s"></div></div>'+
+      '<div style="text-align:center;font-size:10px;color:var(--muted);margin-bottom:8px">Step '+(step+1)+' of '+steps.length+' · Total time: ~'+totalTime+' seconds</div>'+
+      /* Current step */
+      '<div style="background:'+s.color+'15;border:2px solid '+s.color+'44;border-radius:14px;padding:20px;text-align:center;margin-bottom:10px">'+
+      '<div style="font-size:56px;margin-bottom:8px;animation:pulse 1.5s ease infinite">'+s.emoji+'</div>'+
+      '<div style="font-size:16px;font-weight:900;color:'+s.color+';margin-bottom:6px">'+s.title+'</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:8px">'+s.desc+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">⏱ Hold for ~'+s.time+' seconds</div>'+
+      '</div>'+
+      /* Navigation */
+      '<div class="ctrl-row">' +
+      (step>0?'<button class="cbtn" onclick="hwStep(-1)">← Back</button>':'<div></div>')+
+      '<div style="display:flex;gap:4px">' +
+      steps.map(function(_,i){return '<div style="width:8px;height:8px;border-radius:50%;background:'+(i<=step?s.color:'var(--border)')+';transition:all .3s"></div>';}).join('')+
+      '</div>'+
+      (step<steps.length-1?'<button class="cbtn" onclick="hwStep(1)" style="background:'+s.color+';color:white;border-color:'+s.color+'">Next →</button>':
+       '<button class="cbtn" onclick="hwStep(-'+step+')" style="background:var(--evs);color:white;border-color:var(--evs)">✅ Done! Restart</button>')+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">'+
+      'Proper hand washing for 20 seconds kills 99% of germs. Most people wash for only 6 seconds!'+
+      '</div>';
+  }
+
+  window.hwStep=function(d){step=Math.max(0,Math.min(steps.length-1,step+d));render();};
+  render();
+};
+
+/* ── 10. FACTORISATION (factorisation) ── */
+SIM_REGISTRY['factorisation'] = function(c) {
+  var n=12;
+
+  function primeFactors(num) {
+    var factors=[];
+    for(var d=2;d<=num;d++){while(num%d===0){factors.push(d);num/=d;}}
+    return factors;
+  }
+
+  function allFactors(num) {
+    var f=[];
+    for(var i=1;i<=num;i++){if(num%i===0)f.push(i);}
+    return f;
+  }
+
+  function render() {
+    var pf=primeFactors(n);
+    var af=allFactors(n);
+    var isPrime=pf.length===1;
+
+    /* Factor tree */
+    var treeHTML='<svg width="280" height="160" style="display:block;width:100%"><rect width="280" height="160" fill="#0a0a1a" rx="10"/>';
+    function drawTree(ctx,num,x,y,depth,svgParts) {
+      svgParts.push('<circle cx="'+x+'" cy="'+y+'" r="18" fill="'+(isPrimeNum(num)?'var(--evs)':'var(--acc)')+'" opacity="0.8"/>');
+      svgParts.push('<text x="'+x+'" y="'+(y+5)+'" fill="white" font-size="11" font-weight="bold" text-anchor="middle" font-family="Nunito">'+num+'</text>');
+      if(!isPrimeNum(num)&&depth<3){
+        var d=smallestFactor(num);
+        var other=num/d;
+        var spread=60/depth;
+        [[x-spread,y+40,d],[x+spread,y+40,other]].forEach(function(child){
+          svgParts.push('<line x1="'+x+'" y1="'+(y+18)+'" x2="'+child[0]+'" y2="'+(child[1]-18)+'" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>');
+          drawTree(ctx,child[2],child[0],child[1],depth+1,svgParts);
+        });
+      }
+    }
+    function isPrimeNum(num){return num>1&&primeFactors(num).length===1;}
+    function smallestFactor(num){for(var i=2;i<=num;i++){if(num%i===0)return i;}return num;}
+
+    var parts=[];
+    drawTree(null,n,140,25,1,parts);
+    treeHTML+=parts.join('')+'</svg>';
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Factorisation</div>'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;justify-content:center">'+
+      '<span style="font-size:13px;color:var(--muted)">Number:</span>'+
+      '<input type="number" min="2" max="100" value="'+n+'" onchange="factN(this.value)" style="width:70px;background:var(--surface);border:1.5px solid var(--acc);border-radius:8px;padding:6px;color:var(--acc);font-size:20px;font-weight:900;text-align:center">'+
+      '<input type="range" class="slide" min="2" max="100" value="'+n+'" oninput="factN(this.value)" style="width:120px">'+
+      '</div>'+
+      /* Factor tree */
+      '<div style="margin-bottom:8px">'+treeHTML+'</div>'+
+      /* Results */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;color:var(--muted)">Prime factors</div>'+
+      '<div style="font-size:16px;font-weight:900;color:var(--evs)">'+pf.join(' × ')+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)">'+n+' = '+pf.join(' × ')+(isPrime?' (prime!':' (composite)')+'</div>'+
+      '</div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;color:var(--muted)">All factors ('+af.length+')</div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--acc)">'+af.join(', ')+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)'+'">Factor pairs: '+Math.floor(af.length/2)+'</div>'+
+      '</div></div>'+
+      (isPrime?'<div style="background:var(--evs-dim);border:1px solid var(--evs)44;border-radius:10px;padding:10px;font-size:12px;color:var(--text);text-align:center">⭐ '+n+' is a <b>prime number</b> — only divisible by 1 and itself!</div>':'');
+  }
+
+  window.factN=function(v){n=Math.max(2,Math.min(100,parseInt(v)||2));render();};
+  render();
+};
+
+/* ── 11. DATA AVERAGES (data-averages) ── */
+SIM_REGISTRY['data-averages'] = function(c) {
+  var datasets=[
+    {name:'🌡️ Weekly Temperatures (°C)',data:[28,32,30,35,31,29,33]},
+    {name:'📚 Test Scores',data:[72,85,91,68,78,95,82,74]},
+    {name:'🚶 Steps per Day (×100)',data:[65,80,45,90,70,55,85,60]},
+    {name:'Custom',data:[3,7,5,9,4,8]},
+  ];
+  var sel=0;
+
+  function render(){
+    var d=datasets[sel].data;
+    var mean=d.reduce(function(a,b){return a+b;},0)/d.length;
+    var sorted=d.slice().sort(function(a,b){return a-b;});
+    var mid=Math.floor(d.length/2);
+    var median=d.length%2===0?(sorted[mid-1]+sorted[mid])/2:sorted[mid];
+    var freq={};d.forEach(function(v){freq[v]=(freq[v]||0)+1;});
+    var maxF=Math.max.apply(null,Object.values(freq));
+    var mode=Object.keys(freq).filter(function(k){return freq[k]===maxF;}).join(', ');
+    var range=Math.max.apply(null,d)-Math.min.apply(null,d);
+    var max=Math.max.apply(null,d);
+
+    var bars=d.map(function(v,i){
+      var h=(v/max)*90;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">'+
+        '<div style="font-size:9px;font-weight:800;color:var(--text)">'+v+'</div>'+
+        '<div style="width:100%;height:'+h+'px;background:var(--acc);border-radius:3px 3px 0 0;position:relative">'+
+        (Math.abs(v-mean)<0.5?'<div style="position:absolute;bottom:0;left:0;right:0;background:var(--math);height:4px;border-radius:2px"></div>':'')+
+        '</div>'+
+        '<div style="font-size:8px;color:var(--muted)">'+(i+1)+'</div>'+
+        '</div>';
+    }).join('');
+
+    /* Mean line position */
+    var meanPct=(mean/max)*90;
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Data Averages</div>'+
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">'+
+      datasets.map(function(ds,i){
+        return '<button onclick="avgSel('+i+')" style="padding:4px 8px;border-radius:8px;font-size:10px;border:1.5px solid '+(i===sel?'var(--acc)':'var(--border)')+';background:'+(i===sel?'var(--acc-dim)':'var(--surface2)')+';color:'+(i===sel?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:700">'+ds.name+'</button>';
+      }).join('')+'</div>'+
+      '<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:6px">'+datasets[sel].name+'</div>'+
+      '<div style="display:flex;align-items:flex-end;height:110px;gap:4px;border-bottom:2px solid var(--border);border-left:2px solid var(--border);position:relative;padding:0 4px;margin-bottom:6px">'+
+      bars+
+      '<div style="position:absolute;bottom:'+(meanPct)+'px;left:0;right:0;border-top:2px dashed var(--math);pointer-events:none"></div>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--math);margin-bottom:8px">— Mean line = '+mean.toFixed(1)+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+      [{l:'📊 Mean',v:mean.toFixed(2),c:'var(--math)',f:'Sum ÷ Count'},{l:'📍 Median',v:median,c:'var(--acc)',f:'Middle value'},{l:'🔄 Mode',v:mode,c:'var(--evs)',f:'Most frequent'},{l:'📏 Range',v:range,c:'var(--sci)',f:'Max − Min'}].map(function(s){
+        return '<div style="background:var(--surface2);border-radius:9px;padding:8px;border:1px solid var(--border)">'+
+          '<div style="font-size:10px;color:var(--muted)">'+s.l+'</div>'+
+          '<div style="font-size:18px;font-weight:900;color:'+s.c+'">'+s.v+'</div>'+
+          '<div style="font-size:9px;color:var(--muted)">'+s.f+'</div></div>';
+      }).join('')+'</div>';
+  }
+
+  window.avgSel=function(i){sel=i;render();};
+  render();
+};
+
+/* ── 12. GOAL SETTING (goal-setting) ── */
+SIM_REGISTRY['goal-setting'] = function(c) {
+  var goals=[
+    {text:'Read 10 pages daily',category:'Study',done:false,streak:3,emoji:'📚'},
+    {text:'Practise maths 30 min',category:'Study',done:false,streak:7,emoji:'📐'},
+    {text:'Drink 8 glasses of water',category:'Health',done:false,streak:1,emoji:'💧'},
+    {text:'Help at home',category:'Life Skills',done:false,streak:5,emoji:'🏠'},
+  ];
+  var newGoal='';
+
+  function render(){
+    var done=goals.filter(function(g){return g.done;}).length;
+    var pct=Math.round(done/goals.length*100);
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🎯 Daily Goal Tracker</div>'+
+      /* Progress ring */
+      '<div style="text-align:center;margin-bottom:10px">'+
+      '<svg width="80" height="80" style="display:inline-block"><circle cx="40" cy="40" r="32" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--evs)" stroke-width="8" stroke-dasharray="'+(pct/100*201.06)+' 201.06" stroke-linecap="round" transform="rotate(-90 40 40)" style="transition:stroke-dasharray .5s"/><text x="40" y="45" fill="var(--text)" font-size="16" font-weight="900" text-anchor="middle" font-family="Nunito">'+pct+'%</text></svg>'+
+      '<div style="font-size:11px;color:var(--muted)">'+done+'/'+goals.length+' goals done today</div>'+
+      '</div>'+
+      /* Goals list */
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
+      goals.map(function(g,i){
+        return '<div onclick="goalToggle('+i+')" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1.5px solid '+(g.done?'var(--evs)':'var(--border)')+';border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .2s">'+
+          '<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(g.done?'var(--evs)':'var(--border)')+';background:'+(g.done?'var(--evs)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s">'+
+          (g.done?'<span style="color:white;font-size:12px">✓</span>':'')+'</div>'+
+          '<span style="font-size:13px">'+g.emoji+'</span>'+
+          '<div style="flex:1">'+
+          '<div style="font-size:13px;font-weight:700;color:'+(g.done?'var(--evs)':'var(--text)')+';text-decoration:'+(g.done?'line-through':'none')+'">'+g.text+'</div>'+
+          '<div style="font-size:10px;color:var(--muted)">'+g.category+' · 🔥 '+g.streak+' day streak</div>'+
+          '</div></div>';
+      }).join('')+
+      '</div>'+
+      /* SMART framework */
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:11px;color:var(--text);line-height:1.8">'+
+      '🎯 <b>SMART Goals:</b> <span style="color:var(--acc)">S</span>pecific · <span style="color:var(--math)">M</span>easurable · <span style="color:var(--evs)">A</span>chievable · <span style="color:var(--sci)">R</span>elevant · <span style="color:var(--life)">T</span>ime-bound'+
+      '</div>';
+  }
+
+  window.goalToggle=function(i){goals[i].done=!goals[i].done;if(goals[i].done)goals[i].streak++;render();};
+  render();
+};
+
+/* ── 13. FEELINGS WHEEL (feelings-wheel) ── */
+SIM_REGISTRY['feelings-wheel'] = function(c) {
+  var selectedFeeling=null;
+  var feelings=[
+    {name:'Happy',    emoji:'😊', color:'#FFD93D', tips:['Share your joy with someone','Do something creative','Help a friend']},
+    {name:'Sad',      emoji:'😢', color:'#4D96FF', tips:['Talk to someone you trust','Write in a journal','Take a walk outside']},
+    {name:'Angry',    emoji:'😠', color:'#FF6B6B', tips:['Take 10 deep breaths','Count to 20 slowly','Go for a run or exercise']},
+    {name:'Anxious',  emoji:'😰', color:'#C77DFF', tips:['Try box breathing: 4s in, hold 4s, out 4s','Name 5 things you can see','Talk to a trusted adult']},
+    {name:'Excited',  emoji:'🤩', color:'#FF8C42', tips:['Channel energy into a project','Share excitement with friends','Make a plan to enjoy it']},
+    {name:'Bored',    emoji:'😑', color:'#6BCB77', tips:['Try something new or creative','Read a book or explore nature','Help someone who needs it']},
+    {name:'Proud',    emoji:'😎', color:'#4D96FF', tips:['Celebrate your achievement','Write it down to remember','Set your next goal']},
+    {name:'Grateful', emoji:'🙏', color:'#6BCB77', tips:['Write 3 things you\'re thankful for','Tell someone you appreciate them','Do something kind for another']},
+  ];
+
+  function render(){
+    var W=220,CX=110,CY=110,r=85,ir=38;
+    var slices=feelings.map(function(f,i){
+      var a1=i/feelings.length*Math.PI*2-Math.PI/2;
+      var a2=(i+1)/feelings.length*Math.PI*2-Math.PI/2;
+      var mid=(a1+a2)/2;
+      var x1=CX+Math.cos(a1)*ir,y1=CY+Math.sin(a1)*ir;
+      var x2=CX+Math.cos(a1)*r,y2=CY+Math.sin(a1)*r;
+      var x3=CX+Math.cos(a2)*r,y3=CY+Math.sin(a2)*r;
+      var x4=CX+Math.cos(a2)*ir,y4=CY+Math.sin(a2)*ir;
+      var isSel=selectedFeeling===i;
+      var ex=CX+Math.cos(mid)*(isSel?r*0.65:r*0.62);
+      var ey=CY+Math.sin(mid)*(isSel?r*0.65:r*0.62);
+      return '<path d="M '+x1+' '+y1+' L '+x2+' '+y2+' A '+r+' '+r+' 0 0 1 '+x3+' '+y3+' L '+x4+' '+y4+' A '+ir+' '+ir+' 0 0 0 '+x1+' '+y1+' Z" '+
+        'fill="'+f.color+(isSel?'':'88')+'" stroke="#0a0a1a" stroke-width="2" style="cursor:pointer" onclick="feelSel('+i+')"/>'+
+        '<text x="'+ex+'" y="'+(ey+5)+'" font-size="'+(isSel?'18':'16')+'" text-anchor="middle">'+f.emoji+'</text>';
+    }).join('');
+
+    var info=selectedFeeling!==null
+      ? '<div style="background:'+feelings[selectedFeeling].color+'22;border:1.5px solid '+feelings[selectedFeeling].color+'55;border-radius:12px;padding:12px 14px">'+
+        '<div style="font-size:16px;font-weight:900;color:'+feelings[selectedFeeling].color+'">'+feelings[selectedFeeling].emoji+' '+feelings[selectedFeeling].name+'</div>'+
+        '<div style="font-size:11px;font-weight:800;color:var(--muted);margin:6px 0 4px">What helps:</div>'+
+        '<ul style="margin:0;padding-left:16px">'+feelings[selectedFeeling].tips.map(function(t){return '<li style="font-size:12px;color:var(--text);line-height:1.8">'+t+'</li>';}).join('')+'</ul>'+
+        '</div>'
+      : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">☝️ Tap how you\'re feeling right now</div>';
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Feelings Wheel</div>'+
+      '<div style="display:flex;gap:10px;align-items:flex-start">'+
+      '<svg width="'+W+'" height="'+W+'" style="flex-shrink:0">'+
+      '<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="#0a0a1a"/>'+
+      slices+
+      '<circle cx="'+CX+'" cy="'+CY+'" r="'+ir+'" fill="#0a0a1a" stroke="rgba(255,255,255,.1)" stroke-width="1"/>'+
+      '<text x="'+CX+'" y="'+(CY+5)+'" fill="rgba(255,255,255,.4)" font-size="9" text-anchor="middle" font-family="Nunito">How do</text>'+
+      '<text x="'+CX+'" y="'+(CY+16)+'" fill="rgba(255,255,255,.4)" font-size="9" text-anchor="middle" font-family="Nunito">I feel?</text>'+
+      '</svg>'+
+      '<div style="flex:1">'+info+'</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">'+
+      'All feelings are valid! Identifying emotions is the first step to managing them well.'+
+      '</div>';
+  }
+
+  window.feelSel=function(i){selectedFeeling=selectedFeeling===i?null:i;render();};
+  render();
+};
+
+/* ── 14. LINEAR EQUATIONS (linear-equations) ── */
+SIM_REGISTRY['linear-equations'] = function(c) {
+  var a=2, b=3, rhs=9, step=0;
+
+  function render(){
+    /* Solve ax + b = rhs => x = (rhs-b)/a */
+    var x_val=a!==0?(rhs-b)/a:null;
+    var steps=[
+      {desc:'Start with the equation',eq:'<b style="color:var(--acc)">'+a+'x</b> + <b style="color:var(--math)">'+b+'</b> = <b style="color:var(--evs)">'+rhs+'</b>'},
+      {desc:'Subtract '+b+' from both sides',eq:'<b style="color:var(--acc)">'+a+'x</b> + '+b+' − '+b+' = '+rhs+' − '+b+'<br><b style="color:var(--acc)">'+a+'x</b> = <b style="color:var(--evs)">'+(rhs-b)+'</b>'},
+      {desc:'Divide both sides by '+a,eq:'<b style="color:var(--acc)">'+a+'x</b> ÷ '+a+' = '+(rhs-b)+' ÷ '+a+'<br><b style="color:var(--sci)">x = '+x_val+'</b>'},
+      {desc:'Verify: substitute back',eq:'<b style="color:var(--acc)">'+a+'</b> × <b style="color:var(--sci)">'+x_val+'</b> + <b style="color:var(--math)">'+b+'</b> = '+((a*(x_val||0))+b)+' = <b style="color:var(--evs)">'+rhs+'</b> ✅'},
+    ];
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Solving Linear Equations</div>'+
+      /* Big equation */
+      '<div style="text-align:center;font-size:28px;font-weight:900;margin-bottom:10px;background:#0a0a1a;border-radius:12px;padding:14px">'+
+      '<span style="color:var(--acc)">'+a+'x</span>'+
+      '<span style="color:var(--muted)"> + </span>'+
+      '<span style="color:var(--math)">'+b+'</span>'+
+      '<span style="color:var(--muted)"> = </span>'+
+      '<span style="color:var(--evs)">'+rhs+'</span>'+
+      '</div>'+
+      /* Step-by-step solution */
+      '<div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">'+
+      '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:10px">'+
+      steps.map(function(_,i){return '<div style="width:'+(i===step?'24px':'8px')+';height:8px;border-radius:4px;background:'+(i<=step?'var(--acc)':'var(--border)')+';transition:all .3s"></div>';}).join('')+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Step '+(step+1)+': '+steps[step].desc+'</div>'+
+      '<div style="font-size:18px;font-weight:700;color:var(--text);line-height:1.8">'+steps[step].eq+'</div>'+
+      '</div>'+
+      /* Navigation */
+      '<div class="ctrl-row" style="margin-bottom:10px">'+
+      (step>0?'<button class="cbtn" onclick="leqStep(-1)">← Back</button>':'<div></div>')+
+      (step<steps.length-1?'<button class="cbtn" onclick="leqStep(1)" style="background:var(--acc);color:white;border-color:var(--acc)">Next Step →</button>':
+       '<button class="cbtn" onclick="leqStep(-'+step+')" style="background:var(--evs);color:white;border-color:var(--evs)">✅ Solved! Restart</button>')+
+      '</div>'+
+      /* Controls */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">'+
+      '<span style="font-size:11px;color:var(--acc)">a: <b>'+a+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="10" value="'+a+'" oninput="leqA(this.value)" style="width:80px">'+
+      '<span style="font-size:11px;color:var(--math)">b: <b>'+b+'</b></span>'+
+      '<input type="range" class="slide" min="0" max="20" value="'+b+'" oninput="leqB(this.value)" style="width:80px">'+
+      '<span style="font-size:11px;color:var(--evs)">rhs: <b>'+rhs+'</b></span>'+
+      '<input type="range" class="slide" min="1" max="50" value="'+rhs+'" oninput="leqRhs(this.value)" style="width:80px">'+
+      '</div>';
+  }
+
+  window.leqStep=function(d){step=Math.max(0,Math.min(3,step+d));render();};
+  window.leqA=function(v){a=parseInt(v);step=0;render();};
+  window.leqB=function(v){b=parseInt(v);step=0;render();};
+  window.leqRhs=function(v){rhs=parseInt(v);step=0;render();};
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 8 — 14 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. REACTIVITY SERIES (reactivity-series) ── */
+SIM_REGISTRY['reactivity-series'] = function(c) {
+  var selected = null;
+  var metals = [
+    { name:'Potassium',  sym:'K',  react:10, color:'#FF6B6B', fact:'Explodes violently in water! Must be stored in oil.', reacts:['water','acid','oxygen'] },
+    { name:'Sodium',     sym:'Na', react:9,  color:'#FF8C42', fact:'Melts into a ball and fizzes wildly in water.', reacts:['water','acid','oxygen'] },
+    { name:'Calcium',    sym:'Ca', react:8,  color:'#FFD93D', fact:'Fizzes steadily in water. Used in cement.', reacts:['water','acid','oxygen'] },
+    { name:'Magnesium',  sym:'Mg', react:7,  color:'#C8D44A', fact:'Burns with brilliant white flame. Used in fireworks.', reacts:['steam','acid','oxygen'] },
+    { name:'Zinc',       sym:'Zn', react:5,  color:'#6BCB77', fact:'Displaces copper from solution. Used to galvanise iron.', reacts:['acid','oxygen'] },
+    { name:'Iron',       sym:'Fe', react:4,  color:'#4D96FF', fact:'Rusts slowly in air & water. Used in bridges, buildings.', reacts:['acid','oxygen'] },
+    { name:'Lead',       sym:'Pb', react:3,  color:'#888',    fact:'Very slow to react. Used in batteries & radiation shields.', reacts:['acid'] },
+    { name:'Copper',     sym:'Cu', react:2,  color:'#C8945A', fact:'No reaction with water or dilute acid. Coins & wires.', reacts:['oxygen'] },
+    { name:'Gold',       sym:'Au', react:0,  color:'#FFD93D', fact:'Does not react with anything! That\'s why it stays shiny forever.', reacts:[] },
+  ];
+
+  function render() {
+    var W=280;
+    var bars = metals.map(function(m, i) {
+      var isSel = selected === i;
+      var barW = (m.react/10)*100;
+      return '<div onclick="reactSel('+i+')" style="margin-bottom:5px;cursor:pointer">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">' +
+        '<div style="width:28px;height:28px;border-radius:6px;background:'+m.color+(isSel?'':' ') +';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:'+(isSel?'white':m.color)+';border:2px solid '+m.color+';flex-shrink:0;background:'+(isSel?m.color:m.color+'22')+'">'+m.sym+'</div>' +
+        '<div style="flex:1">' +
+        '<div style="height:18px;background:'+m.color+'22;border-radius:4px;overflow:hidden">' +
+        '<div style="height:100%;width:'+barW+'%;background:'+m.color+';border-radius:4px;transition:width .4s"></div></div>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--muted);min-width:70px">'+m.name+'</div>' +
+        '</div></div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Reactivity Series</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-bottom:4px"><span>← More reactive</span><span>Less reactive →</span></div>' +
+      bars +
+      '<div style="margin-top:10px;min-height:80px;background:var(--surface2);border-radius:12px;padding:10px 14px;border:1px solid var(--border)">' +
+      (selected !== null ?
+        '<div style="font-size:14px;font-weight:900;color:'+metals[selected].color+'">'+metals[selected].name+' ('+metals[selected].sym+')</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin:3px 0">Reacts with: <b style="color:var(--text)">'+(metals[selected].reacts.length?metals[selected].reacts.join(', '):'nothing!')+' </b></div>' +
+        '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px">'+metals[selected].fact+'</div>'
+        : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px 0">☝️ Tap a metal to see its properties</div>') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">A more reactive metal displaces a less reactive metal from its salt solution. Gold never tarnishes — it\'s unreactive!</div>';
+  }
+
+  window.reactSel = function(i) { selected = selected===i?null:i; render(); };
+  render();
+};
+
+/* ── 2. RATIO AND COOKING (ratio-cooking) ── */
+SIM_REGISTRY['ratio-cooking'] = function(c) {
+  var recipe = 0, servings = 4;
+  var recipes = [
+    { name:'🍚 Rice', base:2, unit:'cups rice', ratio:[{name:'Rice',base:2,unit:'cups',color:'#FFD93D'},{name:'Water',base:3,unit:'cups',color:'#4D96FF'},{name:'Salt',base:0.5,unit:'tsp',color:'#888'}], note:'Rice:Water ratio is always 1:1.5' },
+    { name:'🥞 Pancakes', base:4, ratio:[{name:'Flour',base:1,unit:'cup',color:'#C8945A'},{name:'Milk',base:0.75,unit:'cup',color:'white'},{name:'Egg',base:1,unit:'egg',color:'#FFD93D'},{name:'Butter',base:2,unit:'tbsp',color:'#FF8C42'}], note:'Dry:Wet ratio is 1:0.75' },
+    { name:'🍋 Lemonade', base:4, ratio:[{name:'Lemon juice',base:0.5,unit:'cup',color:'#FFD93D'},{name:'Sugar',base:0.25,unit:'cup',color:'white'},{name:'Water',base:2,unit:'cups',color:'#4D96FF'}], note:'Sweet:Sour ratio adjustable to taste' },
+  ];
+
+  function render() {
+    var r = recipes[recipe];
+    var scale = servings / r.base;
+    var ingredients = r.ratio.map(function(ing) {
+      var amount = ing.base * scale;
+      var display = amount === Math.floor(amount) ? amount : amount.toFixed(2);
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:10px;padding:9px 12px;border:1px solid var(--border)">' +
+        '<div style="width:12px;height:12px;border-radius:3px;background:'+ing.color+';flex-shrink:0"></div>' +
+        '<div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">'+ing.name+'</div>' +
+        '<div style="font-size:16px;font-weight:900;color:var(--acc)">'+display+'</div>' +
+        '<div style="font-size:11px;color:var(--muted)">'+ing.unit+'</div>' +
+        '</div>';
+    }).join('');
+
+    /* Ratio bars */
+    var total = r.ratio.reduce(function(s,ing){return s+ing.base;},0);
+    var ratioBar = r.ratio.map(function(ing) {
+      return '<div style="flex:'+ing.base+';background:'+ing.color+';height:100%;opacity:0.8" title="'+ing.name+'"></div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Ratio in Cooking</div>' +
+      '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px">' +
+      recipes.map(function(rec,i) {
+        return '<button onclick="ratioRecipe('+i+')" style="padding:6px 12px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===recipe?'var(--acc)':'var(--border)')+';background:'+(i===recipe?'var(--acc-dim)':'var(--surface2)')+';color:'+(i===recipe?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">'+rec.name+'</button>';
+      }).join('') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+      '<span style="font-size:11px;color:var(--muted)">Servings:</span>' +
+      '<input type="range" class="slide" min="1" max="20" value="'+servings+'" oninput="ratioServings(this.value)" style="flex:1">' +
+      '<span style="font-size:20px;font-weight:900;color:var(--acc)">'+servings+'</span>' +
+      '</div>' +
+      '<div style="display:flex;height:24px;border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border)">' + ratioBar + '</div>' +
+      '<div style="font-size:10px;color:var(--muted);margin-bottom:10px;text-align:center">'+r.note+'</div>' +
+      '<div style="display:flex;flex-direction:column;gap:5px">' + ingredients + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">Ratio stays the same no matter how many servings! Scale up by multiplying all ingredients by the same factor.</div>';
+  }
+
+  window.ratioRecipe = function(i) { recipe=i; render(); };
+  window.ratioServings = function(v) { servings=parseInt(v); render(); };
+  render();
+};
+
+/* ── 3. SAVINGS TRACKER (savings-tracker) ── */
+SIM_REGISTRY['savings-tracker'] = function(c) {
+  var goal = 500, saved = 120, weekly = 50, interest = 4;
+
+  function render() {
+    var remaining = Math.max(0, goal - saved);
+    var weeksToGoal = weekly > 0 ? Math.ceil(remaining / weekly) : '∞';
+    var pct = Math.min(100, Math.round(saved/goal*100));
+    /* Simple interest projection */
+    var months = 12;
+    var projection = [];
+    var curr = saved;
+    for (var m = 1; m <= months; m++) {
+      curr += weekly * 4.3;
+      curr += curr * (interest/100/12);
+      projection.push(Math.round(curr));
+    }
+    var projected12 = projection[11];
+
+    /* Mini sparkline */
+    var maxP = Math.max(goal, projected12);
+    var points = projection.map(function(v,i) {
+      return ((i+1)/months*220) + ',' + (90-(v/maxP)*80);
+    }).join(' ');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">💰 Savings Goal Tracker</div>' +
+      /* Goal progress */
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+      '<span style="font-size:11px;color:var(--muted)">Saved: <b style="color:var(--evs)">₹'+saved+'</b></span>' +
+      '<span style="font-size:11px;color:var(--muted)">Goal: <b style="color:var(--math)">₹'+goal+'</b></span>' +
+      '</div>' +
+      '<div style="height:20px;background:var(--surface);border-radius:10px;overflow:hidden;position:relative">' +
+      '<div style="height:100%;width:'+pct+'%;background:linear-gradient(to right,var(--evs),var(--math));border-radius:10px;transition:width .5s"></div>' +
+      '<div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--text)">'+pct+'%</div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Remaining: <b>₹'+remaining+'</b></span>' +
+      '<span style="font-size:11px;color:var(--life)">⏱ ~'+weeksToGoal+' weeks</span>' +
+      '</div></div>' +
+      /* Projection chart */
+      '<svg width="240" height="100" style="display:block;margin:0 auto 8px;overflow:visible">' +
+      '<polyline points="'+points+'" fill="none" stroke="var(--acc)" stroke-width="2"/>' +
+      '<line x1="0" y1="'+(90-(goal/maxP)*80)+'" x2="220" y2="'+(90-(goal/maxP)*80)+'" stroke="rgba(255,217,61,.4)" stroke-width="1" stroke-dasharray="4,4"/>' +
+      '<text x="224" y="'+(92-(goal/maxP)*80)+'" fill="rgba(255,217,61,.6)" font-size="8" font-family="Nunito">Goal</text>' +
+      '<text x="0" y="98" fill="rgba(255,255,255,.3)" font-size="8" font-family="Nunito">Now</text>' +
+      '<text x="200" y="98" fill="rgba(255,255,255,.3)" font-size="8" font-family="Nunito">12m</text>' +
+      '<text x="110" y="14" fill="var(--acc)" font-size="9" font-weight="bold" text-anchor="middle" font-family="Nunito">Projected: ₹'+projected12+' after 12 months</text>' +
+      '</svg>' +
+      /* Controls */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+      [
+        {label:'🎯 Goal (₹)',    val:goal,    key:'goal',    min:100, max:5000, step:100},
+        {label:'💰 Saved (₹)',   val:saved,   key:'saved',   min:0,   max:goal, step:50},
+        {label:'📅 Weekly (₹)', val:weekly,  key:'weekly',  min:0,   max:500,  step:10},
+        {label:'📈 Interest %', val:interest,key:'interest',min:0,   max:15,   step:0.5},
+      ].map(function(s) {
+        return '<div style="background:var(--surface2);border-radius:9px;padding:8px;border:1px solid var(--border)">' +
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+s.label+': <b style="color:var(--text)">'+s.val+'</b></div>' +
+          '<input type="range" class="slide" min="'+s.min+'" max="'+s.max+'" step="'+s.step+'" value="'+s.val+'" oninput="savSet(\''+s.key+'\',this.value)" style="width:100%">' +
+          '</div>';
+      }).join('') + '</div>';
+  }
+
+  window.savSet = function(k,v) {
+    if(k==='goal')goal=parseInt(v);
+    else if(k==='saved')saved=parseInt(v);
+    else if(k==='weekly')weekly=parseInt(v);
+    else interest=parseFloat(v);
+    render();
+  };
+  render();
+};
+
+/* ── 4. PROFIT AND LOSS (profit-loss) ── */
+SIM_REGISTRY['profit-loss'] = function(c) {
+  var cost = 80, selling = 100;
+
+  function render() {
+    var diff = selling - cost;
+    var isProfit = diff >= 0;
+    var pct = Math.abs(diff/cost*100).toFixed(1);
+    var scenarios = [
+      {label:'🏪 Shopkeeper',cost:80,sell:100},{label:'🌽 Farmer',cost:40,sell:55},
+      {label:'📱 Reseller',cost:500,sell:450},{label:'🎨 Artist',cost:200,sell:350},
+    ];
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Profit & Loss</div>' +
+      /* Visual balance */
+      '<div style="display:flex;align-items:flex-end;gap:16px;justify-content:center;margin-bottom:12px">' +
+      /* Cost box */
+      '<div style="text-align:center">' +
+      '<div style="background:var(--sci-dim);border:2px solid var(--sci);border-radius:10px;padding:10px 16px;margin-bottom:4px">' +
+      '<div style="font-size:11px;color:var(--muted)">Cost Price</div>' +
+      '<div style="font-size:26px;font-weight:900;color:var(--sci)">₹'+cost+'</div>' +
+      '</div></div>' +
+      /* Arrow and result */
+      '<div style="text-align:center;padding-bottom:8px">' +
+      '<div style="font-size:32px">'+(isProfit?'📈':'📉')+'</div>' +
+      '<div style="font-size:24px;font-weight:900;color:'+(isProfit?'var(--evs)':'var(--sci)')+'">'+(isProfit?'+':'')+'₹'+diff+'</div>' +
+      '<div style="font-size:11px;font-weight:800;color:'+(isProfit?'var(--evs)':'var(--sci)')+'">'+pct+'% '+(isProfit?'Profit':'Loss')+'</div>' +
+      '</div>' +
+      /* Selling box */
+      '<div style="text-align:center">' +
+      '<div style="background:var(--math-dim);border:2px solid var(--math);border-radius:10px;padding:10px 16px;margin-bottom:4px">' +
+      '<div style="font-size:11px;color:var(--muted)">Selling Price</div>' +
+      '<div style="font-size:26px;font-weight:900;color:var(--math)">₹'+selling+'</div>' +
+      '</div></div></div>' +
+      /* Formula */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--border);font-size:12px;text-align:center;line-height:1.8">' +
+      (isProfit
+        ? 'Profit = SP − CP = ₹'+selling+' − ₹'+cost+' = <b style="color:var(--evs)">₹'+diff+'</b><br>Profit% = ('+diff+'/'+cost+') × 100 = <b style="color:var(--evs)">'+pct+'%</b>'
+        : 'Loss = CP − SP = ₹'+cost+' − ₹'+selling+' = <b style="color:var(--sci)">₹'+Math.abs(diff)+'</b><br>Loss% = ('+Math.abs(diff)+'/'+cost+') × 100 = <b style="color:var(--sci)">'+pct+'%</b>') +
+      '</div>' +
+      /* Sliders */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      '<span style="font-size:11px;color:var(--sci)">Cost: <b>₹'+cost+'</b></span>' +
+      '<input type="range" class="slide" min="10" max="1000" step="10" value="'+cost+'" oninput="plCost(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;color:var(--math)">Selling: <b>₹'+selling+'</b></span>' +
+      '<input type="range" class="slide" min="10" max="1500" step="10" value="'+selling+'" oninput="plSell(this.value)" style="width:100px">' +
+      '</div>' +
+      /* Quick scenarios */
+      '<div style="display:flex;gap:5px;flex-wrap:wrap">' +
+      scenarios.map(function(s) {
+        return '<button onclick="plScenario('+s.cost+','+s.sell+')" style="padding:4px 8px;border-radius:8px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">'+s.label+'</button>';
+      }).join('') + '</div>';
+  }
+
+  window.plCost = function(v) { cost=parseInt(v); render(); };
+  window.plSell = function(v) { selling=parseInt(v); render(); };
+  window.plScenario = function(cp,sp) { cost=cp; selling=sp; render(); };
+  render();
+};
+
+/* ── 5. TRANSFORMATIONS (transformations) ── */
+SIM_REGISTRY['transformations'] = function(c) {
+  var type='translation', tx=3, ty=2, angle=90, sx=1.5;
+
+  function render() {
+    var W=280, H=200, CX=W/2, CY=H/2, scale=16;
+    /* Original triangle */
+    var orig=[[1,1],[4,1],[2.5,4]];
+    var transformed;
+    if(type==='translation') transformed=orig.map(function(p){return[p[0]+tx,p[1]-ty];});
+    else if(type==='rotation') {
+      var rad=angle*Math.PI/180;
+      transformed=orig.map(function(p){return[p[0]*Math.cos(rad)-p[1]*Math.sin(rad),p[0]*Math.sin(rad)+p[1]*Math.cos(rad)];});
+    } else if(type==='reflection') transformed=orig.map(function(p){return[-p[0],p[1]];});
+    else transformed=orig.map(function(p){return[p[0]*sx,p[1]*sx];});
+
+    function toSVG(pts,color,dash) {
+      var coords=pts.map(function(p){return (CX+p[0]*scale)+','+(CY-p[1]*scale);}).join(' ');
+      return '<polygon points="'+coords+'" fill="'+color+'22" stroke="'+color+'" stroke-width="2.5"'+(dash?' stroke-dasharray="6,4"':'')+'/>';
+    }
+    function labels(pts,prefix,color) {
+      return pts.map(function(p,i){return '<text x="'+(CX+p[0]*scale+5)+'" y="'+(CY-p[1]*scale+4)+'" fill="'+color+'" font-size="9" font-family="Nunito">'+prefix+(i+1)+'</text>';}).join('');
+    }
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Geometric Transformations</div>'+
+      '<div class="ctrl-row" style="margin-bottom:6px;flex-wrap:wrap;gap:5px">'+
+      ['translation','rotation','reflection','enlargement'].map(function(t){
+        return '<button onclick="transType(\''+t+'\')" style="padding:4px 9px;border-radius:8px;font-size:11px;border:1.5px solid '+(t===type?'var(--acc)':'var(--border)')+';background:'+(t===type?'var(--acc-dim)':'var(--surface2)')+';color:'+(t===type?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">'+t+'</button>';
+      }).join('')+'</div>'+
+      '<svg width="'+W+'" height="'+H+'" style="display:block;background:#0a0a1a;border-radius:12px;width:100%">'+
+      /* Grid */
+      (function(){var g='';for(var i=-8;i<=8;i++){var gx=CX+i*scale,gy=CY+i*scale;g+='<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="'+H+'" stroke="rgba(255,255,255,.04)" stroke-width="1"/><line x1="0" y1="'+gy+'" x2="'+W+'" y2="'+gy+'" stroke="rgba(255,255,255,.04)" stroke-width="1"/>';}return g;})() +
+      /* Axes */
+      '<line x1="0" y1="'+CY+'" x2="'+W+'" y2="'+CY+'" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>'+
+      '<line x1="'+CX+'" y1="0" x2="'+CX+'" y2="'+H+'" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>'+
+      /* Shapes */
+      toSVG(orig,'#4D96FF',false)+labels(orig,'A','#4D96FF')+
+      toSVG(transformed,'#FF6B6B',true)+labels(transformed,'A\'','#FF6B6B')+
+      /* Arrow for translation */
+      (type==='translation'?'<defs><marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,217,61,.6)"/></marker></defs><line x1="'+(CX+orig[0][0]*scale)+'" y1="'+(CY-orig[0][1]*scale)+'" x2="'+(CX+transformed[0][0]*scale)+'" y2="'+(CY-transformed[0][1]*scale)+'" stroke="rgba(255,217,61,.5)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>':'') +
+      /* Legend */
+      '<text x="8" y="14" fill="#4D96FF" font-size="9" font-family="Nunito">■ Original (A)</text>'+
+      '<text x="8" y="26" fill="#FF6B6B" font-size="9" font-family="Nunito">■ Image (A\')</text>'+
+      '</svg>'+
+      /* Controls */
+      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
+      (type==='translation'
+        ? '<span style="font-size:11px;color:var(--muted)">→ '+tx+'</span><input type="range" class="slide" min="-5" max="5" value="'+tx+'" oninput="transTx(this.value)" style="width:80px"><span style="font-size:11px;color:var(--muted)">↑ '+ty+'</span><input type="range" class="slide" min="-5" max="5" value="'+ty+'" oninput="transTy(this.value)" style="width:80px">'
+        : type==='rotation'
+        ? '<span style="font-size:11px;color:var(--muted)">Angle: <b>'+angle+'°</b></span><input type="range" class="slide" min="0" max="360" value="'+angle+'" oninput="transAngle(this.value)" style="width:160px">'
+        : type==='enlargement'
+        ? '<span style="font-size:11px;color:var(--muted)">Scale: <b>'+sx+'×</b></span><input type="range" class="slide" min="0.5" max="3" step="0.5" value="'+sx+'" oninput="transSx(this.value)" style="width:160px">'
+        : '<span style="font-size:11px;color:var(--muted)">Reflected in Y-axis</span>'
+      )+'</div>';
+  }
+
+  window.transType=function(t){type=t;render();};
+  window.transTx=function(v){tx=parseInt(v);render();};
+  window.transTy=function(v){ty=parseInt(v);render();};
+  window.transAngle=function(v){angle=parseInt(v);render();};
+  window.transSx=function(v){sx=parseFloat(v);render();};
+  render();
+};
+
+/* ── 6. CONGRUENCE (congruence) ── */
+SIM_REGISTRY['congruence'] = function(c) {
+  var rule='sss', t2=0, raf2;
+
+  var rules={
+    sss:{name:'SSS — Side Side Side',color:'#6BCB77',desc:'If all 3 sides are equal, triangles are congruent. The strongest proof!',draw:function(ctx,W,H,t){drawCongruent(ctx,W,H,t,true,true,true,false,false,false);}},
+    sas:{name:'SAS — Side Angle Side',color:'#FFD93D',desc:'Two equal sides with the equal angle between them → congruent.',draw:function(ctx,W,H,t){drawCongruent(ctx,W,H,t,true,false,true,false,true,false);}},
+    asa:{name:'ASA — Angle Side Angle',color:'#4D96FF',desc:'Two equal angles with the equal side between them → congruent.',draw:function(ctx,W,H,t){drawCongruent(ctx,W,H,t,false,true,false,true,false,true);}},
+    rhs:{name:'RHS — Right Hypotenuse Side',color:'#FF6B6B',desc:'Right angle, hypotenuse, and one side equal → congruent. Only for right triangles!',draw:function(ctx,W,H,t){drawCongruent(ctx,W,H,t,false,true,true,true,false,false);}},
+  };
+
+  function drawCongruent(ctx,W,H,t,s1,s2,s3,a1,a2,a3){
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+    var r=rules[rule];
+    function drawTri(ox,oy,flip,sz){
+      var pts=[[ox,oy+sz],[ox+sz*0.7,oy+sz],[ox+sz*0.35,oy]];
+      if(flip) pts=[[ox+sz,oy+sz],[ox+sz*0.3,oy+sz],[ox+sz*0.65,oy]];
+      ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+      pts.forEach(function(p){ctx.lineTo(p[0],p[1]);}); ctx.closePath();
+      ctx.fillStyle=r.color+'18'; ctx.fill();
+      ctx.strokeStyle=r.color; ctx.lineWidth=2.5; ctx.stroke();
+      /* Tick marks for equal sides */
+      var sides=[[pts[0],pts[1]],[pts[1],pts[2]],[pts[2],pts[0]]];
+      var marks=[s1,s2,s3];
+      sides.forEach(function(side,i){
+        if(marks[i]){
+          var mx=(side[0][0]+side[1][0])/2, my=(side[0][1]+side[1][1])/2;
+          var dx=side[1][0]-side[0][0],dy=side[1][1]-side[0][1];
+          var len=Math.sqrt(dx*dx+dy*dy);
+          var nx=-dy/len*6, ny=dx/len*6;
+          ctx.strokeStyle='white'; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(mx+nx,my+ny); ctx.lineTo(mx-nx,my-ny); ctx.stroke();
+        }
+      });
+      /* Angle arcs */
+      var angles=[a1,a2,a3];
+      pts.forEach(function(p,i){
+        if(angles[i]){
+          ctx.beginPath(); ctx.arc(p[0],p[1],12,0,Math.PI*2);
+          ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=1.5; ctx.stroke();
+        }
+      });
+      return pts;
+    }
+    drawTri(W*0.05,H*0.15,false,H*0.65);
+    /* Congruence symbol */
+    ctx.fillStyle=r.color; ctx.font='bold 22px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('≅',W/2,H/2+8);
+    drawTri(W*0.52,H*0.15,true,H*0.65);
+    ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Triangle 1',W*0.25,H-6); ctx.fillText('Triangle 2',W*0.75,H-6);
+  }
+
+  function animate(){
+    var cv=document.getElementById('congCanvas');
+    if(!cv) return;
+    rules[rule].draw(cv.getContext('2d'),cv.width,cv.height,t2);
+    t2+=0.02; raf2=requestAnimationFrame(animate);
+  }
+
+  function render(){
+    var r=rules[rule];
+    c.innerHTML=
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      Object.keys(rules).map(function(k){return '<button onclick="congRule(\''+k+'\')" style="padding:4px 9px;border-radius:8px;font-size:11px;border:1.5px solid '+(k===rule?rules[k].color:'var(--border)')+';background:'+(k===rule?rules[k].color+'22':'var(--surface2)')+';color:'+(k===rule?rules[k].color:'var(--muted)')+';cursor:pointer;font-weight:800">'+k.toUpperCase()+'</button>';}).join('')+'</div>'+
+      '<canvas id="congCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">'+
+      '<div style="font-size:13px;font-weight:900;color:'+r.color+';margin-bottom:4px">'+r.name+'</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+r.desc+'</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Tick marks show equal sides. Arc marks show equal angles.</div>';
+    cancelAnimationFrame(raf2); animate();
+  }
+
+  window.congRule=function(r){rule=r;cancelAnimationFrame(raf2);render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 7. GLACIER AND SEA LEVEL (glacier-sea) ── */
+SIM_REGISTRY['glacier-sea'] = function(c) {
+  var raf2, t2=0, temp=0, running=true;
+
+  function draw(){
+    var cv=document.getElementById('glacierCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    var meltFrac=Math.max(0,Math.min(1,temp/6));
+    var seaRise=meltFrac*60;
+    var baseSeaY=H*0.65;
+    var seaY=baseSeaY-seaRise;
+
+    /* Sky */
+    var skyColor=meltFrac>0.5?'rgba(80,50,30,':'rgba(30,60,100,';
+    ctx.fillStyle=(skyColor+'0.95)'); ctx.fillRect(0,0,W,H*0.6);
+
+    /* Sun/haze */
+    var sunAlpha=0.6+meltFrac*0.4;
+    ctx.beginPath(); ctx.arc(W*0.8,H*0.1,22+meltFrac*8,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,'+(220-meltFrac*80)+',50,'+sunAlpha+')';
+    ctx.shadowColor='rgba(255,150,50,0.5)'; ctx.shadowBlur=30*meltFrac; ctx.fill(); ctx.shadowBlur=0;
+
+    /* Mountain with glacier */
+    ctx.fillStyle='#5a6a7a';
+    ctx.beginPath(); ctx.moveTo(W*0.1,H*0.65); ctx.lineTo(W*0.35,H*0.1); ctx.lineTo(W*0.6,H*0.65); ctx.closePath(); ctx.fill();
+    /* Ice cap */
+    var iceSize=Math.max(0,1-meltFrac)*0.4;
+    if(iceSize>0){
+      ctx.fillStyle='rgba(220,240,255,'+Math.max(0.1,1-meltFrac)+')';
+      ctx.beginPath(); ctx.moveTo(W*0.35,H*0.1); ctx.lineTo(W*0.35-W*iceSize,H*0.1+H*iceSize*1.2); ctx.lineTo(W*0.35+W*iceSize,H*0.1+H*iceSize*1.2); ctx.closePath(); ctx.fill();
+    }
+    /* Melt water drips */
+    if(meltFrac>0.1){
+      for(var i=0;i<4;i++){
+        var dy=((t2*40+i*25)%80);
+        ctx.beginPath(); ctx.arc(W*0.3+i*8,H*0.2+H*iceSize+dy,2,0,Math.PI*2);
+        ctx.fillStyle='rgba(100,180,255,0.7)'; ctx.fill();
+      }
+    }
+
+    /* Sea */
+    var seaGrad=ctx.createLinearGradient(0,seaY,0,H);
+    seaGrad.addColorStop(0,'rgba(30,100,200,0.8)'); seaGrad.addColorStop(1,'rgba(10,40,100,0.95)');
+    ctx.fillStyle=seaGrad; ctx.fillRect(0,seaY,W,H-seaY);
+    /* Wave */
+    ctx.strokeStyle='rgba(100,180,255,0.4)'; ctx.lineWidth=2;
+    ctx.beginPath();
+    for(var wx=0;wx<W;wx++){ctx.lineTo(wx,seaY+Math.sin((wx+t2*20)/20)*3);}
+    ctx.stroke();
+
+    /* City at risk */
+    var cityY=H*0.64;
+    var underwater=cityY>seaY;
+    [[W*0.7,40],[W*0.78,28],[W*0.86,35],[W*0.65,22]].forEach(function(b){
+      ctx.fillStyle=underwater?'rgba(50,80,120,0.6)':'rgba(180,180,200,0.8)';
+      ctx.fillRect(b[0]-8,cityY-b[1],16,b[1]);
+    });
+    if(underwater){
+      ctx.fillStyle='rgba(100,180,255,0.3)';
+      ctx.fillRect(W*0.6,seaY,W*0.4,cityY-seaY);
+      ctx.fillStyle='rgba(255,100,100,.8)'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('⚠️ Flooded!',W*0.75,cityY+14);
+    }
+
+    /* Stats */
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('Temp rise: +'+temp.toFixed(1)+'°C',8,16);
+    ctx.fillStyle='rgba(77,150,255,.9)';
+    ctx.fillText('Sea rise: +'+Math.round(seaRise)+'cm',8,30);
+
+    t2+=0.04;
+    if(running) raf2=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Glaciers & Sea Level Rise</div>'+
+      '<canvas id="glacierCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<span style="font-size:11px;color:'+(temp>3?'#FF6B6B':temp>1.5?'#FFD93D':'#6BCB77')+'">🌡️ +'+temp.toFixed(1)+'°C</span>'+
+      '<input type="range" class="slide" min="0" max="6" step="0.1" value="'+temp+'" oninput="glacierTemp(this.value)" style="flex:1">'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      (temp<1.5?'Paris Agreement target: keep warming below 1.5°C':temp<3?'⚠️ Significant melting. Small island nations threatened.':'🔴 Major cities at risk! Action needed now!')+
+      '</div>';
+    draw();
+  }
+
+  window.glacierTemp=function(v){temp=parseFloat(v);};
+  window.simCleanup=function(){running=false;cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 8. SOIL TYPES (soil-types) ── */
+SIM_REGISTRY['soil-types'] = function(c) {
+  var sel=0;
+  var soils=[
+    {name:'Sandy Soil',color:'#C8A96A',textColor:'#E8D4A0',emoji:'🏜️',particle:'Large grains',drainage:'Very fast — water drains quickly',fertility:'Low — nutrients wash away',crops:'Watermelons, peanuts, carrots',feel:'Gritty and grainy',india:'Rajasthan desert regions'},
+    {name:'Clay Soil',color:'#8B4513',textColor:'#C8945A',emoji:'🏺',particle:'Very fine grains',drainage:'Very slow — waterlogged',fertility:'High — holds nutrients',crops:'Rice, wheat (with irrigation)',feel:'Smooth and sticky when wet',india:'Indo-Gangetic plains'},
+    {name:'Loamy Soil',color:'#5a3a14',textColor:'#8B6914',emoji:'🌱',particle:'Mix of sand, clay, silt',drainage:'Good — ideal balance',fertility:'Very high — best for farming',crops:'Almost everything!',feel:'Crumbly and dark',india:'Kerala, Punjab — most fertile'},
+    {name:'Black Soil',color:'#1a1a1a',textColor:'#888',emoji:'⬛',particle:'Fine, rich in minerals',drainage:'Moderate — holds moisture',fertility:'High — deep and fertile',crops:'Cotton (called black cotton soil)',feel:'Cracks when dry, sticky wet',india:'Deccan Plateau, Maharashtra'},
+    {name:'Red Soil',color:'#8B2020',textColor:'#FF6B6B',emoji:'🔴',particle:'Iron oxide rich',drainage:'Good',fertility:'Low-medium',crops:'Groundnuts, millets, tobacco',feel:'Powdery, turns red in sun',india:'Tamil Nadu, Karnataka, AP'},
+  ];
+
+  function render(){
+    var s=soils[sel];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Soil Types of India</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      soils.map(function(so,i){
+        return '<button onclick="soilType('+i+')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===sel?so.textColor:'var(--border)')+';background:'+(i===sel?so.color+'44':'var(--surface2)')+';color:'+(i===sel?so.textColor:'var(--muted)')+';cursor:pointer;font-weight:800">'+so.emoji+' '+so.name.split(' ')[0]+'</button>';
+      }).join('')+'</div>'+
+      '<div style="background:'+s.color+'33;border:2px solid '+s.textColor+'44;border-radius:14px;padding:16px;margin-bottom:8px;text-align:center">'+
+      '<div style="font-size:52px;margin-bottom:6px">'+s.emoji+'</div>'+
+      '<div style="font-size:16px;font-weight:900;color:'+s.textColor+'">'+s.name+'</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+      [{l:'🔬 Particles',v:s.particle},{l:'💧 Drainage',v:s.drainage},{l:'🌱 Fertility',v:s.fertility},{l:'🌾 Best crops',v:s.crops},{l:'✋ Texture',v:s.feel},{l:'📍 India',v:s.india}].map(function(row){
+        return '<div style="background:var(--surface2);border-radius:9px;padding:8px;border:1px solid var(--border)">'+
+          '<div style="font-size:10px;color:var(--muted)">'+row.l+'</div>'+
+          '<div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.5">'+row.v+'</div>'+
+          '</div>';
+      }).join('')+'</div>';
+  }
+
+  window.soilType=function(i){sel=i;render();};
+  render();
+};
+
+/* ── 9. TRANSPORT COMPARE (transport-compare) ── */
+SIM_REGISTRY['transport-compare'] = function(c) {
+  var distance=100;
+  var modes=[
+    {name:'🚶 Walk',     speed:5,   co2:0,   cost:0,    color:'#6BCB77'},
+    {name:'🚲 Cycle',    speed:15,  co2:0,   cost:0,    color:'#4D96FF'},
+    {name:'🚌 Bus',      speed:40,  co2:4.4, cost:5,    color:'#FFD93D'},
+    {name:'🚂 Train',    speed:80,  co2:6,   cost:8,    color:'#C77DFF'},
+    {name:'🚗 Car',      speed:60,  co2:21,  cost:12,   color:'#FF8C42'},
+    {name:'✈️ Plane',    speed:800, co2:255, cost:150,  color:'#FF6B6B'},
+  ];
+
+  function render(){
+    var rows=modes.map(function(m){
+      var time=distance/m.speed;
+      var timeStr=time<1?(time*60).toFixed(0)+'m':(time).toFixed(1)+'h';
+      var totalCO2=(m.co2*distance/1000).toFixed(2);
+      var totalCost=(m.cost*distance/100).toFixed(0);
+      return '<div style="display:grid;grid-template-columns:90px 1fr 1fr 1fr;gap:4px;align-items:center;background:var(--surface2);border-radius:9px;padding:8px 10px;border:1px solid var(--border)">'+
+        '<div style="font-size:12px;font-weight:800;color:'+m.color+'">'+m.name+'</div>'+
+        '<div style="text-align:center"><div style="font-size:14px;font-weight:900;color:var(--text)">'+timeStr+'</div><div style="font-size:8px;color:var(--muted)">time</div></div>'+
+        '<div style="text-align:center"><div style="font-size:14px;font-weight:900;color:'+(m.co2===0?'var(--evs)':m.co2<10?'var(--math)':'var(--sci)')+'">'+totalCO2+'kg</div><div style="font-size:8px;color:var(--muted)">CO₂</div></div>'+
+        '<div style="text-align:center"><div style="font-size:14px;font-weight:900;color:var(--acc)">₹'+totalCost+'</div><div style="font-size:8px;color:var(--muted)">cost</div></div>'+
+        '</div>';
+    }).join('');
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Transport Comparison</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'+
+      '<span style="font-size:11px;color:var(--muted)">Distance:</span>'+
+      '<input type="range" class="slide" min="5" max="1000" step="5" value="'+distance+'" oninput="transDistance(this.value)" style="flex:1">'+
+      '<span style="font-size:16px;font-weight:900;color:var(--acc)">'+distance+'km</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:90px 1fr 1fr 1fr;gap:4px;margin-bottom:6px;padding:0 10px">'+
+      '<div style="font-size:9px;color:var(--muted)">Mode</div><div style="font-size:9px;color:var(--muted);text-align:center">⏱ Time</div>'+
+      '<div style="font-size:9px;color:var(--muted);text-align:center">🌍 CO₂</div><div style="font-size:9px;color:var(--muted);text-align:center">💰 Cost</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:5px">'+rows+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">'+
+      '🌱 Cycling & walking produce zero carbon emissions! Trains are 10× more efficient than planes per km.'+
+      '</div>';
+  }
+
+  window.transDistance=function(v){distance=parseInt(v);render();};
+  render();
+};
+
+/* ── 10. MICROPLASTICS (microplastics) ── */
+SIM_REGISTRY['microplastics'] = function(c) {
+  var raf2, t2=0, particles=[], clean=true;
+
+  function init(){
+    particles=[];
+    for(var i=0;i<30;i++){
+      particles.push({
+        x:Math.random()*280+10,y:Math.random()*120+30,
+        vx:(Math.random()-.5)*0.5,vy:(Math.random()-.5)*0.3,
+        size:Math.random()*4+1,type:Math.floor(Math.random()*3),
+        color:clean?'rgba(255,255,255,0.05)':['rgba(200,100,50,.7)','rgba(150,150,255,.6)','rgba(255,200,100,.6)'][Math.floor(Math.random()*3)]
+      });
+    }
+  }
+
+  function draw(){
+    var cv=document.getElementById('microCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    /* Ocean */
+    var grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,clean?'rgba(20,80,180,0.9)':'rgba(30,60,80,0.9)');
+    grad.addColorStop(1,clean?'rgba(10,40,100,0.95)':'rgba(20,40,60,0.95)');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+    /* Waves */
+    ctx.strokeStyle='rgba(100,180,255,0.2)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(var wx=0;wx<W;wx++) ctx.lineTo(wx,20+Math.sin((wx+t2*15)/30)*4);
+    ctx.stroke();
+
+    /* Fish */
+    var fx=((t2*30)%W+50)%W, fy=H*0.4;
+    ctx.fillStyle=clean?'rgba(107,203,119,0.8)':'rgba(255,107,107,0.7)';
+    ctx.beginPath(); ctx.ellipse(fx,fy,18,8,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(fx-18,fy); ctx.lineTo(fx-28,fy-8); ctx.lineTo(fx-28,fy+8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(fx+10,fy-2,2.5,0,Math.PI*2); ctx.fill();
+
+    /* Particles */
+    particles.forEach(function(p){
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=clean?'rgba(255,255,255,0.06)':p.color; ctx.fill();
+    });
+
+    /* Pollution level */
+    if(!clean){
+      ctx.fillStyle='rgba(255,107,107,0.6)'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('⚠️ '+particles.length+' microplastic particles visible',W/2,H-8);
+    } else {
+      ctx.fillStyle='rgba(107,203,119,0.7)'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('✅ Clean ocean',W/2,H-8);
+    }
+
+    t2+=0.04;
+    raf2=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Microplastics in the Ocean</div>'+
+      '<canvas id="microCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<button class="cbtn" onclick="microToggle()" id="microBtn" style="background:var(--sci);color:white;border-color:var(--sci)">🏭 Add Pollution</button>'+
+      '</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      '🐟 8 million tonnes of plastic enter oceans every year. Microplastics (<5mm) are eaten by fish → eaten by us. Every human now has microplastics in their blood!'+
+      '</div>';
+    cancelAnimationFrame(raf2); init(); draw();
+  }
+
+  window.microToggle=function(){
+    clean=!clean; init();
+    var btn=document.getElementById('microBtn');
+    btn.textContent=clean?'🏭 Add Pollution':'🌊 Clean Ocean';
+    btn.style.background=clean?'var(--sci)':'var(--evs)';
+  };
+  window.simCleanup=function(){cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 11. DIGITAL SAFETY (digital-safety) ── */
+SIM_REGISTRY['digital-safety'] = function(c) {
+  var scenario=0;
+  var scenarios=[
+    {emoji:'🔐',title:'Strong Passwords',color:'#6BCB77',
+     good:['Use 12+ characters','Mix letters, numbers, symbols','Different password for each site','Use a password manager'],
+     bad:['Using "password123"','Using your name/birthday','Same password everywhere','Sharing passwords with friends'],
+     example:'"Tr0pical$un#42!" is STRONG. "john123" is WEAK.'},
+    {emoji:'🎣',title:'Phishing Scams',color:'#FFD93D',
+     good:['Check the sender\'s email address carefully','Hover over links before clicking','Never share OTP or passwords','Report suspicious messages'],
+     bad:['Clicking unknown links immediately','Giving OTP to anyone who calls','Believing "You won a prize!" messages','Downloading unknown attachments'],
+     example:'"Your bank account is locked, click here" = SCAM!'},
+    {emoji:'👤',title:'Privacy Online',color:'#4D96FF',
+     good:['Keep personal info private','Use nicknames in games','Tell a trusted adult if uncomfortable','Check app permissions'],
+     bad:['Sharing your home address','Posting school name publicly','Accepting unknown friend requests','Sharing location always-on'],
+     example:'Never share full name + school + address together.'},
+    {emoji:'🤝',title:'Cyberbullying',color:'#C77DFF',
+     good:['Don\'t respond to bullies online','Save evidence (screenshots)','Block and report immediately','Tell a trusted adult'],
+     bad:['Joining in on bullying others','Sharing embarrassing photos of others','Threatening or harassing online','Staying silent if being bullied'],
+     example:'If you see cyberbullying, don\'t share it — report it!'},
+  ];
+
+  function render(){
+    var s=scenarios[scenario];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Digital Safety</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      scenarios.map(function(sc,i){
+        return '<button onclick="digSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===scenario?sc.color:'var(--border)')+';background:'+(i===scenario?sc.color+'22':'var(--surface2)')+';color:'+(i===scenario?sc.color:'var(--muted)')+';cursor:pointer;font-weight:800">'+sc.emoji+'</button>';
+      }).join('')+'</div>'+
+      '<div style="text-align:center;margin-bottom:10px"><span style="font-size:40px">'+s.emoji+'</span><div style="font-size:16px;font-weight:900;color:'+s.color+'">'+s.title+'</div></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--evs);margin-bottom:6px">✅ DO</div>'+
+      s.good.map(function(g){return '<div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.5">• '+g+'</div>';}).join('')+
+      '</div>'+
+      '<div style="background:var(--sci-dim);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--sci);margin-bottom:6px">❌ DON\'T</div>'+
+      s.bad.map(function(b){return '<div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.5">• '+b+'</div>';}).join('')+
+      '</div></div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:12px;color:var(--text);line-height:1.7">'+
+      '💡 '+s.example+'</div>';
+  }
+
+  window.digSel=function(i){scenario=i;render();};
+  render();
+};
+
+/* ── 12. CROP SEASONS (crop-seasons) ── */
+SIM_REGISTRY['crop-seasons'] = function(c) {
+  var season='kharif';
+  var crops={
+    kharif:{
+      name:'☔ Kharif Season (June–October)',color:'#6BCB77',
+      desc:'Monsoon crops. Sown at start of monsoon, harvested in autumn. India depends on this season for food security.',
+      crops:[
+        {name:'🌾 Rice',     months:'Jun-Nov', states:'West Bengal, UP, AP',    water:'High'},
+        {name:'🌽 Maize',    months:'Jun-Sep', states:'Karnataka, MP, Bihar',   water:'Medium'},
+        {name:'🫘 Soybean',  months:'Jun-Sep', states:'MP, Maharashtra',        water:'Medium'},
+        {name:'🥜 Groundnut',months:'Jun-Oct', states:'Gujarat, AP, Tamil Nadu',water:'Low-Med'},
+        {name:'🌿 Cotton',   months:'Jun-Nov', states:'Maharashtra, Gujarat',   water:'Medium'},
+      ]
+    },
+    rabi:{
+      name:'❄️ Rabi Season (October–March)',color:'#4D96FF',
+      desc:'Winter crops. Sown after monsoon, uses soil moisture + irrigation. Harvested before summer.',
+      crops:[
+        {name:'🌾 Wheat',    months:'Oct-Mar', states:'Punjab, Haryana, UP',    water:'Medium'},
+        {name:'🫛 Mustard',  months:'Oct-Feb', states:'Rajasthan, UP, Haryana', water:'Low'},
+        {name:'🧅 Onion',    months:'Oct-Jan', states:'Maharashtra, Karnataka', water:'Medium'},
+        {name:'🥕 Potato',   months:'Oct-Jan', states:'UP, West Bengal',        water:'Medium'},
+        {name:'🌱 Pea',      months:'Oct-Jan', states:'UP, Punjab, Karnataka',  water:'Low'},
+      ]
+    },
+    zaid:{
+      name:'☀️ Zaid Season (March–June)',color:'#FFD93D',
+      desc:'Summer crops grown between rabi and kharif. Needs irrigation. Hot and dry conditions.',
+      crops:[
+        {name:'🍉 Watermelon',months:'Mar-Jun', states:'UP, AP, Karnataka',    water:'High'},
+        {name:'🥒 Cucumber',  months:'Mar-Jun', states:'Karnataka, AP',        water:'High'},
+        {name:'🍈 Muskmelon', months:'Mar-Jun', states:'UP, Rajasthan',        water:'High'},
+        {name:'🌿 Fodder',    months:'Mar-Jun', states:'All states',           water:'Medium'},
+      ]
+    },
+  };
+
+  function render(){
+    var s=crops[season];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Crop Seasons of India</div>'+
+      '<div class="ctrl-row" style="margin-bottom:8px">'+
+      Object.keys(crops).map(function(k){
+        return '<button onclick="cropSeason(\''+k+'\')" style="padding:6px 12px;border-radius:9px;font-size:12px;border:1.5px solid '+(k===season?crops[k].color:'var(--border)')+';background:'+(k===season?crops[k].color+'22':'var(--surface2)')+';color:'+(k===season?crops[k].color:'var(--muted)')+';cursor:pointer;font-weight:800">'+crops[k].name.split(' ')[0]+' '+k.charAt(0).toUpperCase()+k.slice(1)+'</button>';
+      }).join('')+'</div>'+
+      '<div style="background:'+s.color+'22;border:1.5px solid '+s.color+'44;border-radius:12px;padding:10px 14px;margin-bottom:10px">'+
+      '<div style="font-size:14px;font-weight:900;color:'+s.color+';margin-bottom:4px">'+s.name+'</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+s.desc+'</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:5px">'+
+      s.crops.map(function(crop){
+        return '<div style="display:grid;grid-template-columns:80px 1fr 1fr 50px;gap:6px;align-items:center;background:var(--surface2);border-radius:9px;padding:7px 10px;border:1px solid var(--border)">'+
+          '<div style="font-size:13px;font-weight:800;color:var(--text)">'+crop.name+'</div>'+
+          '<div style="font-size:10px;color:var(--muted)">📅 '+crop.months+'</div>'+
+          '<div style="font-size:10px;color:var(--muted)">📍 '+crop.states+'</div>'+
+          '<div style="font-size:10px;color:'+(crop.water==='High'?'var(--sci)':crop.water==='Medium'?'var(--math)':'var(--evs)')+'">💧 '+crop.water+'</div>'+
+          '</div>';
+      }).join('')+'</div>';
+  }
+
+  window.cropSeason=function(s){season=s;render();};
+  render();
+};
+
+/* ── 13. WATER QUALITY (water-quality) ── */
+SIM_REGISTRY['water-quality'] = function(c) {
+  var raf2, drops=[], running=false, t2=0;
+  var pollutants={industrial:0,agricultural:0,domestic:0};
+
+  function getQuality(){
+    var total=pollutants.industrial*3+pollutants.agricultural*2+pollutants.domestic;
+    if(total<20)return{label:'✅ Clean',color:'#6BCB77',ph:7.2};
+    if(total<50)return{label:'⚠️ Moderate',color:'#FFD93D',ph:6.5};
+    if(total<80)return{label:'🔴 Polluted',color:'#FF8C42',ph:5.8};
+    return{label:'☠️ Severely Polluted',color:'#FF6B6B',ph:4.5};
+  }
+
+  function draw(){
+    var cv=document.getElementById('waterCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    var q=getQuality();
+    var total=pollutants.industrial*3+pollutants.agricultural*2+pollutants.domestic;
+    var dirtyFrac=Math.min(1,total/100);
+
+    /* Water */
+    ctx.fillStyle='rgba(20,'+Math.round(80-dirtyFrac*50)+','+Math.round(200-dirtyFrac*150)+',0.9)';
+    ctx.fillRect(0,0,W,H);
+
+    /* Ripples */
+    ctx.strokeStyle='rgba(255,255,255,'+(0.1-dirtyFrac*0.08)+')'; ctx.lineWidth=1;
+    for(var i=0;i<3;i++){
+      var r=(t2*20+i*40)%120;
+      ctx.beginPath(); ctx.arc(W/2,H/2,r,0,Math.PI*2); ctx.stroke();
+    }
+
+    /* Pollution particles */
+    if(running&&Math.random()<0.15){
+      drops.push({x:Math.random()*W,y:0,vy:1+Math.random(),color:pollutants.industrial>30?'rgba(100,50,50,.7)':pollutants.agricultural>30?'rgba(100,150,50,.7)':'rgba(100,100,180,.5)',size:2+Math.random()*4});
+    }
+    drops=drops.filter(function(d){
+      d.y+=d.vy;
+      ctx.beginPath(); ctx.arc(d.x,d.y,d.size,0,Math.PI*2);
+      ctx.fillStyle=d.color; ctx.fill();
+      return d.y<H;
+    });
+
+    /* Fish indicator */
+    if(dirtyFrac<0.3){
+      [[W*0.25,H*0.5],[W*0.6,H*0.35],[W*0.8,H*0.65]].forEach(function(p){
+        ctx.fillStyle='rgba(100,200,100,0.7)';
+        ctx.beginPath(); ctx.ellipse(p[0],p[1],12,5,0,0,Math.PI*2); ctx.fill();
+      });
+    } else if(dirtyFrac>0.7){
+      ctx.fillStyle='rgba(255,100,100,0.6)'; ctx.font='bold 12px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('💀 No fish can survive',W/2,H/2);
+    }
+
+    /* Quality label */
+    ctx.fillStyle=q.color; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(q.label+'  |  pH: '+q.ph,W/2,H-8);
+
+    t2+=0.05; raf2=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Water Quality Monitor</div>'+
+      '<canvas id="waterCanvas" width="300" height="160" style="border-radius:12px;display:block;width:100%;margin-bottom:8px"></canvas>'+
+      '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">'+
+      [{k:'industrial',label:'🏭 Industrial waste',max:40},{k:'agricultural',label:'🌾 Agricultural runoff',max:40},{k:'domestic',label:'🏠 Domestic sewage',max:40}].map(function(item){
+        return '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:11px;color:var(--muted);min-width:140px">'+item.label+'</span>'+
+          '<input type="range" class="slide" min="0" max="'+item.max+'" value="'+pollutants[item.k]+'" oninput="wqSet(\''+item.k+'\',this.value)" style="flex:1">'+
+          '<span style="font-size:11px;font-weight:800;color:var(--text);min-width:24px">'+pollutants[item.k]+'</span>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      '<div class="ctrl-row">'+
+      '<button class="cbtn" onclick="wqPollute()" id="wqBtn" style="background:var(--sci);color:white;border-color:var(--sci)">💧 Simulate Flow</button>'+
+      '<button class="cbtn" onclick="wqReset()">🌊 Clean Water</button>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      'Only 2.5% of Earth\'s water is freshwater. Less than 1% is accessible to us. Every drop counts!'+
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.wqSet=function(k,v){pollutants[k]=parseInt(v);};
+  window.wqPollute=function(){running=!running;document.getElementById('wqBtn').textContent=running?'⏸ Pause':'💧 Simulate Flow';};
+  window.wqReset=function(){pollutants={industrial:0,agricultural:0,domestic:0};drops=[];render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);running=false;};
+  render();
+};
+
+/* ── 14. TIME MATRIX (time-matrix) ── */
+SIM_REGISTRY['time-matrix'] = function(c) {
+  var tasks=[
+    {name:'Study for exam',urgent:true, important:true, done:false},
+    {name:'Check social media',urgent:true, important:false, done:false},
+    {name:'Learn a new skill',urgent:false,important:true, done:false},
+    {name:'Watch random videos',urgent:false,important:false,done:false},
+    {name:'Exercise daily',urgent:false,important:true, done:false},
+    {name:'Answer unimportant calls',urgent:true,important:false,done:false},
+  ];
+  var newTask='', newU=true, newI=true;
+
+  function render(){
+    var quadrants=[
+      {label:'DO FIRST',desc:'Urgent + Important',color:'var(--sci)',u:true,i:true},
+      {label:'SCHEDULE',desc:'Not Urgent + Important',color:'var(--evs)',u:false,i:true},
+      {label:'DELEGATE',desc:'Urgent + Not Important',color:'var(--math)',u:true,i:false},
+      {label:'ELIMINATE',desc:'Not Urgent + Not Important',color:'var(--muted)',u:false,i:false},
+    ];
+
+    var grid=quadrants.map(function(q){
+      var qTasks=tasks.filter(function(t){return t.urgent===q.u&&t.important===q.i;});
+      return '<div style="background:'+q.color+'15;border:1.5px solid '+q.color+'44;border-radius:10px;padding:8px;min-height:80px">'+
+        '<div style="font-size:10px;font-weight:800;color:'+q.color+';margin-bottom:2px">'+q.label+'</div>'+
+        '<div style="font-size:9px;color:var(--muted);margin-bottom:6px">'+q.desc+'</div>'+
+        qTasks.map(function(t,i){
+          var idx=tasks.indexOf(t);
+          return '<div onclick="tmToggle('+idx+')" style="font-size:11px;color:'+(t.done?'var(--muted)':'var(--text)')+';text-decoration:'+(t.done?'line-through':'none')+';cursor:pointer;margin-bottom:3px;display:flex;align-items:center;gap:4px">'+
+            '<span style="color:'+q.color+'">'+( t.done?'✓':'○')+'</span>'+t.name+'</div>';
+        }).join('')+
+        '</div>';
+    }).join('');
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">⏰ Eisenhower Time Matrix</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+grid+'</div>'+
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:6px">'+
+      '<span style="font-size:10px;color:var(--muted)">Urgent:</span>'+
+      ['Yes','No'].map(function(v,i){return '<button onclick="tmU('+(i===0)+')" style="padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid '+(newU===(i===0)?'var(--acc)':'var(--border)')+';background:'+(newU===(i===0)?'var(--acc-dim)':'var(--surface2)')+';color:'+(newU===(i===0)?'var(--acc)':'var(--muted)')+';cursor:pointer">'+v+'</button>';}).join('')+
+      '<span style="font-size:10px;color:var(--muted)">Important:</span>'+
+      ['Yes','No'].map(function(v,i){return '<button onclick="tmI('+(i===0)+')" style="padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid '+(newI===(i===0)?'var(--acc)':'var(--border)')+';background:'+(newI===(i===0)?'var(--acc-dim)':'var(--surface2)')+';color:'+(newI===(i===0)?'var(--acc)':'var(--muted)')+';cursor:pointer">'+v+'</button>';}).join('')+
+      '</div>'+
+      '<div class="ctrl-row">'+
+      '<input id="tmInput" placeholder="Add a task..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px">'+
+      '<button class="cbtn" onclick="tmAdd()" style="background:var(--acc);color:white;border-color:var(--acc)">+ Add</button>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      'Developed by US President Eisenhower. Helps you focus on what truly matters, not just what feels urgent!'+
+      '</div>';
+  }
+
+  window.tmToggle=function(i){tasks[i].done=!tasks[i].done;render();};
+  window.tmU=function(v){newU=v;render();};
+  window.tmI=function(v){newI=v;render();};
+  window.tmAdd=function(){
+    var el=document.getElementById('tmInput');
+    if(el&&el.value.trim()){tasks.push({name:el.value.trim(),urgent:newU,important:newI,done:false});el.value='';render();}
+  };
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 9 — 14 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. INDIA MAP (india-map) ── */
+SIM_REGISTRY['india-map'] = function(c) {
+  var highlighted = null;
+  var regions = [
+    { name:'North India',     states:'J&K, HP, Punjab, Haryana, Delhi, UP, Uttarakhand', emoji:'🏔️', color:'#4D96FF', fact:'Himalayan rivers — Ganga, Yamuna, Indus. Major wheat-growing belt. Capital region.', landmark:'Taj Mahal, Red Fort, Haridwar' },
+    { name:'South India',     states:'Kerala, Tamil Nadu, Karnataka, AP, Telangana',      emoji:'🌴', color:'#6BCB77', fact:'Deccan plateau and coastal plains. Coffee, spices, IT hub. Two coastlines!', landmark:'Ooty, Hampi, Munnar, Marina Beach' },
+    { name:'East India',      states:'West Bengal, Odisha, Jharkhand, Bihar',             emoji:'🐅', color:'#FFD93D', fact:'Gangetic plains and Bay of Bengal coast. Rice bowl. Sundarbans mangroves.', landmark:'Sundarbans, Konark, Puri' },
+    { name:'West India',      states:'Rajasthan, Gujarat, Maharashtra, Goa',              emoji:'🏜️', color:'#FF8C42', fact:'Thar Desert to tropical coast. Mumbai finance hub. Bollywood. Rann of Kutch.', landmark:'Jaipur, Ajanta-Ellora, Goa beaches' },
+    { name:'Northeast India', states:'Assam, Meghalaya, Manipur, Mizoram + 4 others',    emoji:'🌿', color:'#C77DFF', fact:'7 Sister States + Sikkim. Highest rainfall on Earth (Cherrapunji). Tea gardens.', landmark:'Kaziranga, Cherrapunji, Ziro' },
+    { name:'Central India',   states:'MP, Chhattisgarh',                                  emoji:'🐆', color:'#C8945A', fact:'Heart of India. Tiger reserves. Rich tribal culture. Coal and iron mining.', landmark:'Khajuraho, Bandhavgarh, Pench' },
+  ];
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Regions of India</div>' +
+      /* Simplified India outline with region buttons */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">' +
+      regions.map(function(r, i) {
+        var isSel = highlighted === i;
+        return '<button onclick="indiaReg(' + i + ')" style="padding:10px 12px;border-radius:12px;border:2px solid ' + (isSel ? r.color : 'var(--border)') + ';background:' + (isSel ? r.color + '22' : 'var(--surface2)') + ';color:' + (isSel ? r.color : 'var(--muted)') + ';cursor:pointer;text-align:left;transition:all .2s">' +
+          '<div style="font-size:18px;margin-bottom:2px">' + r.emoji + '</div>' +
+          '<div style="font-size:12px;font-weight:800">' + r.name + '</div>' +
+          '<div style="font-size:9px;opacity:.7;line-height:1.4">' + r.states.split(',')[0] + '...</div>' +
+          '</button>';
+      }).join('') +
+      '</div>' +
+      (highlighted !== null ?
+        '<div style="background:' + regions[highlighted].color + '15;border:2px solid ' + regions[highlighted].color + '44;border-radius:12px;padding:12px 14px">' +
+        '<div style="font-size:15px;font-weight:900;color:' + regions[highlighted].color + '">' + regions[highlighted].emoji + ' ' + regions[highlighted].name + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin:4px 0">📍 States: <b style="color:var(--text)">' + regions[highlighted].states + '</b></div>' +
+        '<div style="font-size:12px;color:var(--text);line-height:1.7;margin:4px 0">' + regions[highlighted].fact + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">🏛️ ' + regions[highlighted].landmark + '</div>' +
+        '</div>'
+        : '<div style="background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);text-align:center;color:var(--muted);font-size:12px">☝️ Tap a region to explore India!</div>') +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">India has 28 states and 8 Union Territories, 22 official languages, and is the world\'s most populous country!</div>';
+  }
+
+  window.indiaReg = function(i) { highlighted = highlighted === i ? null : i; render(); };
+  render();
+};
+
+/* ── 2. BIODIVERSITY HOTSPOT (biodiversity-hotspot) ── */
+SIM_REGISTRY['biodiversity-hotspot'] = function(c) {
+  var ecosystem = 'forest';
+  var ecosystems = {
+    forest: { name:'🌳 Tropical Forest', color:'#2d7a1e',
+      species:[{e:'🐯',n:'Bengal Tiger',status:'Endangered'},{e:'🐘',n:'Asian Elephant',status:'Vulnerable'},{e:'🦜',n:'Indian Parrot',status:'Least Concern'},{e:'🦎',n:'Monitor Lizard',status:'Near Threatened'},{e:'🌺',n:'Orchid',status:'Vulnerable'}],
+      threat:'Deforestation removes 15 billion trees per year globally.',fact:'1 hectare of tropical forest contains more species than all of Europe combined.' },
+    ocean:  { name:'🌊 Coral Reef', color:'#1a5a8a',
+      species:[{e:'🐠',n:'Clownfish',status:'Least Concern'},{e:'🦈',n:'Reef Shark',status:'Vulnerable'},{e:'🐢',n:'Sea Turtle',status:'Endangered'},{e:'🦑',n:'Reef Squid',status:'Least Concern'},{e:'🪸',n:'Brain Coral',status:'Near Threatened'}],
+      threat:'Ocean warming is bleaching coral reefs — 50% already dead.',fact:'Coral reefs cover <1% of ocean floor but support 25% of all marine species.' },
+    wetland:{ name:'💧 Wetland', color:'#1a5a3a',
+      species:[{e:'🦩',n:'Flamingo',status:'Least Concern'},{e:'🐊',n:'Mugger Croc',status:'Vulnerable'},{e:'🐸',n:'Indian Frog',status:'Endangered'},{e:'🦆',n:'Migratory Duck',status:'Least Concern'},{e:'🌾',n:'Reed',status:'Least Concern'}],
+      threat:'60% of world\'s wetlands have been lost since 1900.',fact:'Wetlands filter water, prevent floods, and support more biodiversity per area than almost any habitat.' },
+  };
+
+  function render() {
+    var eco = ecosystems[ecosystem];
+    var statusColor = { 'Least Concern':'#6BCB77','Near Threatened':'#FFD93D','Vulnerable':'#FF8C42','Endangered':'#FF6B6B' };
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Biodiversity Hotspots</div>' +
+      '<div class="ctrl-row" style="margin-bottom:8px">' +
+      Object.keys(ecosystems).map(function(k) {
+        return '<button onclick="biodivEco(\'' + k + '\')" style="padding:6px 12px;border-radius:9px;font-size:12px;border:1.5px solid ' + (k === ecosystem ? 'white' : 'var(--border)') + ';background:' + (k === ecosystem ? ecosystems[k].color + '66' : 'var(--surface2)') + ';color:' + (k === ecosystem ? 'white' : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + ecosystems[k].name.split(' ')[0] + ' ' + ecosystems[k].name.split(' ')[1] + '</button>';
+      }).join('') + '</div>' +
+      '<div style="background:' + eco.color + '22;border:1.5px solid ' + eco.color + '88;border-radius:12px;padding:12px;margin-bottom:8px">' +
+      '<div style="font-size:14px;font-weight:900;color:white;margin-bottom:8px">' + eco.name + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+      eco.species.map(function(sp) {
+        var sc = statusColor[sp.status] || '#aaa';
+        return '<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:7px 10px;display:flex;align-items:center;gap:6px">' +
+          '<span style="font-size:22px">' + sp.e + '</span>' +
+          '<div><div style="font-size:11px;font-weight:800;color:white">' + sp.n + '</div>' +
+          '<div style="font-size:9px;color:' + sc + ';font-weight:700">' + sp.status + '</div></div>' +
+          '</div>';
+      }).join('') + '</div></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+      '<div style="background:var(--sci-dim);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:10px">' +
+      '<div style="font-size:10px;font-weight:800;color:var(--sci);margin-bottom:4px">⚠️ Threat</div>' +
+      '<div style="font-size:11px;color:var(--text);line-height:1.6">' + eco.threat + '</div>' +
+      '</div>' +
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px">' +
+      '<div style="font-size:10px;font-weight:800;color:var(--evs);margin-bottom:4px">💡 Amazing Fact</div>' +
+      '<div style="font-size:11px;color:var(--text);line-height:1.6">' + eco.fact + '</div>' +
+      '</div></div>';
+  }
+
+  window.biodivEco = function(k) { ecosystem = k; render(); };
+  render();
+};
+
+/* ── 3. ELECTROLYSIS (electrolysis) ── */
+SIM_REGISTRY['electrolysis'] = function(c) {
+  var raf2, t2 = 0, running = false, bubbles = [];
+  var solution = 'water';
+  var solutions = {
+    water:    { name:'Water (H₂O)',       cathode:'H₂ gas',  anode:'O₂ gas',  ratio:'2:1', color:'rgba(77,150,255,0.3)', fact:'Water splits into hydrogen and oxygen. Hydrogen is a clean fuel!' },
+    brine:    { name:'Brine (NaCl)',       cathode:'H₂ gas',  anode:'Cl₂ gas', ratio:'1:1', color:'rgba(200,200,100,0.3)',fact:'Brine electrolysis makes chlorine (used in bleach) and sodium hydroxide (NaOH).' },
+    copper:   { name:'CuSO₄ solution',    cathode:'Cu metal',anode:'Cu dissolves',ratio:'—',color:'rgba(100,180,255,0.35)',fact:'Pure copper is deposited at cathode. Used in electroplating!' },
+  };
+
+  function draw() {
+    var cv = document.getElementById('elecCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    var sol = solutions[solution];
+
+    /* Beaker */
+    ctx.fillStyle = sol.color;
+    ctx.fillRect(50, 40, W - 100, H - 80);
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2;
+    ctx.strokeRect(50, 40, W - 100, H - 80);
+
+    /* Electrodes */
+    var cathX = W * 0.3, anodX = W * 0.7, electrodeY = 30, electrodeH = H * 0.6;
+    /* Cathode (-) */
+    ctx.fillStyle = '#888'; ctx.fillRect(cathX - 5, electrodeY, 10, electrodeH);
+    ctx.fillStyle = '#FF6B6B'; ctx.font = 'bold 11px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('− Cathode', cathX, electrodeY - 6);
+    ctx.fillStyle = '#aaa'; ctx.font = '9px Nunito,sans-serif';
+    ctx.fillText(sol.cathode, cathX, electrodeY + electrodeH + 14);
+    /* Anode (+) */
+    ctx.fillStyle = '#888'; ctx.fillRect(anodX - 5, electrodeY, 10, electrodeH);
+    ctx.fillStyle = '#6BCB77'; ctx.font = 'bold 11px Nunito,sans-serif';
+    ctx.fillText('+ Anode', anodX, electrodeY - 6);
+    ctx.fillStyle = '#aaa'; ctx.font = '9px Nunito,sans-serif';
+    ctx.fillText(sol.anode, anodX, electrodeY + electrodeH + 14);
+
+    /* Battery */
+    var batX = W / 2, batY = 14;
+    ctx.fillStyle = '#FFD93D'; ctx.fillRect(batX - 20, batY - 8, 40, 16); ctx.strokeStyle = '#C8A930'; ctx.lineWidth = 1.5; ctx.strokeRect(batX - 20, batY - 8, 40, 16);
+    ctx.fillStyle = '#000'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center'; ctx.fillText('⚡ DC', batX, batY + 4);
+    /* Wires */
+    ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cathX, electrodeY); ctx.lineTo(cathX, batY); ctx.lineTo(batX - 20, batY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(anodX, electrodeY); ctx.lineTo(anodX, batY); ctx.lineTo(batX + 20, batY); ctx.stroke();
+
+    /* Bubbles */
+    if (running) {
+      if (Math.random() < 0.3) {
+        bubbles.push({ x: cathX + (Math.random() - 0.5) * 8, y: electrodeY + electrodeH, r: 2 + Math.random() * 3, side: 'c' });
+        if (Math.random() < 0.5) bubbles.push({ x: anodX + (Math.random() - 0.5) * 8, y: electrodeY + electrodeH, r: 2 + Math.random() * 3, side: 'a' });
+      }
+    }
+    bubbles = bubbles.filter(function(b) {
+      b.y -= 1.5 + Math.random() * 0.5;
+      b.x += Math.sin(t2 * 3 + b.y) * 0.5;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.strokeStyle = b.side === 'c' ? 'rgba(77,150,255,0.8)' : 'rgba(107,203,119,0.8)';
+      ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = b.side === 'c' ? 'rgba(77,150,255,0.2)' : 'rgba(107,203,119,0.2)'; ctx.fill();
+      return b.y > 30;
+    });
+
+    /* Ion movement arrows */
+    if (running) {
+      ctx.strokeStyle = 'rgba(255,217,61,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 5]);
+      var iy = 40 + (H - 80) * 0.6 + ((t2 * 30) % ((H - 80) * 0.4));
+      ctx.beginPath(); ctx.moveTo(W * 0.45, iy); ctx.lineTo(cathX + 8, iy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W * 0.55, iy); ctx.lineTo(anodX - 8, iy); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    t2 += 0.04;
+    if (running) raf2 = requestAnimationFrame(draw);
+    else { ctx.clearRect(0, 0, W, H); draw(); }
+  }
+
+  function render() {
+    var sol = solutions[solution];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Electrolysis</div>' +
+      '<div class="ctrl-row" style="margin-bottom:6px;flex-wrap:wrap;gap:5px">' +
+      Object.keys(solutions).map(function(k) {
+        return '<button onclick="elecSol(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === solution ? 'var(--acc)' : 'var(--border)') + ';background:' + (k === solution ? 'var(--acc-dim)' : 'var(--surface2)') + ';color:' + (k === solution ? 'var(--acc)' : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + solutions[k].name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="elecCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="elecRun()" id="elecBtn" style="background:var(--math);color:white;border-color:var(--math)">⚡ Switch On</button>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '🔵 Cathode (−): ' + sol.cathode + ' · 🟢 Anode (+): ' + sol.anode + (sol.ratio !== '—' ? ' · Ratio: ' + sol.ratio : '') + '<br>' + sol.fact + '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.elecSol = function(k) { solution = k; cancelAnimationFrame(raf2); running = false; render(); };
+  window.elecRun = function() {
+    running = !running;
+    document.getElementById('elecBtn').textContent = running ? '⏸ Switch Off' : '⚡ Switch On';
+    if (running) draw();
+  };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); running = false; };
+  render();
+};
+
+/* ── 4. POPULATION DENSITY (population-density) ── */
+SIM_REGISTRY['population-density'] = function(c) {
+  var view = 'india';
+  var data = {
+    india: {
+      title: '🇮🇳 India — Population Density by State',
+      unit: 'persons/km²',
+      items: [
+        {name:'Bihar',          val:1102, color:'#FF6B6B'},
+        {name:'West Bengal',    val:1028, color:'#FF8C42'},
+        {name:'Kerala',         val:860,  color:'#FFD93D'},
+        {name:'UP',             val:828,  color:'#C8D44A'},
+        {name:'Punjab',         val:551,  color:'#6BCB77'},
+        {name:'Haryana',        val:573,  color:'#4D96FF'},
+        {name:'MP',             val:236,  color:'#4D96FF'},
+        {name:'Rajasthan',      val:201,  color:'#4D96FF'},
+        {name:'Arunachal',      val:17,   color:'#C77DFF'},
+      ],
+      fact:'India\'s average density is 382/km². Bihar is 3× the national average!'
+    },
+    world: {
+      title: '🌍 World — Population Density by Country',
+      unit: 'persons/km²',
+      items: [
+        {name:'Bangladesh',     val:1265, color:'#FF6B6B'},
+        {name:'South Korea',    val:528,  color:'#FF8C42'},
+        {name:'India',          val:382,  color:'#FFD93D'},
+        {name:'Japan',          val:347,  color:'#6BCB77'},
+        {name:'UK',             val:275,  color:'#4D96FF'},
+        {name:'China',          val:153,  color:'#4D96FF'},
+        {name:'USA',            val:36,   color:'#C77DFF'},
+        {name:'Australia',      val:3,    color:'#C77DFF'},
+        {name:'Canada',         val:4,    color:'#C77DFF'},
+      ],
+      fact:'Bangladesh is the most densely populated large nation — 1265 people per km²!'
+    }
+  };
+
+  function render() {
+    var d = data[view];
+    var max = Math.max.apply(null, d.items.map(function(i) { return i.val; }));
+    var bars = d.items.map(function(item) {
+      var pct = (item.val / max) * 100;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">' +
+        '<div style="min-width:90px;font-size:11px;font-weight:700;color:var(--text);text-align:right">' + item.name + '</div>' +
+        '<div style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + item.color + ';border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;transition:width .5s">' +
+        '<span style="font-size:9px;font-weight:800;color:rgba(0,0,0,0.7)">' + item.val + '</span>' +
+        '</div></div></div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Population Density</div>' +
+      '<div class="ctrl-row" style="margin-bottom:8px">' +
+      '<button onclick="popView(\'india\')" style="padding:6px 14px;border-radius:9px;font-size:12px;border:1.5px solid ' + (view === 'india' ? 'var(--acc)' : 'var(--border)') + ';background:' + (view === 'india' ? 'var(--acc-dim)' : 'var(--surface2)') + ';color:' + (view === 'india' ? 'var(--acc)' : 'var(--muted)') + ';cursor:pointer;font-weight:800">🇮🇳 India</button>' +
+      '<button onclick="popView(\'world\')" style="padding:6px 14px;border-radius:9px;font-size:12px;border:1.5px solid ' + (view === 'world' ? 'var(--acc)' : 'var(--border)') + ';background:' + (view === 'world' ? 'var(--acc-dim)' : 'var(--surface2)') + ';color:' + (view === 'world' ? 'var(--acc)' : 'var(--muted)') + ';cursor:pointer;font-weight:800">🌍 World</button>' +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">' + d.title + '</div>' +
+      '<div style="font-size:9px;color:var(--muted);margin-bottom:6px;text-align:right">' + d.unit + '</div>' +
+      bars +
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--text);line-height:1.7">' + d.fact + '</div>';
+  }
+
+  window.popView = function(v) { view = v; render(); };
+  render();
+};
+
+/* ── 5. TISSUE TYPES (tissue-types) ── */
+SIM_REGISTRY['tissue-types'] = function(c) {
+  var sel = 0;
+  var tissues = [
+    { name:'Epithelial Tissue', emoji:'🧱', color:'#FF6B6B',
+      desc:'Lines and covers body surfaces — skin, gut lining, blood vessels. Forms the outer boundary of organs. The body\'s first defence!',
+      types:['Squamous (flat)','Cuboidal (cube-shaped)','Columnar (tall)'],
+      location:'Skin, stomach lining, lung air sacs',
+      function:'Protection, secretion, absorption' },
+    { name:'Connective Tissue', emoji:'🕸️', color:'#FFD93D',
+      desc:'Connects and supports other tissues. Most widespread tissue type. Includes blood, bone, cartilage, fat, and tendons.',
+      types:['Blood (liquid)','Bone (rigid)','Cartilage (flexible)','Fat (adipose)'],
+      location:'Throughout the body',
+      function:'Support, transport, protection, energy storage' },
+    { name:'Muscle Tissue',     emoji:'💪', color:'#FF8C42',
+      desc:'Specialised for contraction and movement. Contains proteins actin and myosin that slide against each other.',
+      types:['Skeletal (voluntary)','Cardiac (heart)','Smooth (involuntary)'],
+      location:'Attached to bones, heart, organs',
+      function:'Movement, posture, heat generation' },
+    { name:'Nervous Tissue',    emoji:'⚡', color:'#4D96FF',
+      desc:'Receives and transmits electrical signals. Neurons communicate at 270 km/h! Forms brain, spinal cord, and nerves.',
+      types:['Neurons (signal cells)','Glial cells (support)'],
+      location:'Brain, spinal cord, nerves',
+      function:'Communication, coordination, thought, reflex' },
+  ];
+
+  function render() {
+    var t = tissues[sel];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Animal Tissue Types</div>' +
+      '<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:8px">' +
+      tissues.map(function(ti, i) {
+        return '<button onclick="tissueSel(' + i + ')" style="padding:6px 10px;border-radius:10px;border:2px solid ' + (i === sel ? ti.color : 'var(--border)') + ';background:' + (i === sel ? ti.color + '22' : 'var(--surface2)') + ';cursor:pointer;font-size:16px">' + ti.emoji + '</button>';
+      }).join('') + '</div>' +
+      '<div style="background:' + t.color + '15;border:2px solid ' + t.color + '44;border-radius:14px;padding:14px;margin-bottom:8px;text-align:center">' +
+      '<div style="font-size:40px;margin-bottom:6px">' + t.emoji + '</div>' +
+      '<div style="font-size:16px;font-weight:900;color:' + t.color + '">' + t.name + '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:8px">' + t.desc + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px;border:1px solid var(--border)">' +
+      '<div style="font-size:10px;font-weight:800;color:' + t.color + ';margin-bottom:4px">Types</div>' +
+      t.types.map(function(ty) { return '<div style="font-size:11px;color:var(--text);margin-bottom:2px">• ' + ty + '</div>'; }).join('') +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px;border:1px solid var(--border)">' +
+      '<div style="font-size:10px;font-weight:800;color:' + t.color + ';margin-bottom:4px">📍 Location</div>' +
+      '<div style="font-size:11px;color:var(--text);margin-bottom:6px">' + t.location + '</div>' +
+      '<div style="font-size:10px;font-weight:800;color:' + t.color + ';margin-bottom:4px">⚙️ Function</div>' +
+      '<div style="font-size:11px;color:var(--text)">' + t.function + '</div>' +
+      '</div></div>';
+  }
+
+  window.tissueSel = function(i) { sel = i; render(); };
+  render();
+};
+
+/* ── 6. SOUND VIBRATION (sound-vibration) ── */
+SIM_REGISTRY['sound-vibration'] = function(c) {
+  var raf2, t2 = 0, vibrating = false, medium = 'air';
+  var mediums = {
+    air:    { name:'🌬️ Air',    speed:343,  color:'#4D96FF', density:'Low', desc:'Sound travels as pressure waves. ~343 m/s at 20°C.' },
+    water:  { name:'💧 Water',  speed:1484, color:'#6BCB77', density:'High',desc:'4× faster than air! Whales communicate across oceans.' },
+    steel:  { name:'⚙️ Steel',  speed:5960, color:'#888',    density:'Very High',desc:'17× faster than air! You can hear trains through rails.' },
+    vacuum: { name:'🚀 Vacuum', speed:0,    color:'#333',    density:'None',desc:'NO sound! Space is completely silent.' },
+  };
+
+  function draw() {
+    var cv = document.getElementById('vibCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+
+    var med = mediums[medium];
+    var isVacuum = medium === 'vacuum';
+
+    /* Vibrating object */
+    var objX = 40, amplitude = vibrating && !isVacuum ? 12 : 2;
+    var objOff = vibrating && !isVacuum ? Math.sin(t2 * 8) * amplitude : 0;
+    ctx.fillStyle = '#FFD93D';
+    ctx.fillRect(objX - 8, H / 2 - 25 + objOff, 16, 50 - objOff * 2);
+    ctx.fillStyle = 'rgba(255,217,61,.3)';
+    ctx.fillRect(objX - 14, H / 2 - 35 + objOff * 0.5, 28, 70 - objOff);
+
+    /* Wave propagation */
+    if (vibrating && !isVacuum) {
+      var speed = med.speed / 400;
+      for (var ring = 0; ring < 6; ring++) {
+        var r = ((t2 * speed * 30 + ring * 40) % (W - objX)) + 10;
+        var alpha = Math.max(0, 0.7 - r / (W - objX));
+        ctx.beginPath();
+        ctx.arc(objX + r, H / 2, Math.min(r * 0.6, H / 2 - 15), 0, Math.PI * 2);
+        ctx.strokeStyle = med.color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+        ctx.lineWidth = 2; ctx.stroke();
+      }
+    }
+
+    /* Speed label */
+    ctx.fillStyle = isVacuum ? 'rgba(255,107,107,.7)' : med.color;
+    ctx.font = 'bold 12px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(isVacuum ? '🔇 NO SOUND in vacuum!' : '🔊 ' + med.speed + ' m/s', W / 2, H - 10);
+
+    if (vibrating && !isVacuum) t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var med = mediums[medium];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Sound — Vibration & Mediums</div>' +
+      '<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:8px">' +
+      Object.keys(mediums).map(function(k) {
+        return '<button onclick="vibMedium(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid ' + (k === medium ? mediums[k].color : 'var(--border)') + ';background:' + (k === medium ? mediums[k].color + '22' : 'var(--surface2)') + ';color:' + (k === medium ? mediums[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + mediums[k].name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="vibCanvas" width="300" height="160" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="vibToggle()" id="vibBtn" style="background:var(--math);color:white;border-color:var(--math)">🔊 Vibrate!</button>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '<b style="color:' + med.color + '">' + med.name + '</b> · Speed: <b>' + (med.speed || 'N/A') + ' m/s</b> · Density: ' + med.density + '<br>' + med.desc + '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.vibMedium = function(m) { medium = m; cancelAnimationFrame(raf2); render(); };
+  window.vibToggle = function() {
+    vibrating = !vibrating;
+    document.getElementById('vibBtn').textContent = vibrating ? '⏸ Stop' : '🔊 Vibrate!';
+  };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 7. EXAM STRATEGY (exam-strategy) ── */
+SIM_REGISTRY['exam-strategy'] = function(c) {
+  var phase = 'before';
+  var phases = {
+    before: {
+      emoji: '📚', title: 'Before the Exam', color: '#4D96FF',
+      tips: [
+        { icon: '🗓️', tip: 'Make a study timetable — allocate more time to weaker subjects' },
+        { icon: '📝', tip: 'Use active recall: test yourself rather than re-reading notes' },
+        { icon: '🌙', tip: 'Sleep 8 hours! Memory consolidates during sleep — all-nighters backfire' },
+        { icon: '🥗', tip: 'Eat a good meal. Glucose is the brain\'s only fuel' },
+        { icon: '🔄', tip: 'Spaced repetition: review topics after 1 day, 3 days, 1 week' },
+        { icon: '✏️', tip: 'Practise past papers under timed conditions' },
+      ]
+    },
+    during: {
+      emoji: '📋', title: 'During the Exam', color: '#6BCB77',
+      tips: [
+        { icon: '👀', tip: 'Read ALL questions first — 2 minutes well spent' },
+        { icon: '⏱️', tip: 'Allocate time per question. Don\'t get stuck — move on!' },
+        { icon: '💧', tip: 'Take deep breaths if anxious. Box breathing: 4s in, 4s hold, 4s out' },
+        { icon: '✅', tip: 'Attempt all questions — partial marks add up' },
+        { icon: '🔍', tip: 'Check your work with remaining time — catch silly errors' },
+        { icon: '📊', tip: 'Easy marks first — builds confidence and time' },
+      ]
+    },
+    after: {
+      emoji: '🎉', title: 'After the Exam', color: '#FFD93D',
+      tips: [
+        { icon: '🚫', tip: 'Don\'t discuss answers immediately — it causes anxiety for nothing' },
+        { icon: '😴', tip: 'Rest and recover — exams are mentally tiring' },
+        { icon: '📖', tip: 'Review mistakes when results come — learning from errors is growth' },
+        { icon: '🙏', tip: 'Celebrate effort, not just marks — the habit of working hard is the real win' },
+        { icon: '🔄', tip: 'Adjust your strategy for next time based on what worked' },
+        { icon: '💪', tip: 'One exam doesn\'t define your future. Keep going!' },
+      ]
+    }
+  };
+
+  function render() {
+    var p = phases[phase];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Exam Success Strategies</div>' +
+      '<div class="ctrl-row" style="margin-bottom:8px">' +
+      Object.keys(phases).map(function(k) {
+        return '<button onclick="examPhase(\'' + k + '\')" style="padding:6px 12px;border-radius:9px;font-size:12px;border:1.5px solid ' + (k === phase ? phases[k].color : 'var(--border)') + ';background:' + (k === phase ? phases[k].color + '22' : 'var(--surface2)') + ';color:' + (k === phase ? phases[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + phases[k].emoji + ' ' + phases[k].title.split(' ')[0] + '</button>';
+      }).join('') + '</div>' +
+      '<div style="text-align:center;font-size:36px;margin-bottom:4px">' + p.emoji + '</div>' +
+      '<div style="text-align:center;font-size:14px;font-weight:900;color:' + p.color + ';margin-bottom:10px">' + p.title + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      p.tips.map(function(t) {
+        return '<div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border-radius:10px;padding:9px 12px;border:1px solid var(--border)">' +
+          '<span style="font-size:18px;flex-shrink:0">' + t.icon + '</span>' +
+          '<span style="font-size:12px;color:var(--text);line-height:1.6">' + t.tip + '</span>' +
+          '</div>';
+      }).join('') + '</div>';
+  }
+
+  window.examPhase = function(p) { phase = p; render(); };
+  render();
+};
+
+/* ── 8. ANGLES SIM (angles-sim) ── */
+SIM_REGISTRY['angles-sim'] = function(c) {
+  var angle = 65, type = 'interactive';
+
+  function getAngleType(a) {
+    if (a === 0) return { name: 'Zero Angle', color: '#888' };
+    if (a < 90) return { name: 'Acute Angle', color: '#6BCB77' };
+    if (a === 90) return { name: 'Right Angle', color: '#4D96FF' };
+    if (a < 180) return { name: 'Obtuse Angle', color: '#FFD93D' };
+    if (a === 180) return { name: 'Straight Angle', color: '#FF8C42' };
+    if (a < 360) return { name: 'Reflex Angle', color: '#FF6B6B' };
+    return { name: 'Complete Angle', color: '#C77DFF' };
+  }
+
+  function render() {
+    var at = getAngleType(angle);
+    var W = 220, H = 180, CX = W / 2, CY = H * 0.75, R = 80;
+    var rad = angle * Math.PI / 180;
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Types of Angles</div>' +
+      '<svg width="' + W + '" height="' + H + '" style="display:block;background:#0a0a1a;border-radius:12px;margin:0 auto">' +
+      /* Base ray */
+      '<line x1="' + (CX - R) + '" y1="' + CY + '" x2="' + (CX + R) + '" y2="' + CY + '" stroke="rgba(255,255,255,.3)" stroke-width="2.5"/>' +
+      /* Arc */
+      '<path d="M ' + (CX + 40) + ' ' + CY + ' A 40 40 0 ' + (angle > 180 ? '1' : '0') + ' 0 ' + (CX + 40 * Math.cos(-rad)) + ' ' + (CY + 40 * Math.sin(-rad)) + '" fill="' + at.color + '33" stroke="' + at.color + '" stroke-width="2"/>' +
+      /* Angle ray */
+      '<line x1="' + CX + '" y1="' + CY + '" x2="' + (CX + R * Math.cos(-rad)) + '" y2="' + (CY + R * Math.sin(-rad)) + '" stroke="' + at.color + '" stroke-width="2.5"/>' +
+      /* Right angle marker */
+      (angle === 90 ? '<rect x="' + CX + '" y="' + (CY - 14) + '" width="14" height="14" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>' : '') +
+      /* Angle label */
+      '<text x="' + (CX + 55 * Math.cos(-rad / 2)) + '" y="' + (CY + 55 * Math.sin(-rad / 2) + 4) + '" fill="' + at.color + '" font-size="14" font-weight="bold" text-anchor="middle" font-family="Nunito">' + angle + '°</text>' +
+      /* Type label */
+      '<text x="' + W / 2 + '" y="22" fill="' + at.color + '" font-size="12" font-weight="bold" text-anchor="middle" font-family="Nunito">' + at.name + '</text>' +
+      '</svg>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Angle:</span>' +
+      '<input type="range" class="slide" min="0" max="360" value="' + angle + '" oninput="angSet(this.value)" style="flex:1">' +
+      '<span style="font-size:16px;font-weight:900;color:' + at.color + '">' + angle + '°</span>' +
+      '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:center">' +
+      [0, 45, 90, 120, 180, 270, 360].map(function(a) {
+        var at2 = getAngleType(a);
+        return '<button onclick="angSet(' + a + ')" style="padding:3px 8px;border-radius:7px;font-size:11px;border:1px solid ' + (a === angle ? at2.color : 'var(--border)') + ';background:' + (a === angle ? at2.color + '22' : 'var(--surface2)') + ';color:' + (a === angle ? at2.color : 'var(--muted)') + ';cursor:pointer">' + a + '°</button>';
+      }).join('') + '</div>';
+  }
+
+  window.angSet = function(v) { angle = parseInt(v); render(); };
+  render();
+};
+
+/* ── 9. GEO CONSTRUCTIONS (geo-constructions) ── */
+SIM_REGISTRY['geo-constructions'] = function(c) {
+  var construction = 'bisect';
+  var constructions = {
+    bisect: {
+      name: '✂️ Angle Bisector',
+      color: '#6BCB77',
+      desc: 'Divide an angle into two equal halves using compass and ruler. The bisector is equidistant from both rays!',
+      steps: ['Draw angle ABC', 'Place compass at B, draw arc cutting both rays at D and E', 'Place compass at D, draw arc in the interior', 'Same radius at E, draw arc crossing previous arc at F', 'Draw BF — this is the angle bisector!'],
+    },
+    perpendicular: {
+      name: '⊥ Perpendicular Bisector',
+      color: '#4D96FF',
+      desc: 'Bisect a line segment at 90°. Every point on the perpendicular bisector is equidistant from both endpoints!',
+      steps: ['Draw line segment AB', 'Place compass at A with radius > half AB, draw arcs above and below', 'Same radius at B, draw arcs crossing previous arcs at C and D', 'Draw CD — this is the perpendicular bisector', 'Verify: CD meets AB at its midpoint at 90°!'],
+    },
+    triangle60: {
+      name: '🔺 60° Equilateral Triangle',
+      color: '#FFD93D',
+      desc: 'Construct a perfect equilateral triangle using only compass and ruler. All angles = 60°, all sides equal!',
+      steps: ['Draw base AB', 'Place compass at A with radius = AB, draw arc above', 'Place compass at B with same radius, draw arc crossing at C', 'Draw AC and BC', 'Triangle ABC has all sides equal and all angles 60°!'],
+    }
+  };
+
+  function drawConstruction(ctx, W, H, key, t) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+    var con = constructions[key];
+    ctx.strokeStyle = con.color; ctx.lineWidth = 2;
+
+    if (key === 'bisect') {
+      var bx = W * 0.2, by = H * 0.7, len = 80;
+      var a1 = -0.3, a2 = -0.9, bisect = (a1 + a2) / 2;
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + len * Math.cos(a1), by + len * Math.sin(a1)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + len * Math.cos(a2), by + len * Math.sin(a2)); ctx.stroke();
+      /* Arc at vertex */
+      ctx.strokeStyle = 'rgba(255,217,61,.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.arc(bx, by, 35, a1, a2, true); ctx.stroke();
+      /* Intersection arcs */
+      var d1x = bx + 35 * Math.cos(a1), d1y = by + 35 * Math.sin(a1);
+      var d2x = bx + 35 * Math.cos(a2), d2y = by + 35 * Math.sin(a2);
+      ctx.beginPath(); ctx.arc(d1x, d1y, 30, -0.5, 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.arc(d2x, d2y, 30, -0.8, 0.2); ctx.stroke();
+      ctx.setLineDash([]);
+      /* Bisector line */
+      ctx.strokeStyle = con.color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + len * Math.cos(bisect), by + len * Math.sin(bisect)); ctx.stroke();
+      ctx.fillStyle = con.color; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Bisector', bx + (len + 10) * Math.cos(bisect), by + (len + 10) * Math.sin(bisect));
+    } else if (key === 'perpendicular') {
+      var ax = W * 0.2, bx2 = W * 0.75, midY = H * 0.6;
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ax, midY); ctx.lineTo(bx2, midY); ctx.stroke();
+      var midX = (ax + bx2) / 2;
+      /* Arcs */
+      ctx.strokeStyle = 'rgba(77,150,255,.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.arc(ax, midY, (bx2 - ax) * 0.6, -1.8, 0.6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx2, midY, (bx2 - ax) * 0.6, Math.PI - 0.6, Math.PI + 1.8); ctx.stroke();
+      ctx.setLineDash([]);
+      /* Perpendicular */
+      ctx.strokeStyle = con.color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(midX, midY - 60); ctx.lineTo(midX, midY + 60); ctx.stroke();
+      /* Right angle square */
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(midX, midY - 12, 12, 12);
+      ctx.fillStyle = '#4D96FF'; ctx.font = '10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('90°', midX + 20, midY - 4);
+    } else {
+      var tx = W * 0.15, ty = H * 0.75, tlen = W * 0.65;
+      var ax2 = tx, ay = ty, bx3 = tx + tlen, by2 = ty;
+      var cx = tx + tlen / 2, cy = ty - tlen * Math.sqrt(3) / 2;
+      ctx.strokeStyle = con.color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(ax2, ay); ctx.lineTo(bx3, by2); ctx.lineTo(cx, cy); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = con.color + '15'; ctx.fill();
+      /* Construction arcs */
+      ctx.strokeStyle = 'rgba(255,217,61,.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]);
+      ctx.beginPath(); ctx.arc(ax2, ay, tlen, -1.2, 0.2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(bx3, by2, tlen, Math.PI - 0.2, Math.PI + 1.2); ctx.stroke();
+      ctx.setLineDash([]);
+      /* Labels */
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '10px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('A', ax2 - 10, ay + 14); ctx.fillText('B', bx3 + 10, by2 + 14); ctx.fillText('C', cx, cy - 8);
+      ctx.fillStyle = con.color;
+      ctx.fillText('60°', ax2 + 18, ay - 8); ctx.fillText('60°', bx3 - 20, by2 - 8); ctx.fillText('60°', cx, cy + 18);
+    }
+  }
+
+  var raf2, t2 = 0;
+  function animate() {
+    var cv = document.getElementById('geoCanvas');
+    if (!cv) return;
+    drawConstruction(cv.getContext('2d'), cv.width, cv.height, construction, t2);
+    t2 += 0.02; raf2 = requestAnimationFrame(animate);
+  }
+
+  function render() {
+    var con = constructions[construction];
+    c.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      Object.keys(constructions).map(function(k) {
+        return '<button onclick="geoConst(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === construction ? constructions[k].color : 'var(--border)') + ';background:' + (k === construction ? constructions[k].color + '22' : 'var(--surface2)') + ';color:' + (k === construction ? constructions[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + constructions[k].name + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="geoCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border)">' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-bottom:6px">' + con.desc + '</div>' +
+      '<div style="font-size:10px;font-weight:800;color:' + con.color + ';margin-bottom:4px">Steps:</div>' +
+      con.steps.map(function(s, i) { return '<div style="font-size:11px;color:var(--muted);margin-bottom:2px"><b style="color:' + con.color + '">' + (i + 1) + '.</b> ' + s + '</div>'; }).join('') +
+      '</div>';
+    cancelAnimationFrame(raf2); animate();
+  }
+
+  window.geoConst = function(k) { construction = k; cancelAnimationFrame(raf2); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 10. COMPOST SIM (compost-sim) ── */
+SIM_REGISTRY['compost-sim'] = function(c) {
+  var raf2, t2 = 0, running = false, decomp = 0;
+  var items = { leaves: 3, vegPeel: 2, paper: 1, meat: 0, plastic: 0 };
+
+  function quality() {
+    var score = items.leaves * 2 + items.vegPeel * 3 + items.paper * 1 - items.meat * 5 - items.plastic * 10;
+    if (score >= 10) return { label: '🌱 Excellent compost!', color: 'var(--evs)' };
+    if (score >= 5) return { label: '✅ Good compost', color: 'var(--math)' };
+    if (score >= 0) return { label: '⚠️ Poor mix', color: 'var(--acc)' };
+    return { label: '❌ Not compostable!', color: 'var(--sci)' };
+  }
+
+  function draw() {
+    var cv = document.getElementById('compCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+
+    /* Compost bin */
+    ctx.fillStyle = '#3a2a14'; ctx.fillRect(W * 0.2, H * 0.25, W * 0.6, H * 0.65);
+    ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 2; ctx.strokeRect(W * 0.2, H * 0.25, W * 0.6, H * 0.65);
+    /* Slats */
+    for (var s = 0; s < 5; s++) {
+      ctx.strokeStyle = '#2a1a08'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(W * 0.2, H * 0.25 + s * H * 0.13); ctx.lineTo(W * 0.8, H * 0.25 + s * H * 0.13); ctx.stroke();
+    }
+
+    /* Compost contents */
+    var fillH = (decomp / 100) * H * 0.6;
+    var q = quality();
+    ctx.fillStyle = q.color === 'var(--evs)' ? '#3a6b1e' : q.color === 'var(--math)' ? '#6b5a1e' : '#3a1e1e';
+    ctx.fillRect(W * 0.22, H * 0.25 + H * 0.63 - fillH, W * 0.56, fillH);
+
+    /* Worms */
+    if (running && decomp > 20) {
+      for (var w = 0; w < 3; w++) {
+        var wx = W * 0.3 + w * W * 0.15 + Math.sin(t2 * 2 + w) * 10;
+        var wy = H * 0.7 + Math.cos(t2 + w) * 8;
+        ctx.strokeStyle = '#ff9966'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (var seg = 0; seg < 5; seg++) ctx.lineTo(wx + seg * 8, wy + Math.sin(t2 * 3 + seg + w) * 4);
+        ctx.stroke();
+      }
+    }
+
+    /* Decomposition % */
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = 'bold 12px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(decomp) + '% decomposed', W / 2, H * 0.22);
+
+    if (running && decomp < 100) { decomp = Math.min(100, decomp + 0.15); }
+    t2 += 0.04;
+    if (running) raf2 = requestAnimationFrame(draw);
+    else { ctx.clearRect(0, 0, W, H); draw(); }
+  }
+
+  function render() {
+    var q = quality();
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Composting Simulator</div>' +
+      '<canvas id="compCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-top:8px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">Add to your compost bin:</div>' +
+      [
+        { k: 'leaves',  label: '🍂 Dry Leaves',   max: 10, good: true },
+        { k: 'vegPeel', label: '🥕 Veggie Peels',  max: 10, good: true },
+        { k: 'paper',   label: '📄 Paper',         max: 5,  good: true },
+        { k: 'meat',    label: '🥩 Meat (avoid!)', max: 5,  good: false },
+        { k: 'plastic', label: '🛍️ Plastic (NO!)', max: 3,  good: false },
+      ].map(function(item) {
+        return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+          '<span style="font-size:11px;min-width:120px;color:' + (item.good ? 'var(--text)' : 'var(--sci)') + '">' + item.label + '</span>' +
+          '<input type="range" class="slide" min="0" max="' + item.max + '" value="' + items[item.k] + '" oninput="compSet(\'' + item.k + '\',this.value)" style="flex:1">' +
+          '<span style="font-size:11px;font-weight:800;color:var(--text);min-width:16px">' + items[item.k] + '</span>' +
+          '</div>';
+      }).join('') +
+      '</div>' +
+      '<div style="background:' + q.color + '22;border:1px solid ' + q.color + '44;border-radius:10px;padding:8px;margin-top:6px;text-align:center;font-size:13px;font-weight:800;color:' + q.color + '">' + q.label + '</div>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="compRun()" id="compBtn" style="background:var(--evs);color:white;border-color:var(--evs)">🌱 Start Decomposing</button>' +
+      '<button class="cbtn" onclick="compReset()">↺ Reset</button>' +
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.compSet = function(k, v) { items[k] = parseInt(v); };
+  window.compRun = function() {
+    running = !running;
+    document.getElementById('compBtn').textContent = running ? '⏸ Pause' : '🌱 Resume';
+    if (running) draw();
+  };
+  window.compReset = function() { running = false; decomp = 0; cancelAnimationFrame(raf2); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); running = false; };
+  render();
+};
+
+/* ── 11. RAIN HARVEST (rain-harvest) ── */
+SIM_REGISTRY['rain-harvest'] = function(c) {
+  var roofArea = 100, rainfall = 600, efficiency = 0.8;
+
+  function render() {
+    var annualCollect = Math.round(roofArea * (rainfall / 1000) * efficiency * 1000);
+    var dailyAvg = Math.round(annualCollect / 365);
+    var familyNeeds = 150 * 4 * 365; /* 4 person family, 150L/day */
+    var coversPct = Math.min(100, Math.round(annualCollect / familyNeeds * 100));
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">☔ Rainwater Harvesting</div>' +
+      /* Visual */
+      '<svg width="280" height="140" style="display:block;background:#0a0a1a;border-radius:12px;width:100%;margin-bottom:8px">' +
+      /* Rain */
+      (Array.from({length:12},function(_,i){'';return '<line x1="'+(20+i*22)+'" y1="0" x2="'+(15+i*22)+'" y2="20" stroke="rgba(77,150,255,0.5)" stroke-width="1.5"/>';}).join('')) +
+      /* Roof */
+      '<polygon points="40,40 140,10 240,40" fill="#C8945A" stroke="#8B6914" stroke-width="2"/>' +
+      /* Gutters */
+      '<line x1="40" y1="40" x2="40" y2="80" stroke="#888" stroke-width="4"/>' +
+      '<line x1="240" y1="40" x2="240" y2="80" stroke="#888" stroke-width="4"/>' +
+      /* Pipe */
+      '<line x1="40" y1="80" x2="80" y2="80" stroke="#888" stroke-width="3"/>' +
+      '<line x1="80" y1="80" x2="80" y2="120" stroke="#888" stroke-width="3"/>' +
+      /* Tank */
+      '<rect x="60" y="100" width="60" height="35" fill="rgba(77,150,255,0.3)" stroke="rgba(77,150,255,0.6)" stroke-width="2" rx="4"/>' +
+      '<text x="90" y="123" fill="rgba(77,150,255,.8)" font-size="9" text-anchor="middle" font-family="Nunito">' + Math.round(annualCollect / 1000) + 'kL/yr</text>' +
+      /* Labels */
+      '<text x="140" y="132" fill="rgba(255,255,255,.4)" font-size="9" text-anchor="middle" font-family="Nunito">Roof area: ' + roofArea + 'm² · Rainfall: ' + rainfall + 'mm/yr</text>' +
+      '</svg>' +
+      /* Stats */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
+      [
+        { label: '💧 Annual Collection', val: (annualCollect / 1000).toFixed(1) + ' kL', color: 'var(--life)' },
+        { label: '📅 Daily Average', val: dailyAvg + ' L/day', color: 'var(--acc)' },
+        { label: '👨‍👩‍👧‍👦 Family Coverage', val: coversPct + '%', color: coversPct > 50 ? 'var(--evs)' : 'var(--math)' },
+        { label: '🌍 Saves', val: Math.round(annualCollect / 1000) + ' tankers/yr', color: 'var(--evs)' },
+      ].map(function(s) {
+        return '<div style="background:var(--surface2);border-radius:10px;padding:8px;border:1px solid var(--border);text-align:center">' +
+          '<div style="font-size:10px;color:var(--muted)">' + s.label + '</div>' +
+          '<div style="font-size:18px;font-weight:900;color:' + s.color + '">' + s.val + '</div>' +
+          '</div>';
+      }).join('') + '</div>' +
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Roof: <b>' + roofArea + 'm²</b></span>' +
+      '<input type="range" class="slide" min="10" max="300" step="10" value="' + roofArea + '" oninput="rainRoof(this.value)" style="width:90px">' +
+      '<span style="font-size:11px;color:var(--muted)">Rainfall: <b>' + rainfall + 'mm</b></span>' +
+      '<input type="range" class="slide" min="100" max="3000" step="100" value="' + rainfall + '" oninput="rainfall(this.value)" style="width:90px">' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">Kerala receives 3,000mm rainfall — one of the highest in India. Yet faces water scarcity! Harvesting can change this.</div>';
+  }
+
+  window.rainRoof = function(v) { roofArea = parseInt(v); render(); };
+  window.rainFall = function(v) { rainfall = parseInt(v); render(); };
+  window.simCleanup = function() {};
+  render();
+};
+
+/* ── 12. STRESS TOOLS (stress-tools) ── */
+SIM_REGISTRY['stress-tools'] = function(c) {
+  var tool = 'breathing';
+  var raf2, t2 = 0, running = false;
+
+  var tools = {
+    breathing: {
+      name: '🫁 Box Breathing',
+      color: '#4D96FF',
+      desc: 'Used by Navy SEALs to stay calm under pressure. 4 seconds each phase.',
+      phases: ['Breathe IN', 'HOLD', 'Breathe OUT', 'HOLD'],
+      duration: 4,
+    },
+    grounding: {
+      name: '🌿 5-4-3-2-1 Grounding',
+      color: '#6BCB77',
+      desc: 'Brings you back to the present moment. Stops anxious thoughts.',
+      steps: ['Name 5 things you can SEE 👁️', 'Name 4 things you can TOUCH ✋', 'Name 3 things you can HEAR 👂', 'Name 2 things you can SMELL 👃', 'Name 1 thing you can TASTE 👅'],
+    },
+    affirmation: {
+      name: '💪 Positive Affirmations',
+      color: '#FFD93D',
+      desc: 'Repeat these when feeling anxious or low. Rewires your thinking!',
+      affirmations: ['I am capable of handling challenges', 'I have done hard things before', 'This feeling is temporary — it will pass', 'I am learning and growing every day', 'It\'s okay to not be perfect', 'I deserve kindness — from myself too'],
+    },
+  };
+
+  function render() {
+    var to = tools[tool];
+    var body = '';
+
+    if (tool === 'breathing') {
+      var phase = Math.floor(t2 / to.duration) % 4;
+      var progress = (t2 % to.duration) / to.duration;
+      var r = 40 + (tool === 'breathing' ? (phase === 0 || phase === 3 ? progress : phase === 1 ? 1 : 1 - progress) * 30 : 0);
+      body =
+        '<div style="text-align:center;margin-bottom:10px">' +
+        '<svg width="160" height="160" style="display:inline-block">' +
+        '<circle cx="80" cy="80" r="70" fill="rgba(77,150,255,.08)" stroke="rgba(77,150,255,.2)" stroke-width="2"/>' +
+        '<circle cx="80" cy="80" r="' + r + '" fill="rgba(77,150,255,' + (0.1 + progress * 0.2) + ')" stroke="#4D96FF" stroke-width="3" style="transition:r .5s"/>' +
+        '<text x="80" y="76" fill="white" font-size="13" font-weight="bold" text-anchor="middle" font-family="Nunito">' + (running ? to.phases[phase] : 'Tap Start') + '</text>' +
+        '<text x="80" y="94" fill="rgba(255,255,255,.5)" font-size="11" text-anchor="middle" font-family="Nunito">' + (running ? Math.ceil(to.duration - t2 % to.duration) + 's' : '') + '</text>' +
+        '</svg></div>' +
+        '<div class="ctrl-row">' +
+        '<button class="cbtn" onclick="stressRun()" id="stressBtn" style="background:' + to.color + ';color:white;border-color:' + to.color + '">' + (running ? '⏸ Pause' : '▶ Start') + '</button>' +
+        '</div>';
+    } else if (tool === 'grounding') {
+      body = '<div style="display:flex;flex-direction:column;gap:6px">' +
+        to.steps.map(function(s, i) {
+          return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px">' +
+            '<div style="width:24px;height:24px;border-radius:50%;background:' + to.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">' + (5 - i) + '</div>' +
+            '<div style="font-size:12px;color:var(--text);line-height:1.5">' + s + '</div>' +
+            '</div>';
+        }).join('') + '</div>';
+    } else {
+      var idx = Math.floor(t2 / 4) % to.affirmations.length;
+      body =
+        '<div style="background:' + to.color + '22;border:2px solid ' + to.color + '44;border-radius:14px;padding:20px;text-align:center;min-height:80px;margin-bottom:10px">' +
+        '<div style="font-size:14px;font-weight:700;color:' + to.color + ';line-height:1.7">"' + to.affirmations[running ? idx : 0] + '"</div>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+        '<button class="cbtn" onclick="stressRun()" id="stressBtn" style="background:' + to.color + ';color:white;border-color:' + to.color + '">' + (running ? '⏸ Pause' : '▶ Next Affirmation') + '</button>' +
+        '</div>';
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Stress Management Tools</div>' +
+      '<div class="ctrl-row" style="margin-bottom:8px;flex-wrap:wrap;gap:5px">' +
+      Object.keys(tools).map(function(k) {
+        return '<button onclick="stressTool(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === tool ? tools[k].color : 'var(--border)') + ';background:' + (k === tool ? tools[k].color + '22' : 'var(--surface2)') + ';color:' + (k === tool ? tools[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + tools[k].name + '</button>';
+      }).join('') + '</div>' +
+      body +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">' + to.desc + '</div>';
+  }
+
+  var interval;
+  window.stressTool = function(k) { tool = k; running = false; t2 = 0; clearInterval(interval); render(); };
+  window.stressRun = function() {
+    running = !running;
+    if (running) { interval = setInterval(function() { t2 += 0.1; render(); }, 100); }
+    else { clearInterval(interval); render(); }
+  };
+  window.simCleanup = function() { clearInterval(interval); };
+  render();
+};
+
+/* ── 13. FAMILY TREE (family-tree) ── */
+SIM_REGISTRY['family-tree'] = function(c) {
+  var members = [
+    { id: 'gg', name: 'Great-grandpa', gen: 0, x: 0.5, emoji: '👴', color: '#888' },
+    { id: 'gm', name: 'Great-grandma', gen: 0, x: 0.5, emoji: '👵', color: '#888', right: true },
+    { id: 'gf', name: 'Grandpa', gen: 1, x: 0.28, emoji: '👴', color: '#4D96FF' },
+    { id: 'gmo', name: 'Grandma', gen: 1, x: 0.72, emoji: '👵', color: '#C77DFF' },
+    { id: 'fa', name: 'Father', gen: 2, x: 0.2, emoji: '👨', color: '#6BCB77' },
+    { id: 'mo', name: 'Mother', gen: 2, x: 0.5, emoji: '👩', color: '#FF8C42' },
+    { id: 'un', name: 'Uncle', gen: 2, x: 0.8, emoji: '👨', color: '#FFD93D' },
+    { id: 'me', name: 'You!', gen: 3, x: 0.35, emoji: '⭐', color: '#FF6B6B' },
+    { id: 'si', name: 'Sibling', gen: 3, x: 0.65, emoji: '🧒', color: '#6BCB77' },
+  ];
+  var selected = null;
+
+  var relations = {
+    gg: 'Great-grandparent — your grandparent\'s parent!',
+    gm: 'Great-grandparent — your grandparent\'s parent!',
+    gf: 'Paternal Grandparent (Thatha/Nana)',
+    gmo: 'Maternal/Paternal Grandparent (Paati/Nani)',
+    fa: 'Father — your male parent',
+    mo: 'Mother — your female parent',
+    un: 'Uncle — your parent\'s sibling',
+    me: 'You are the centre of your family tree!',
+    si: 'Sibling — brother or sister',
+  };
+
+  function render() {
+    var W = 280, H = 220;
+    var genY = [20, 70, 130, 185];
+
+    var nodes = members.map(function(m) {
+      var x = m.x * W, y = genY[m.gen];
+      var isSel = selected === m.id;
+      return '<circle cx="' + x + '" cy="' + y + '" r="' + (isSel ? 20 : 16) + '" fill="' + m.color + '33" stroke="' + m.color + '" stroke-width="' + (isSel ? 3 : 2) + '" style="cursor:pointer" onclick="famSel(\'' + m.id + '\')"/>' +
+        '<text x="' + x + '" y="' + (y + 5) + '" font-size="14" text-anchor="middle">' + m.emoji + '</text>' +
+        '<text x="' + x + '" y="' + (y + 30) + '" fill="' + m.color + '" font-size="8" font-weight="bold" text-anchor="middle" font-family="Nunito">' + m.name + '</text>';
+    }).join('');
+
+    /* Connection lines */
+    var lines =
+      '<line x1="' + (0.5*W) + '" y1="' + genY[0] + '" x2="' + (0.28*W) + '" y2="' + genY[1] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.5*W) + '" y1="' + genY[0] + '" x2="' + (0.72*W) + '" y2="' + genY[1] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.28*W) + '" y1="' + genY[1] + '" x2="' + (0.2*W) + '" y2="' + genY[2] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.72*W) + '" y1="' + genY[1] + '" x2="' + (0.5*W) + '" y2="' + genY[2] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.28*W) + '" y1="' + genY[1] + '" x2="' + (0.8*W) + '" y2="' + genY[2] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.2*W) + '" y1="' + genY[2] + '" x2="' + (0.35*W) + '" y2="' + genY[3] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>' +
+      '<line x1="' + (0.5*W) + '" y1="' + genY[2] + '" x2="' + (0.65*W) + '" y2="' + genY[3] + '" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Family Tree</div>' +
+      '<svg width="' + W + '" height="' + H + '" style="display:block;background:#0a0a1a;border-radius:12px;width:100%">' +
+      /* Generation labels */
+      '<text x="4" y="' + (genY[0]+4) + '" fill="rgba(255,255,255,.2)" font-size="7" font-family="Nunito">Gen 1</text>' +
+      '<text x="4" y="' + (genY[1]+4) + '" fill="rgba(255,255,255,.2)" font-size="7" font-family="Nunito">Gen 2</text>' +
+      '<text x="4" y="' + (genY[2]+4) + '" fill="rgba(255,255,255,.2)" font-size="7" font-family="Nunito">Gen 3</text>' +
+      '<text x="4" y="' + (genY[3]+4) + '" fill="rgba(255,255,255,.2)" font-size="7" font-family="Nunito">You</text>' +
+      lines + nodes +
+      '</svg>' +
+      (selected ?
+        '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+        '<b style="color:var(--acc)">' + members.find(function(m){return m.id===selected;}).name + '</b>: ' + relations[selected] +
+        '</div>'
+        : '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-top:8px;border:1px solid var(--border);text-align:center;color:var(--muted);font-size:12px">☝️ Tap any family member to learn the relation</div>') +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">You have 2 parents, 4 grandparents, 8 great-grandparents — it doubles each generation!</div>';
+  }
+
+  window.famSel = function(id) { selected = selected === id ? null : id; render(); };
+  render();
+};
+
+/* ── 14. DEFORESTATION RUNOFF (deforestation-runoff) ── */
+SIM_REGISTRY['deforestation-runoff'] = function(c) {
+  var raf2, t2 = 0, rain = false, deforested = false, drops = [], soil = 100;
+
+  function draw() {
+    var cv = document.getElementById('defCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+
+    /* Sky */
+    ctx.fillStyle = rain ? '#1a2a3a' : '#0a1a2a'; ctx.fillRect(0, 0, W, H * 0.35);
+    /* Clouds */
+    if (rain) {
+      ctx.fillStyle = '#334455';
+      [[W*0.2,H*0.08,50,18],[W*0.6,H*0.06,65,22]].forEach(function(cl) {
+        ctx.beginPath(); ctx.ellipse(cl[0],cl[1],cl[2],cl[3],0,0,Math.PI*2); ctx.fill();
+      });
+    }
+
+    /* Ground / slope */
+    var soilColor = 'rgba(' + Math.round(60 + (100-soil)*1.5) + ',' + Math.round(40 + soil*0.2) + ',20,0.9)';
+    ctx.fillStyle = soilColor; ctx.fillRect(0, H*0.35, W, H*0.65);
+
+    /* Trees or stumps */
+    var treePositions = [0.1, 0.2, 0.3, 0.6, 0.7, 0.8, 0.9];
+    treePositions.forEach(function(xp) {
+      var tx = xp * W, ty = H * 0.35;
+      if (!deforested) {
+        ctx.fillStyle = '#2d5a1e';
+        ctx.beginPath(); ctx.moveTo(tx, ty-35); ctx.lineTo(tx-14,ty); ctx.lineTo(tx+14,ty); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(tx, ty-48); ctx.lineTo(tx-10,ty-20); ctx.lineTo(tx+10,ty-20); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#5a3a10'; ctx.fillRect(tx-3, ty, 6, 14);
+      } else {
+        ctx.fillStyle = '#5a3a10'; ctx.fillRect(tx-4, ty, 8, 8);
+        ctx.strokeStyle = '#4a2a08'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(tx, ty+4, 4, 0, Math.PI*2); ctx.stroke();
+      }
+    });
+
+    /* Rain drops */
+    if (rain) {
+      if (Math.random() < 0.4) drops.push({ x: Math.random()*W, y: 0, speed: 3+Math.random()*2 });
+      drops = drops.filter(function(d) {
+        d.y += d.speed;
+        ctx.strokeStyle = 'rgba(100,180,255,0.6)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x-1,d.y-7); ctx.stroke();
+        if (d.y > H * 0.35) {
+          if (deforested) { soil = Math.max(0, soil - 0.05); }
+          return false;
+        }
+        return true;
+      });
+    }
+
+    /* Runoff stream if deforested */
+    if (deforested && rain) {
+      ctx.strokeStyle = 'rgba(139,90,43,0.6)'; ctx.lineWidth = 4; ctx.setLineDash([5,3]);
+      ctx.beginPath();
+      for (var x = 0; x < W; x += 4) ctx.lineTo(x, H*0.35 + H*0.05 + Math.sin(x/20+t2)*4);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    /* Soil level indicator */
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = 'bold 11px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Topsoil: ' + Math.round(soil) + '%', W/2, H-8);
+    if (soil < 50) { ctx.fillStyle = 'rgba(255,107,107,.8)'; ctx.fillText('⚠️ Critical erosion!', W/2, H-22); }
+
+    t2 += 0.04;
+    raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Deforestation & Soil Erosion</div>' +
+      '<canvas id="defCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="defRain()" id="defRainBtn" style="background:var(--life);color:white;border-color:var(--life)">🌧️ Start Rain</button>' +
+      '<button class="cbtn" onclick="defForest()" id="defForestBtn" style="background:var(--evs);color:white;border-color:var(--evs)">' + (deforested ? '🌳 Replant' : '🪓 Deforest') + '</button>' +
+      '<button class="cbtn" onclick="defReset()">↺ Reset</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">Tree roots hold soil. Without them, rain washes topsoil away — permanently. It takes 1,000 years to form 1cm of topsoil.</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.defRain = function() {
+    rain = !rain;
+    document.getElementById('defRainBtn').textContent = rain ? '⏸ Stop Rain' : '🌧️ Start Rain';
+  };
+  window.defForest = function() {
+    deforested = !deforested;
+    document.getElementById('defForestBtn').textContent = deforested ? '🌳 Replant' : '🪓 Deforest';
+  };
+  window.defReset = function() { rain = false; deforested = false; drops = []; soil = 100; cancelAnimationFrame(raf2); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 10 — 14 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. ANIMAL HOMES (animal-homes) ── */
+SIM_REGISTRY['animal-homes'] = function(c) {
+  var sel = 0;
+  var animals = [
+    { name:'🐝 Honeybee',   home:'Beehive',      emoji:'🍯', color:'#FFD93D', fact:'Bees build hexagonal cells — the strongest shape that uses least wax. 50,000 bees in one hive!', material:'Beeswax secreted from body' },
+    { name:'🦫 Beaver',     home:'Lodge',        emoji:'🪵', color:'#C8945A', fact:'Beavers build dams and lodges entirely underwater entrance — natural flood control!', material:'Sticks, mud, bark' },
+    { name:'🐦 Weaver Bird',home:'Woven Nest',   emoji:'🪺', color:'#6BCB77', fact:'Male weaver birds weave intricate nests to impress females. If she doesn\'t like it, he tears it down and starts again!', material:'Grass blades, leaves, fibre' },
+    { name:'🐜 Termite',    home:'Termite Mound',emoji:'🏔️', color:'#C8945A', fact:'Termite mounds have perfect air conditioning — vents keep temperature steady at 29°C even in the desert!', material:'Soil, saliva, dung' },
+    { name:'🐠 Clownfish',  home:'Anemone',      emoji:'🪸', color:'#FF8C42', fact:'Clownfish are immune to anemone\'s sting. They protect the anemone from predators — perfect symbiosis!', material:'Lives inside anemone tentacles' },
+    { name:'🦅 Eagle',      home:'Eyrie',        emoji:'🌄', color:'#888',    fact:'Eagles reuse the same nest for decades! The world\'s largest eagle nest was 6 metres deep and weighed 2 tonnes.', material:'Sticks, grass, bones' },
+  ];
+
+  function render() {
+    var a = animals[sel];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Animal Homes</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      animals.map(function(an, i) {
+        return '<button onclick="animalSel(' + i + ')" style="padding:5px 10px;border-radius:9px;font-size:13px;border:2px solid ' + (i===sel?an.color:'var(--border)') + ';background:' + (i===sel?an.color+'22':'var(--surface2)') + ';cursor:pointer">' + an.name.split(' ')[0] + '</button>';
+      }).join('') + '</div>' +
+      '<div style="background:' + a.color + '15;border:2px solid ' + a.color + '44;border-radius:14px;padding:20px;text-align:center;margin-bottom:10px">' +
+      '<div style="font-size:52px;margin-bottom:6px">' + a.emoji + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:' + a.color + '">' + a.name + '\'s ' + a.home + '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px;border:1px solid var(--border)">' +
+      '<div style="font-size:10px;font-weight:800;color:' + a.color + ';margin-bottom:4px">🏗️ Built With</div>' +
+      '<div style="font-size:12px;color:var(--text)">' + a.material + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px;border:1px solid var(--border)">' +
+      '<div style="font-size:10px;font-weight:800;color:' + a.color + ';margin-bottom:4px">🏠 Called</div>' +
+      '<div style="font-size:12px;font-weight:800;color:var(--text)">' + a.home + '</div>' +
+      '</div></div>' +
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);line-height:1.7">💡 ' + a.fact + '</div>';
+  }
+  window.animalSel = function(i) { sel = i; render(); };
+  render();
+};
+
+/* ── 2. CLIMATE WEATHER (climate-weather) ── */
+SIM_REGISTRY['climate-weather'] = function(c) {
+  var raf2, t2 = 0, day = 0;
+  var season = 'monsoon';
+  var seasons = {
+    monsoon: { name:'☔ Monsoon (June–Sep)', color:'#4D96FF', temp:'25–32°C', rain:'High', humidity:'Very High', emoji:'🌧️', cloudCover:0.9, rainIntensity:0.8 },
+    winter:  { name:'❄️ Winter (Nov–Feb)',   color:'#C8D4E8', temp:'15–25°C', rain:'Low',  humidity:'Low',       emoji:'🌤️', cloudCover:0.2, rainIntensity:0 },
+    summer:  { name:'☀️ Summer (Mar–May)',   color:'#FF8C42', temp:'35–45°C', rain:'None', humidity:'Low',       emoji:'☀️', cloudCover:0.05, rainIntensity:0 },
+    postmonsoon:{name:'🌥️ Post-Monsoon (Oct)',color:'#6BCB77',temp:'22–30°C', rain:'Medium',humidity:'Medium',  emoji:'⛅', cloudCover:0.4, rainIntensity:0.2 },
+  };
+
+  function draw() {
+    var cv = document.getElementById('climateCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    var s = seasons[season];
+
+    /* Sky gradient */
+    var skyTop = season === 'summer' ? '#3a1a00' : season === 'winter' ? '#1a2a3a' : '#0a1a2a';
+    var skyBot = season === 'summer' ? '#ff6600' : season === 'monsoon' ? '#1a3a5a' : '#2a3a4a';
+    var grad = ctx.createLinearGradient(0, 0, 0, H * 0.6);
+    grad.addColorStop(0, skyTop); grad.addColorStop(1, skyBot);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H * 0.6);
+
+    /* Sun */
+    if (season !== 'monsoon') {
+      var sunBright = season === 'summer' ? 1 : 0.6;
+      ctx.beginPath(); ctx.arc(W * 0.75, H * 0.15, season === 'summer' ? 28 : 20, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,' + (season === 'summer' ? 150 : 217) + ',50,' + sunBright + ')';
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20 * sunBright;
+      ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    /* Clouds */
+    var cloudCount = Math.round(s.cloudCover * 6);
+    for (var ci = 0; ci < cloudCount; ci++) {
+      var cx2 = (W * 0.1 + ci * W * 0.16 + Math.sin(t2 * 0.3 + ci) * 8) % W;
+      var cy2 = H * 0.1 + ci * H * 0.06;
+      ctx.fillStyle = season === 'monsoon' ? 'rgba(60,80,100,0.9)' : 'rgba(180,200,220,0.7)';
+      ctx.beginPath(); ctx.ellipse(cx2, cy2, 35, 15, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    /* Rain */
+    if (s.rainIntensity > 0) {
+      for (var ri = 0; ri < Math.round(s.rainIntensity * 20); ri++) {
+        var rx = ((ri * 17 + t2 * 60) % W);
+        var ry = (t2 * 50 + ri * 11) % (H * 0.6);
+        ctx.strokeStyle = 'rgba(100,180,255,0.6)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 1, ry - 7); ctx.stroke();
+      }
+    }
+
+    /* Ground */
+    var groundColor = season === 'summer' ? '#7a5a2a' : season === 'monsoon' ? '#2d5a1e' : '#4a7a3a';
+    ctx.fillStyle = groundColor; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+
+    /* Tree */
+    ctx.fillStyle = season === 'summer' ? '#8B6914' : '#2d5a1e';
+    ctx.beginPath(); ctx.moveTo(W * 0.3, H * 0.6); ctx.lineTo(W * 0.3 - 20, H * 0.75); ctx.lineTo(W * 0.3 + 20, H * 0.75); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(W * 0.3, H * 0.48); ctx.lineTo(W * 0.3 - 15, H * 0.62); ctx.lineTo(W * 0.3 + 15, H * 0.62); ctx.closePath(); ctx.fill();
+
+    /* Stats overlay */
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(W * 0.55, H * 0.62, W * 0.43, H * 0.36);
+    ctx.fillStyle = s.color; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'left';
+    [['🌡️', s.temp], ['🌧️', s.rain + ' rain'], ['💧', s.humidity + ' humidity']].forEach(function(item, i) {
+      ctx.fillText(item[0] + ' ' + item[1], W * 0.57, H * 0.68 + i * H * 0.1);
+    });
+
+    t2 += 0.04; raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Climate & Weather — India\'s Seasons</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      Object.keys(seasons).map(function(k) {
+        return '<button onclick="climateSel(\'' + k + '\')" style="padding:5px 9px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k===season?seasons[k].color:'var(--border)') + ';background:' + (k===season?seasons[k].color+'22':'var(--surface2)') + ';color:' + (k===season?seasons[k].color:'var(--muted)') + ';cursor:pointer;font-weight:800">' + seasons[k].emoji + ' ' + k + '</button>';
+      }).join('') + '</div>' +
+      '<canvas id="climateCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">India\'s climate is controlled by monsoon winds from the Indian Ocean. Kerala gets the monsoon first — every June 1st, called the "Monsoon Onset"!</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+  window.climateSel = function(k) { cancelAnimationFrame(raf2); season = k; render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 3. PARLIAMENT SIM (parliament-sim) ── */
+SIM_REGISTRY['parliament-sim'] = function(c) {
+  var stage = 0;
+  var stages = [
+    { emoji:'💡', title:'Bill Introduced',       color:'#4D96FF', desc:'A minister or MP proposes a new law (Bill). It\'s introduced in Lok Sabha or Rajya Sabha with a speech explaining why it\'s needed.' },
+    { emoji:'📋', title:'First Reading',          color:'#6BCB77', desc:'The Bill\'s title is read out. No debate yet — just formal introduction. Printed and circulated to all members to read.' },
+    { emoji:'🗣️', title:'Second Reading & Debate',color:'#FFD93D', desc:'Members debate the Bill\'s principles. A Select or Standing Committee may study it in detail and suggest changes.' },
+    { emoji:'✏️', title:'Committee Stage',        color:'#FF8C42', desc:'The Bill is examined clause by clause. Members can propose amendments (changes). Experts may be consulted.' },
+    { emoji:'🗳️', title:'Third Reading & Vote',   color:'#C77DFF', desc:'Final debate. Members vote. If majority approves in one House, it goes to the other House (Lok Sabha ↔ Rajya Sabha).' },
+    { emoji:'✅', title:'Presidential Assent',    color:'#6BCB77', desc:'After both Houses pass the Bill, the President signs it. It becomes an ACT — the law of the land!' },
+  ];
+
+  function render() {
+    var s = stages[stage];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">How a Bill Becomes Law in India</div>' +
+      /* Timeline dots */
+      '<div style="display:flex;gap:4px;justify-content:center;align-items:center;margin-bottom:10px">' +
+      stages.map(function(st, i) {
+        return '<div style="width:' + (i===stage?'24px':'10px') + ';height:10px;border-radius:6px;background:' + (i<=stage?st.color:'var(--border)') + ';transition:all .3s;cursor:pointer" onclick="parlStage(' + i + ')"></div>';
+      }).join('<div style="height:1px;flex:1;background:var(--border)"></div>') + '</div>' +
+      '<div style="background:' + s.color + '15;border:2px solid ' + s.color + '44;border-radius:14px;padding:20px;text-align:center;margin-bottom:10px">' +
+      '<div style="font-size:48px;margin-bottom:6px">' + s.emoji + '</div>' +
+      '<div style="font-size:15px;font-weight:900;color:' + s.color + ';margin-bottom:6px">Stage ' + (stage+1) + ': ' + s.title + '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">' + s.desc + '</div>' +
+      '</div>' +
+      '<div class="ctrl-row">' +
+      (stage > 0 ? '<button class="cbtn" onclick="parlStage(' + (stage-1) + ')">← Back</button>' : '<div></div>') +
+      (stage < stages.length-1 ?
+        '<button class="cbtn" onclick="parlStage(' + (stage+1) + ')" style="background:' + s.color + ';color:white;border-color:' + s.color + '">Next Stage →</button>' :
+        '<button class="cbtn" onclick="parlStage(0)" style="background:var(--evs);color:white;border-color:var(--evs)">🔄 New Bill</button>') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">India\'s Parliament has two houses: <b style="color:var(--text)">Lok Sabha</b> (545 members, directly elected) and <b style="color:var(--text)">Rajya Sabha</b> (245 members).</div>';
+  }
+  window.parlStage = function(i) { stage = i; render(); };
+  render();
+};
+
+/* ── 4. WATER JOURNEY (water-journey) ── */
+SIM_REGISTRY['water-journey'] = function(c) {
+  var step = 0, raf2, t2 = 0;
+  var steps = [
+    { emoji:'🌊', title:'Source: River/Dam',     color:'#4D96FF', desc:'Water comes from rivers, lakes, reservoirs, or underground aquifers. India gets most of its drinking water from the Himalayan rivers and monsoon rainfall.' },
+    { emoji:'🏭', title:'Treatment Plant',        color:'#6BCB77', desc:'Raw water is treated: 1) Screening removes large debris, 2) Sedimentation — particles settle, 3) Filtration through sand/gravel, 4) Chlorination kills bacteria.' },
+    { emoji:'🧪', title:'Quality Testing',        color:'#FFD93D', desc:'Water is tested for pH, turbidity, bacteria, and chemical levels. Must meet BIS standards (IS 10500) before being released.' },
+    { emoji:'🏗️', title:'Storage: Overhead Tank', color:'#C77DFF', desc:'Clean water is pumped to elevated storage tanks (overhead reservoirs). Gravity provides the pressure to push water into homes.' },
+    { emoji:'🚰', title:'Distribution Network',   color:'#FF8C42', desc:'A network of underground pipes carries water to every neighbourhood. Pipes range from 2km diameter mains to small home connections.' },
+    { emoji:'🚿', title:'Your Tap!',              color:'#6BCB77', desc:'Clean, safe water reaches your home. It travels hundreds of kilometres and through 5 treatment stages before you drink it. Every drop is precious!' },
+  ];
+
+  function draw() {
+    var cv = document.getElementById('waterJCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+
+    /* Animated water flow */
+    var stepX = W / steps.length;
+    steps.forEach(function(st, i) {
+      var x = stepX * i + stepX / 2, y = H / 2;
+      var isActive = i === step, isPast = i < step;
+      /* Node */
+      ctx.beginPath(); ctx.arc(x, y, isActive ? 22 : 14, 0, Math.PI * 2);
+      ctx.fillStyle = isActive ? st.color + 'aa' : isPast ? st.color + '44' : 'rgba(255,255,255,.05)';
+      ctx.fill();
+      ctx.strokeStyle = isActive ? st.color : isPast ? st.color + '66' : 'rgba(255,255,255,.1)';
+      ctx.lineWidth = isActive ? 2.5 : 1.5; ctx.stroke();
+      ctx.font = (isActive ? '20px' : '14px') + ' sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(st.emoji, x, y + 6);
+      /* Connector */
+      if (i < steps.length - 1) {
+        var nx = stepX * (i + 1) + stepX / 2;
+        /* Animated water drop on pipe */
+        if (isPast) {
+          var dropX = x + 14 + ((t2 * 20) % (nx - x - 28));
+          ctx.beginPath(); ctx.arc(dropX, y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = steps[i].color + '88'; ctx.fill();
+        }
+        ctx.strokeStyle = isPast ? steps[i].color + '44' : 'rgba(255,255,255,.08)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x + 14, y); ctx.lineTo(nx - 14, y); ctx.stroke();
+      }
+    });
+    t2 += 0.04; raf2 = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    var s = steps[step];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Journey of Water — Source to Tap</div>' +
+      '<canvas id="waterJCanvas" width="300" height="100" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:' + s.color + '15;border:2px solid ' + s.color + '44;border-radius:12px;padding:14px;margin-top:8px;margin-bottom:8px">' +
+      '<div style="font-size:15px;font-weight:900;color:' + s.color + ';margin-bottom:4px">Step ' + (step+1) + ': ' + s.emoji + ' ' + s.title + '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">' + s.desc + '</div>' +
+      '</div>' +
+      '<div class="ctrl-row">' +
+      (step > 0 ? '<button class="cbtn" onclick="waterJStep(-1)">← Back</button>' : '<div></div>') +
+      (step < steps.length-1 ?
+        '<button class="cbtn" onclick="waterJStep(1)" style="background:' + s.color + ';color:white;border-color:' + s.color + '">Next →</button>' :
+        '<button class="cbtn" onclick="waterJStep(-' + step + ')" style="background:var(--evs);color:white;border-color:var(--evs)">🔄 Start Again</button>') +
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+  window.waterJStep = function(d) { step = Math.max(0, Math.min(steps.length-1, step+d)); cancelAnimationFrame(raf2); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+/* ── 5. LONGITUDE & TIME (longitude-time) ── */
+SIM_REGISTRY['longitude-time'] = function(c) {
+  var longitude = 82.5; /* IST standard */
+
+  function render() {
+    var utcHour = 12;
+    var offset = longitude / 15;
+    var localHour = (utcHour + offset) % 24;
+    var citiesData = [
+      { name:'London',  lon:0,     tz:'UTC+0' },
+      { name:'Mumbai',  lon:72.8,  tz:'UTC+5:30' },
+      { name:'IST',     lon:82.5,  tz:'UTC+5:30 (Standard)' },
+      { name:'Kolkata', lon:88.4,  tz:'UTC+5:30' },
+      { name:'Tokyo',   lon:139.7, tz:'UTC+9' },
+    ];
+
+    var W = 280, H = 120;
+    /* Globe-like representation */
+    var svgLines = '';
+    for (var lo = -180; lo <= 180; lo += 30) {
+      var x = (lo + 180) / 360 * W;
+      var isSelected = Math.abs(lo - longitude) < 15;
+      svgLines += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '" stroke="' + (isSelected ? 'rgba(255,217,61,.5)' : 'rgba(255,255,255,.06)') + '" stroke-width="' + (isSelected ? 2 : 1) + '"/>';
+    }
+    /* Equator */
+    svgLines += '<line x1="0" y1="' + H/2 + '" x2="' + W + '" y2="' + H/2 + '" stroke="rgba(255,255,255,.1)" stroke-width="1"/>';
+    /* Cities */
+    citiesData.forEach(function(city) {
+      var cx2 = (city.lon + 180) / 360 * W;
+      var cityOffset = city.lon / 15;
+      var cityTime = Math.round((utcHour + cityOffset) % 24);
+      svgLines += '<circle cx="' + cx2 + '" cy="' + H/2 + '" r="5" fill="rgba(255,107,107,.8)"/>';
+      svgLines += '<text x="' + cx2 + '" y="' + (H/2-10) + '" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle" font-family="Nunito">' + city.name + '</text>';
+      svgLines += '<text x="' + cx2 + '" y="' + (H/2+20) + '" fill="rgba(255,107,107,.8)" font-size="8" text-anchor="middle" font-family="Nunito">' + cityTime + ':00</text>';
+    });
+    /* Selected longitude marker */
+    var selX = (longitude + 180) / 360 * W;
+    svgLines += '<line x1="' + selX + '" y1="0" x2="' + selX + '" y2="' + H + '" stroke="#FFD93D" stroke-width="2"/>';
+    svgLines += '<circle cx="' + selX + '" cy="' + H/2 + '" r="7" fill="#FFD93D"/>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Longitude & Time Zones</div>' +
+      '<svg width="' + W + '" height="' + H + '" style="display:block;background:#0a0a1a;border-radius:12px;width:100%;margin-bottom:8px">' +
+      svgLines + '</svg>' +
+      '<div style="text-align:center;margin-bottom:10px">' +
+      '<div style="font-size:13px;color:var(--muted)">At longitude <b style="color:#FFD93D">' + longitude + '°E</b>:</div>' +
+      '<div style="font-size:28px;font-weight:900;color:#FFD93D">' + Math.floor(localHour) + ':' + (localHour % 1 * 60).toFixed(0).padStart(2,'0') + ' local time</div>' +
+      '<div style="font-size:11px;color:var(--muted)">when UTC = 12:00 noon</div>' +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-bottom:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Longitude:</span>' +
+      '<input type="range" class="slide" min="-180" max="180" step="7.5" value="' + longitude + '" oninput="longSet(this.value)" style="flex:1">' +
+      '<span style="font-size:14px;font-weight:900;color:#FFD93D">' + longitude + '°</span>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '🇮🇳 India spans 68°E to 97°E — a difference of 2 hours! To avoid confusion, India uses a single standard time: <b>IST = 82.5°E = UTC+5:30</b> (the 82.5° meridian passes through Allahabad).' +
+      '</div>';
+  }
+  window.longSet = function(v) { longitude = parseFloat(v); render(); };
+  render();
+};
+
+/* ── 6. AIR SPACE (air-space) ── */
+SIM_REGISTRY['air-space'] = function(c) {
+  var layer = 0;
+  var layers = [
+    { name:'Troposphere',   range:'0–12 km',   temp:'15°C to −57°C', color:'#4D96FF', emoji:'✈️', desc:'Where all weather happens. Contains 75% of atmosphere\'s mass. We live at the bottom of this layer!', fact:'Mount Everest (8.8km) is within the troposphere' },
+    { name:'Stratosphere',  range:'12–50 km',  temp:'−57°C to 0°C',  color:'#6BCB77', emoji:'🎈', desc:'Where the ozone layer sits (15–35km). Absorbs harmful UV radiation. Weather balloons reach here.', fact:'Concorde jets flew in the lower stratosphere at 18km' },
+    { name:'Mesosphere',    range:'50–85 km',  temp:'0°C to −90°C',  color:'#C77DFF', emoji:'☄️', desc:'The coldest layer. Meteors burn up here due to friction with air particles. Very difficult to study.', fact:'Temperature drops to −90°C — the coldest natural place on Earth' },
+    { name:'Thermosphere',  range:'85–600 km', temp:'−90°C to 2500°C',color:'#FF8C42', emoji:'🌠', desc:'Northern Lights (Aurora) happen here. ISS orbits here at 400km. Temperature is extreme but air is too thin.', fact:'ISS astronauts are in the thermosphere right now!' },
+    { name:'Exosphere',     range:'>600 km',   temp:'0°C to 2000°C', color:'#FF6B6B', emoji:'🛸', desc:'Transition to outer space. GPS satellites orbit here. Air is so thin individual molecules escape into space.', fact:'The Kármán line at 100km is where "space" officially begins' },
+  ];
+
+  function render() {
+    var l = layers[layer];
+    var W = 80, totalH = 250;
+    var svg = '<svg width="' + W + '" height="' + totalH + '" style="flex-shrink:0">';
+    var segH = totalH / layers.length;
+    layers.forEach(function(la, i) {
+      var y = i * segH;
+      svg += '<rect x="0" y="' + y + '" width="' + W + '" height="' + segH + '" fill="' + la.color + (i===layer?'55':'11') + '" stroke="' + la.color + (i===layer?'':'44') + '" stroke-width="' + (i===layer?2:0.5) + '" style="cursor:pointer" onclick="airLayer(' + i + ')"/>';
+      svg += '<text x="' + W/2 + '" y="' + (y+segH/2) + '" fill="' + la.color + '" font-size="' + (i===layer?11:9) + '" font-weight="bold" text-anchor="middle" font-family="Nunito">' + la.emoji + '</text>';
+      svg += '<text x="' + W/2 + '" y="' + (y+segH/2+12) + '" fill="rgba(255,255,255,0.4)" font-size="7" text-anchor="middle" font-family="Nunito">' + la.name.slice(0,5) + '</text>';
+    });
+    svg += '</svg>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Layers of the Atmosphere</div>' +
+      '<div style="display:flex;gap:10px;align-items:flex-start">' + svg +
+      '<div style="flex:1">' +
+      '<div style="background:' + l.color + '22;border:2px solid ' + l.color + '55;border-radius:12px;padding:12px;margin-bottom:8px">' +
+      '<div style="font-size:16px;font-weight:900;color:' + l.color + '">' + l.emoji + ' ' + l.name + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin:4px 0">📏 ' + l.range + ' · 🌡️ ' + l.temp + '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-top:4px">' + l.desc + '</div>' +
+      '</div>' +
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:9px;font-size:11px;color:var(--text);line-height:1.7">💡 ' + l.fact + '</div>' +
+      '</div></div>' +
+      '<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">← Tap layers to explore each</div>';
+  }
+  window.airLayer = function(i) { layer = i; render(); };
+  render();
+};
+
+/* ── 7. GROUPED MEAN (grouped-mean) ── */
+SIM_REGISTRY['grouped-mean'] = function(c) {
+  var groups = [
+    { range:'0–10',  freq:3,  mid:5  },
+    { range:'10–20', freq:7,  mid:15 },
+    { range:'20–30', freq:12, mid:25 },
+    { range:'30–40', freq:8,  mid:35 },
+    { range:'40–50', freq:4,  mid:45 },
+    { range:'50–60', freq:2,  mid:55 },
+  ];
+
+  function render() {
+    var totalFreq = groups.reduce(function(s,g){return s+g.freq;},0);
+    var totalFX = groups.reduce(function(s,g){return s+g.freq*g.mid;},0);
+    var mean = (totalFX/totalFreq).toFixed(2);
+    var maxFreq = Math.max.apply(null, groups.map(function(g){return g.freq;}));
+
+    var bars = groups.map(function(g, i) {
+      var h = (g.freq/maxFreq)*90;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">' +
+        '<div style="font-size:10px;font-weight:800;color:var(--acc)">' + g.freq + '</div>' +
+        '<div style="width:100%;height:' + h + 'px;background:var(--acc);border-radius:3px 3px 0 0;cursor:pointer" ' +
+        'onclick="gmEdit(' + i + ')"></div>' +
+        '<div style="font-size:9px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);margin-top:2px">' + g.range + '</div>' +
+        '</div>';
+    }).join('');
+
+    var table = '<table style="width:100%;border-collapse:collapse;font-size:11px">' +
+      '<tr style="background:var(--surface2)"><th style="padding:4px 6px;color:var(--muted);font-weight:700;text-align:left">Range</th><th style="padding:4px;color:var(--muted);font-weight:700">f</th><th style="padding:4px;color:var(--muted);font-weight:700">mid (x)</th><th style="padding:4px;color:var(--muted);font-weight:700">f×x</th></tr>' +
+      groups.map(function(g) {
+        return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 6px;color:var(--text)">' + g.range + '</td><td style="padding:4px;text-align:center;color:var(--acc)">' + g.freq + '</td><td style="padding:4px;text-align:center;color:var(--muted)">' + g.mid + '</td><td style="padding:4px;text-align:center;color:var(--math)">' + (g.freq*g.mid) + '</td></tr>';
+      }).join('') +
+      '<tr style="background:var(--surface2);font-weight:800"><td style="padding:4px 6px;color:var(--text)">Total</td><td style="padding:4px;text-align:center;color:var(--acc)">' + totalFreq + '</td><td style="padding:4px"></td><td style="padding:4px;text-align:center;color:var(--math)">' + totalFX + '</td></tr>' +
+      '</table>';
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Grouped Mean</div>' +
+      '<div style="display:flex;align-items:flex-end;height:110px;gap:4px;border-bottom:2px solid var(--border);margin-bottom:8px">' + bars + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">Click a bar to change its frequency</div>' +
+      table +
+      '<div style="text-align:center;margin-top:10px;font-size:14px;font-weight:900;color:var(--evs)">Mean = Σ(f×x) ÷ Σf = ' + totalFX + ' ÷ ' + totalFreq + ' = ' + mean + '</div>';
+  }
+
+  window.gmEdit = function(i) {
+    var newFreq = parseInt(prompt('Enter frequency for range ' + groups[i].range + ':', groups[i].freq));
+    if (!isNaN(newFreq) && newFreq >= 0) { groups[i].freq = newFreq; render(); }
+  };
+  render();
+};
+
+/* ── 8. MINDSET FLIP (mindset-flip) ── */
+SIM_REGISTRY['mindset-flip'] = function(c) {
+  var currentIdx = 0;
+  var thoughts = [
+    { fixed: 'I\'m just bad at maths.',         growth: 'I haven\'t mastered this yet. With practice, I can improve!', tip: 'The word "yet" is powerful. It changes a fixed limit into a temporary state.' },
+    { fixed: 'I failed the test. I\'m stupid.',  growth: 'This result shows me exactly what to study next time.', tip: 'A test result is data, not a verdict. Mistakes are information.' },
+    { fixed: 'She\'s naturally smart. I\'m not.', growth: 'She worked harder on this. I can build those skills too.', tip: 'Research shows that effort and strategy matter more than "natural talent".' },
+    { fixed: 'I can\'t do this. It\'s too hard.', growth: 'This is challenging — that means my brain is growing!', tip: 'Neuroscience: struggling actually creates new neural connections. Hard = growth.' },
+    { fixed: 'I give up. What\'s the point?',    growth: 'Let me try a different approach or ask for help.', tip: '"Not giving up" doesn\'t mean trying the same thing. It means trying differently.' },
+    { fixed: 'Criticism makes me feel terrible.', growth: 'Feedback is free coaching. What can I learn from this?', tip: 'The best learners actively seek feedback — it\'s their fastest path to improvement.' },
+  ];
+  var showing = 'fixed';
+
+  function render() {
+    var t = thoughts[currentIdx];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Growth Mindset Flipper</div>' +
+      /* Cards */
+      '<div style="position:relative;min-height:130px;margin-bottom:8px">' +
+      '<div style="background:' + (showing==='fixed'?'var(--sci-dim)':'var(--evs-dim)') + ';border:2px solid ' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';border-radius:14px;padding:16px;transition:all .3s">' +
+      '<div style="font-size:11px;font-weight:800;color:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';margin-bottom:8px">' + (showing==='fixed'?'❌ Fixed Mindset':'✅ Growth Mindset') + '</div>' +
+      '<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.7;font-style:italic">"' + (showing==='fixed'?t.fixed:t.growth) + '"</div>' +
+      '</div></div>' +
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--text);line-height:1.7">💡 ' + t.tip + '</div>' +
+      '<div class="ctrl-row">' +
+      '<button class="cbtn" onclick="mfPrev()" style="font-size:11px">← Prev</button>' +
+      '<button class="cbtn" onclick="mfFlip()" style="background:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';color:white;border-color:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';font-size:13px">🔄 Flip!</button>' +
+      '<button class="cbtn" onclick="mfNext()" style="font-size:11px">Next →</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">Carol Dweck\'s research: Students with a <b style="color:var(--evs)">growth mindset</b> outperform those with fixed mindset — even if their initial ability is the same!</div>';
+  }
+  window.mfFlip = function() { showing = showing === 'fixed' ? 'growth' : 'fixed'; render(); };
+  window.mfNext = function() { currentIdx = (currentIdx+1) % thoughts.length; showing='fixed'; render(); };
+  window.mfPrev = function() { currentIdx = (currentIdx-1+thoughts.length) % thoughts.length; showing='fixed'; render(); };
+  render();
+};
+
+/* ── 9. DAILY ROUTINE (daily-routine) ── */
+SIM_REGISTRY['daily-routine'] = function(c) {
+  var tasks = [
+    { time:'6:00', icon:'⏰', task:'Wake up & stretch', done:false, category:'health' },
+    { time:'6:15', icon:'🪥', task:'Brush teeth & freshen up', done:false, category:'hygiene' },
+    { time:'6:30', icon:'🧘', task:'Exercise or yoga (20 min)', done:false, category:'health' },
+    { time:'7:00', icon:'🍳', task:'Breakfast (never skip!)', done:false, category:'food' },
+    { time:'7:30', icon:'📚', task:'Study — hardest subject first', done:false, category:'study' },
+    { time:'9:00', icon:'🏫', task:'School / online class', done:false, category:'study' },
+    { time:'14:00',icon:'🥗', task:'Lunch & short rest', done:false, category:'food' },
+    { time:'15:00',icon:'📖', task:'Homework & revision', done:false, category:'study' },
+    { time:'17:00',icon:'⚽', task:'Play / physical activity', done:false, category:'health' },
+    { time:'19:00',icon:'🍽️', task:'Dinner with family', done:false, category:'food' },
+    { time:'20:00',icon:'📚', task:'Light reading or revision', done:false, category:'study' },
+    { time:'21:30',icon:'😴', task:'Sleep — 9 hours!', done:false, category:'health' },
+  ];
+  var catColors = { health:'var(--evs)', hygiene:'var(--life)', study:'var(--acc)', food:'var(--math)' };
+
+  function render() {
+    var doneCnt = tasks.filter(function(t){return t.done;}).length;
+    var pct = Math.round(doneCnt/tasks.length*100);
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">📅 My Daily Routine</div>' +
+      '<div style="height:8px;background:var(--surface2);border-radius:4px;margin-bottom:8px"><div style="height:8px;width:' + pct + '%;background:var(--evs);border-radius:4px;transition:width .4s"></div></div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px">' + doneCnt + '/' + tasks.length + ' tasks done · ' + pct + '%</div>' +
+      '<div style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto">' +
+      tasks.map(function(t, i) {
+        return '<div onclick="dailyToggle(' + i + ')" style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:10px;padding:8px 10px;border:1.5px solid ' + (t.done?catColors[t.category]:'var(--border)') + ';cursor:pointer;transition:all .2s">' +
+          '<div style="width:20px;height:20px;border-radius:50%;border:2px solid ' + (t.done?catColors[t.category]:'var(--border)') + ';background:' + (t.done?catColors[t.category]:'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s">' +
+          (t.done?'<span style="color:white;font-size:11px">✓</span>':'') + '</div>' +
+          '<span style="font-size:11px;color:var(--muted);min-width:40px">' + t.time + '</span>' +
+          '<span style="font-size:16px">' + t.icon + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:' + (t.done?'var(--muted)':'var(--text)') + ';text-decoration:' + (t.done?'line-through':'none') + '">' + t.task + '</span>' +
+          '</div>';
+      }).join('') + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Tap tasks to mark them done. A consistent routine reduces stress and improves performance!</div>';
+  }
+  window.dailyToggle = function(i) { tasks[i].done = !tasks[i].done; render(); };
+  render();
+};
+
+/* ── 10. FOOD AUDIT (food-audit) ── */
+SIM_REGISTRY['food-audit'] = function(c) {
+  var meals = {
+    breakfast: { items:['Paratha','Chai','Banana'], cals:[250,45,90] },
+    lunch:     { items:['Rice','Dal','Sabzi','Roti'], cals:[200,120,80,80] },
+    snack:     { items:['Chips','Cold drink'], cals:[160,140] },
+    dinner:    { items:['Roti','Sabzi','Curd'], cals:[160,100,60] },
+  };
+  var selected = 'breakfast';
+
+  function render() {
+    var totalCals = Object.values(meals).reduce(function(sum, m) {
+      return sum + m.cals.reduce(function(a,b){return a+b;},0);
+    }, 0);
+    var recommended = 2000;
+    var pct = Math.min(100, Math.round(totalCals/recommended*100));
+
+    var mealRows = Object.keys(meals).map(function(k) {
+      var m = meals[k];
+      var mealCal = m.cals.reduce(function(a,b){return a+b;},0);
+      var isSel = k === selected;
+      return '<div onclick="foodMeal(\'' + k + '\')" style="background:var(--surface2);border-radius:10px;padding:9px 12px;border:1.5px solid ' + (isSel?'var(--acc)':'var(--border)') + ';cursor:pointer;transition:all .2s;margin-bottom:5px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<span style="font-size:13px;font-weight:800;color:' + (isSel?'var(--acc)':'var(--text)') + '">' + k.charAt(0).toUpperCase()+k.slice(1) + '</span>' +
+        '<span style="font-size:13px;font-weight:900;color:var(--math)">' + mealCal + ' kcal</span>' +
+        '</div>' +
+        (isSel ?
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">' +
+          m.items.map(function(item, i) {
+            return '<span style="background:var(--surface);border-radius:6px;padding:3px 7px;font-size:11px;color:var(--text)">' + item + ' (' + m.cals[i] + ')</span>';
+          }).join('') + '</div>' : '') +
+        '</div>';
+    }).join('');
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🍽️ Daily Food Audit</div>' +
+      /* Calorie meter */
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
+      '<span style="font-size:11px;color:var(--muted)">Total: <b style="color:' + (totalCals>2200?'var(--sci)':totalCals>1800?'var(--math)':'var(--evs)') + '">' + totalCals + ' kcal</b></span>' +
+      '<span style="font-size:11px;color:var(--muted)">Recommended: <b>~2000 kcal</b></span>' +
+      '</div>' +
+      '<div style="height:14px;background:var(--surface);border-radius:7px;overflow:hidden">' +
+      '<div style="height:100%;width:' + pct + '%;background:' + (pct>110?'var(--sci)':pct>90?'var(--math)':'var(--evs)') + ';border-radius:7px;transition:width .4s"></div></div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">' + (totalCals>2200?'⚠️ Over the daily limit!':totalCals<1500?'⚠️ Under-eating — not enough energy!':'✅ Balanced calorie intake') + '</div>' +
+      '</div>' +
+      mealRows +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">Tap a meal to see its breakdown. The snack has 300 calories of low-nutrition food! Swap chips for fruit.</div>';
+  }
+  window.foodMeal = function(k) { selected = k; render(); };
+  render();
+};
+
+/* ── 11. CLIMATE ZONES (climate-zones) ── */
+SIM_REGISTRY['climate-zones'] = function(c) {
+  var zone = 'tropical';
+  var zones = {
+    tropical:   { name:'🌴 Tropical',    temp:'>18°C year-round', rainfall:'Heavy (>2500mm)',  color:'#6BCB77',  examples:'Amazon, Congo, Kerala coast, SE Asia',    animals:'Jaguar, Macaw, Tiger, Elephant',    plants:'Rainforest, mangroves, orchids' },
+    desert:     { name:'🏜️ Desert',      temp:'Extreme (−10 to 55°C)',rainfall:'<250mm/yr',    color:'#C8A96A',  examples:'Sahara, Thar (India), Australian Outback', animals:'Camel, Scorpion, Fennec Fox',        plants:'Cactus, Acacia, Date Palm' },
+    temperate:  { name:'🌿 Temperate',   temp:'10–20°C average',  rainfall:'500–1500mm',      color:'#4D96FF',  examples:'Europe, NE USA, parts of China',           animals:'Deer, Squirrel, Robin',             plants:'Oak, Maple, Wheat' },
+    polar:      { name:'❄️ Polar',       temp:'<−10°C most of year',rainfall:'<250mm (snow)',  color:'#C8D4F8',  examples:'Arctic, Antarctic, Siberia',               animals:'Polar Bear, Penguin, Seal',         plants:'Lichens, Mosses, Tundra grass' },
+    mediterranean:{name:'🫒 Mediterranean',temp:'Dry summers, mild winters',rainfall:'300–900mm',color:'#FFD93D',examples:'Mediterranean coast, California, Chile, SW Australia',animals:'Lynx, Wild Boar, Flamingo',  plants:'Olive, Cork Oak, Lavender' },
+  };
+
+  function render() {
+    var z = zones[zone];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">World Climate Zones</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
+      Object.keys(zones).map(function(k) {
+        return '<button onclick="climZone(\'' + k + '\')" style="padding:5px 9px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k===zone?zones[k].color:'var(--border)') + ';background:' + (k===zone?zones[k].color+'22':'var(--surface2)') + ';color:' + (k===zone?zones[k].color:'var(--muted)') + ';cursor:pointer;font-weight:800">' + zones[k].name.split(' ')[0] + ' ' + zones[k].name.split(' ')[1] + '</button>';
+      }).join('') + '</div>' +
+      '<div style="background:' + z.color + '22;border:2px solid ' + z.color + '55;border-radius:14px;padding:14px;margin-bottom:8px">' +
+      '<div style="font-size:15px;font-weight:900;color:' + z.color + ';margin-bottom:8px">' + z.name + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
+      [['🌡️ Temperature',z.temp],['🌧️ Rainfall',z.rainfall],['🌍 Examples',z.examples],['🐾 Animals',z.animals],['🌿 Plants',z.plants]].map(function(row) {
+        return '<div style="' + (row[0].includes('Examples')||row[0].includes('Animals')||row[0].includes('Plants')?'grid-column:1/-1;':'') + 'background:rgba(0,0,0,.2);border-radius:8px;padding:7px 9px">' +
+          '<div style="font-size:10px;font-weight:800;color:' + z.color + '">' + row[0] + '</div>' +
+          '<div style="font-size:11px;color:var(--text);margin-top:2px">' + row[1] + '</div>' +
+          '</div>';
+      }).join('') + '</div></div>';
+  }
+  window.climZone = function(k) { zone = k; render(); };
+  render();
+};
+
+/* ── 12. PROBLEM STEPS (problem-steps) ── */
+SIM_REGISTRY['problem-steps'] = function(c) {
+  var activeStep = null;
+  var problem = 'A train leaves Delhi at 6:00 AM at 80 km/h. Another train leaves at 8:00 AM at 120 km/h in the same direction. When do they meet?';
+  var steps = [
+    { icon:'🔍', title:'Understand the Problem', color:'#4D96FF',
+      content:'What do we know? Train A: 80 km/h, starts 6 AM. Train B: 120 km/h, starts 8 AM.\nWhat do we need? When do they meet (same position)?', },
+    { icon:'📋', title:'Plan the Strategy',       color:'#6BCB77',
+      content:'Train A has a 2-hour head start. By 8 AM, A has gone 80×2 = 160 km.\nThen B catches up at a rate of (120-80) = 40 km/h.', },
+    { icon:'✏️', title:'Solve Step by Step',      color:'#FFD93D',
+      content:'Gap to close = 160 km\nClosing speed = 120 - 80 = 40 km/h\nTime for B to catch A = 160 ÷ 40 = 4 hours\nB meets A at 8:00 AM + 4 hours = 12:00 PM (noon)', },
+    { icon:'✅', title:'Check the Answer',         color:'#6BCB77',
+      content:'By noon: A has travelled 6 hours × 80 = 480 km\nBy noon: B has travelled 4 hours × 120 = 480 km ✅\nBoth at 480 km — they meet!' },
+  ];
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Problem-Solving Strategy</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7;font-style:italic">' + problem + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      steps.map(function(s, i) {
+        var isActive = activeStep === i;
+        return '<div onclick="probStep(' + i + ')" style="border-radius:12px;border:2px solid ' + (isActive?s.color:'var(--border)') + ';background:' + (isActive?s.color+'15':'var(--surface2)') + ';cursor:pointer;overflow:hidden;transition:all .2s">' +
+          '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px">' +
+          '<div style="width:30px;height:30px;border-radius:50%;background:' + s.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">' + s.icon + '</div>' +
+          '<div style="font-size:13px;font-weight:800;color:' + (isActive?s.color:'var(--text)') + '">Step ' + (i+1) + ': ' + s.title + '</div>' +
+          '<div style="margin-left:auto;font-size:14px;color:var(--muted)">' + (isActive?'▲':'▼') + '</div>' +
+          '</div>' +
+          (isActive ? '<div style="padding:0 12px 12px;font-size:12px;color:var(--text);line-height:1.8;white-space:pre-line">' + s.content + '</div>' : '') +
+          '</div>';
+      }).join('') + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Use this 4-step method for any maths word problem: Understand → Plan → Solve → Check</div>';
+  }
+  window.probStep = function(i) { activeStep = activeStep === i ? null : i; render(); };
+  render();
+};
+
+/* ── 13. URBAN RURAL (urban-rural) ── */
+SIM_REGISTRY['urban-rural'] = function(c) {
+  var view = 'compare';
+  var data = {
+    urban:  { emoji:'🏙️', name:'Urban (City)', color:'#4D96FF', population:'36% of India', density:'High — 3000+ per km²', jobs:'Industry, Services, IT', education:'Better access to schools and colleges', health:'Hospitals and specialists nearby', problems:'Pollution, overcrowding, cost of living, loneliness', famous:'Mumbai, Delhi, Bangalore, Chennai' },
+    rural:  { emoji:'🌾', name:'Rural (Village)', color:'#6BCB77', population:'64% of India', density:'Low — <500 per km²', jobs:'Agriculture, fishing, small trades', education:'Fewer schools, some lack colleges', health:'Primary health centres, far from hospitals', problems:'Poverty, lack of infrastructure, migration', famous:'Kerala villages, Punjab farmlands, UP rural' },
+  };
+
+  function render() {
+    if (view === 'compare') {
+      var keys = ['population','density','jobs','education','health','problems'];
+      var labels = {'population':'👥 Population','density':'📍 Density','jobs':'💼 Jobs','education':'🎓 Education','health':'🏥 Healthcare','problems':'⚠️ Challenges'};
+      c.innerHTML =
+        '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Urban vs Rural India</div>' +
+        '<div class="ctrl-row" style="margin-bottom:8px"><button onclick="urView(\'compare\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1.5px solid var(--acc);background:var(--acc-dim);color:var(--acc);cursor:pointer;font-weight:800">Compare</button><button onclick="urView(\'urban\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">🏙️ Urban</button><button onclick="urView(\'rural\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">🌾 Rural</button></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:800;padding:4px">Aspect</div>' +
+        '<div style="font-size:11px;font-weight:800;color:#4D96FF;padding:4px;text-align:center">🏙️ Urban</div>' +
+        '<div style="font-size:11px;font-weight:800;color:#6BCB77;padding:4px;text-align:center">🌾 Rural</div>' +
+        keys.map(function(k) {
+          return '<div style="font-size:10px;color:var(--muted);padding:4px;border-top:1px solid var(--border)">' + labels[k] + '</div>' +
+            '<div style="font-size:10px;color:var(--text);padding:4px;border-top:1px solid var(--border)">' + data.urban[k] + '</div>' +
+            '<div style="font-size:10px;color:var(--text);padding:4px;border-top:1px solid var(--border)">' + data.rural[k] + '</div>';
+        }).join('') + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">India is rapidly urbanising — from 27% urban in 2001 to 36% in 2011. By 2050, over 50% of Indians will live in cities!</div>';
+    } else {
+      var d = data[view];
+      c.innerHTML =
+        '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Urban vs Rural India</div>' +
+        '<div class="ctrl-row" style="margin-bottom:8px"><button onclick="urView(\'compare\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">Compare</button><button onclick="urView(\'urban\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1.5px solid #4D96FF;background:rgba(77,150,255,.15);color:#4D96FF;cursor:pointer;font-weight:800">🏙️ Urban</button><button onclick="urView(\'rural\')" style="padding:5px 12px;border-radius:9px;font-size:12px;border:1.5px solid #6BCB77;background:rgba(107,203,119,.15);color:#6BCB77;cursor:pointer;font-weight:800">🌾 Rural</button></div>' +
+        '<div style="text-align:center;font-size:48px;margin-bottom:6px">' + d.emoji + '</div>' +
+        '<div style="font-size:16px;font-weight:900;color:' + d.color + ';text-align:center;margin-bottom:10px">' + d.name + '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:5px">' +
+        ['population','density','jobs','education','health','problems','famous'].map(function(k) {
+          var labels2 = {'population':'👥','density':'📍','jobs':'💼','education':'🎓','health':'🏥','problems':'⚠️','famous':'📌'};
+          return '<div style="background:var(--surface2);border-radius:9px;padding:8px 10px;border:1px solid var(--border);display:flex;gap:8px"><span>' + labels2[k] + '</span><div><b style="font-size:10px;color:' + d.color + '">' + k.toUpperCase() + '</b><div style="font-size:11px;color:var(--text)">' + d[k] + '</div></div></div>';
+        }).join('') + '</div>';
+    }
+  }
+  window.urView = function(v) { view = v; render(); };
+  render();
+};
+
+/* ── 14. TEAMWORK TOWER (teamwork-tower) ── */
+SIM_REGISTRY['teamwork-tower'] = function(c) {
+  var raf2, t2 = 0, blocks = [], nextBlock = null, score = 0, gameOver = false, started = false;
+  var towerX = 120, blockW = 60, blockH = 20, speed = 2;
+  var direction = 1;
+
+  function init() {
+    blocks = [{ x: towerX - blockW/2, y: 260, w: blockW, color: '#4D96FF', placed: true }];
+    nextBlock = { x: 20, y: 40, w: blockW, color: getColor() };
+    score = 0; gameOver = false; started = true; direction = 1; speed = 2;
+  }
+
+  function getColor() {
+    var colors = ['#FF6B6B','#FFD93D','#6BCB77','#C77DFF','#FF8C42','#4D96FF'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  function drop() {
+    if (!started || gameOver || !nextBlock) return;
+    var topBlock = blocks[blocks.length - 1];
+    var overlap = Math.min(nextBlock.x + nextBlock.w, topBlock.x + topBlock.w) - Math.max(nextBlock.x, topBlock.x);
+    if (overlap <= 0) { gameOver = true; return; }
+    var newX = Math.max(nextBlock.x, topBlock.x);
+    blocks.push({ x: newX, y: topBlock.y - blockH, w: overlap, color: nextBlock.color, placed: true });
+    score++;
+    speed = Math.min(5, 2 + score * 0.2);
+    nextBlock = { x: direction > 0 ? -blockW : 280, y: 40, w: overlap, color: getColor() };
+    direction *= Math.random() > 0.5 ? 1 : -1;
+  }
+
+  function draw() {
+    var cv = document.getElementById('towerCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
+
+    /* Ground */
+    ctx.fillStyle = '#1a2a1a'; ctx.fillRect(0, H - 30, W, 30);
+
+    /* Placed blocks */
+    blocks.forEach(function(b) {
+      ctx.fillStyle = b.color + 'cc';
+      ctx.fillRect(b.x, b.y, b.w, blockH);
+      ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1;
+      ctx.strokeRect(b.x, b.y, b.w, blockH);
+    });
+
+    /* Moving block */
+    if (nextBlock && started && !gameOver) {
+      nextBlock.x += speed * direction;
+      if (nextBlock.x + nextBlock.w > 280) direction = -1;
+      if (nextBlock.x < 0) direction = 1;
+      ctx.fillStyle = nextBlock.color + 'cc';
+      ctx.fillRect(nextBlock.x, nextBlock.y, nextBlock.w, blockH);
+      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(nextBlock.x, nextBlock.y, nextBlock.w, blockH);
+    }
+
+    /* Score */
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = 'bold 14px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(gameOver ? '😔 Game Over! Score: ' + score : started ? 'Score: ' + score : 'Press Drop to start!', W/2, 22);
+
+    if (!gameOver) raf2 = requestAnimationFrame(draw);
+    t2 += 0.04;
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">🏗️ Teamwork Tower — Precision & Timing</div>' +
+      '<canvas id="towerCanvas" width="280" height="280" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      '<button class="cbtn" onclick="towerDrop()" style="background:var(--acc);color:white;border-color:var(--acc);font-size:14px;flex:1">⬇️ Drop Block!</button>' +
+      '<button class="cbtn" onclick="towerReset()" style="font-size:12px">↺ New Game</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">Time your drop perfectly! Blocks get narrower with each miss — just like teamwork: small errors compound over time. Can you reach 10?</div>';
+    cancelAnimationFrame(raf2);
+    draw();
+    document.getElementById('towerCanvas').addEventListener('click', function() { if (!started || gameOver) init(); else drop(); draw(); });
+  }
+
+  window.towerDrop = function() { if (!started || gameOver) { init(); } else { drop(); } };
+  window.towerReset = function() { cancelAnimationFrame(raf2); gameOver = false; started = false; blocks = []; render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); };
+  render();
+};
+
+
+/* ══════════════════════════════════════
+   BATCH 11 — Final 42 simulations
+   ══════════════════════════════════════ */
+
+/* ── 1. MOTOR MODEL (motor-model) ── */
+SIM_REGISTRY['motor-model'] = function(c) {
+  var raf2, t2=0, running=false, speed=1;
+
+  function draw() {
+    var cv=document.getElementById('motorCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    var cx=W/2,cy=H/2,angle=t2*speed;
+
+    /* Stator (outer) */
+    ctx.beginPath(); ctx.arc(cx,cy,70,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,100,120,0.4)'; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=3; ctx.stroke();
+
+    /* Stator coils */
+    for(var i=0;i<6;i++){
+      var a=i/6*Math.PI*2;
+      var sx=cx+Math.cos(a)*55,sy=cy+Math.sin(a)*55;
+      ctx.beginPath(); ctx.arc(sx,sy,10,0,Math.PI*2);
+      var coilColor=i<3?'rgba(255,107,107,0.7)':'rgba(77,150,255,0.7)';
+      ctx.fillStyle=coilColor; ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.stroke();
+      /* Field arrows */
+      if(running){
+        var arrow=i<3?1:-1;
+        ctx.strokeStyle=coilColor; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(sx,sy-6*arrow); ctx.lineTo(sx,sy+6*arrow); ctx.stroke();
+        ctx.fillStyle=coilColor; ctx.font='10px sans-serif'; ctx.textAlign='center';
+        ctx.fillText(i<3?'N':'S',sx,sy+4);
+      }
+    }
+
+    /* Rotor */
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+    ctx.fillStyle='rgba(255,217,61,0.2)';
+    ctx.fillRect(-30,-12,60,24);
+    ctx.strokeStyle='#FFD93D'; ctx.lineWidth=2; ctx.strokeRect(-30,-12,60,24);
+    /* Rotor coil */
+    ctx.strokeStyle='rgba(107,203,119,0.8)'; ctx.lineWidth=2;
+    for(var r=0;r<3;r++){
+      ctx.beginPath(); ctx.ellipse(0,0,25-r*3,10-r*2,0,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+
+    /* Shaft */
+    ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2);
+    ctx.fillStyle='#888'; ctx.fill();
+
+    /* Rotation arrow */
+    if(running){
+      ctx.strokeStyle='rgba(255,217,61,0.6)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(cx,cy,80,angle,angle+1.5);
+      ctx.stroke();
+      ctx.fillStyle='rgba(255,217,61,0.6)';
+      ctx.font='12px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('⚡→🔄',cx,H-12);
+    }
+
+    t2+=0.04;
+    if(running) raf2=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Electric Motor Model</div>'+
+      '<canvas id="motorCanvas" width="280" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<button class="cbtn" onclick="motorRun()" id="motorBtn" style="background:var(--math);color:white;border-color:var(--math)">⚡ Power On</button>'+
+      '<span style="font-size:11px;color:var(--muted)">Speed:</span>'+
+      '<input type="range" class="slide" min="0.5" max="5" step="0.5" value="1" oninput="motorSpeed(this.value)" style="width:100px">'+
+      '</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      '🔴 Stator = fixed electromagnets · 🟡 Rotor = spinning coil · Current in rotor → magnetic field → repulsion/attraction → <b>rotation</b>! Fleming\'s Left Hand Rule.'+
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.motorRun=function(){running=!running;document.getElementById('motorBtn').textContent=running?'⏸ Power Off':'⚡ Power On';if(running)draw();};
+  window.motorSpeed=function(v){speed=parseFloat(v);};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);running=false;};
+  render();
+};
+
+/* ── 2. ADAPTATION SHOW (adaptation-show) ── */
+SIM_REGISTRY['adaptation-show'] = function(c) {
+  var sel=0;
+  var animals=[
+    {name:'🐪 Camel',   habitat:'Desert',  color:'#C8A96A',
+     adaptations:['Hump stores fat (not water!) — energy reserve for weeks','Extra-long eyelashes keep sand out of eyes','Can lose 40% body weight in water and survive','Wide feet act like snowshoes on sand','Can drink 100L of water in 13 minutes!'],
+     fact:'Camels can raise their body temperature to avoid sweating!'},
+    {name:'🐻‍❄️ Polar Bear', habitat:'Arctic', color:'#E8F0FF',
+     adaptations:['Hollow transparent fur traps heat like a greenhouse','Black skin underneath absorbs maximum sunlight','Thick layer of fat (10cm) for insulation','Large paws to spread weight on thin ice','Great swimmers — can swim 100km without rest!'],
+     fact:'Polar bear fur is actually colourless, not white — it scatters light!'},
+    {name:'🦁 Lion',    habitat:'Savanna', color:'#C8945A',
+     adaptations:['Tawny coat camouflages in golden grass','Social hunters — pack tactics to catch large prey','Sleep 20 hours/day to conserve energy in heat','Territory marking prevents prey from leaving area','Roar carries 8km — keeps rivals away!'],
+     fact:'Only the lion among big cats lives in social groups — prides.'},
+    {name:'🐟 Deep Sea Fish', habitat:'Deep Ocean', color:'#4D96FF',
+     adaptations:['Bioluminescent light to attract prey in darkness','Expandable stomachs to eat rare large meals','No eyes in some species — useless in pure dark','Antifreeze proteins prevent cells from freezing','Can withstand pressure 1000× greater than surface!'],
+     fact:'Some deep sea fish have transparent bodies — organs and skeleton visible!'},
+  ];
+
+  function render(){
+    var a=animals[sel];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Animal Adaptations</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      animals.map(function(an,i){return '<button onclick="adaptSel('+i+')" style="padding:5px 10px;border-radius:9px;font-size:13px;border:2px solid '+(i===sel?an.color:'var(--border)')+';background:'+(i===sel?an.color+'22':'var(--surface2)')+';cursor:pointer">'+an.name.split(' ')[0]+'</button>';}).join('')+
+      '</div>'+
+      '<div style="background:'+a.color+'15;border:2px solid '+a.color+'44;border-radius:14px;padding:14px;margin-bottom:8px;text-align:center">'+
+      '<div style="font-size:48px;margin-bottom:4px">'+a.name.split(' ')[0]+'</div>'+
+      '<div style="font-size:14px;font-weight:900;color:'+a.color+';margin-bottom:2px">'+a.name.split(' ').slice(1).join(' ')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">Habitat: '+a.habitat+'</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">'+
+      a.adaptations.map(function(ad,i){return '<div style="display:flex;gap:8px;background:var(--surface2);border-radius:9px;padding:8px 10px;border:1px solid var(--border)"><div style="width:20px;height:20px;border-radius:50%;background:'+a.color+';color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0">'+(i+1)+'</div><div style="font-size:12px;color:var(--text);line-height:1.6">'+ad+'</div></div>';}).join('')+
+      '</div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:12px;color:var(--text);line-height:1.7">⭐ Amazing: '+a.fact+'</div>';
+  }
+  window.adaptSel=function(i){sel=i;render();};
+  render();
+};
+
+/* ── 3. CONSTITUTION RIGHTS (constitution-rights) ── */
+SIM_REGISTRY['constitution-rights'] = function(c) {
+  var sel=null;
+  var rights=[
+    {num:'Art 12-35', name:'Fundamental Rights', icon:'⚖️', color:'#FF6B6B',
+     rights:['Right to Equality (Art 14-18)','Right to Freedom (Art 19-22)','Right Against Exploitation (Art 23-24)','Right to Freedom of Religion (Art 25-28)','Cultural & Educational Rights (Art 29-30)','Right to Constitutional Remedies (Art 32)'],
+     note:'Dr. BR Ambedkar called Article 32 the "heart and soul" of the Constitution.'},
+    {num:'Part IV', name:'Directive Principles', icon:'🎯', color:'#FFD93D',
+     rights:['Equal pay for equal work','Free legal aid','Right to work','Public health & nutrition','Uniform Civil Code','Protection of environment'],
+     note:'DPSPs are not enforceable in court but guide government policy.'},
+    {num:'Part IVA', name:'Fundamental Duties', icon:'🤝', color:'#6BCB77',
+     rights:['Abide by the Constitution','Respect national symbols','Promote harmony','Protect environment','Develop scientific temper','Safeguard public property'],
+     note:'Added in 1976 by 42nd Amendment. 11 duties total.'},
+    {num:'Various', name:'Children\'s Rights', icon:'🧒', color:'#4D96FF',
+     rights:['Right to free education (6-14 years) - Art 21A','Protection from hazardous work - Art 24','Special care in custody matters','Right to play and leisure','Right to protection from abuse','POCSO Act 2012 protection'],
+     note:'Right to Education Act 2009 made free education a fundamental right!'},
+  ];
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Indian Constitution — Rights & Duties</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      rights.map(function(r,i){return '<button onclick="constSel('+i+')" style="padding:6px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(sel===i?r.color:'var(--border)')+';background:'+(sel===i?r.color+'22':'var(--surface2)')+';color:'+(sel===i?r.color:'var(--muted)')+';cursor:pointer;font-weight:800">'+r.icon+' '+r.name.split(' ')[0]+'</button>';}).join('')+
+      '</div>'+
+      (sel!==null?
+        '<div style="background:'+rights[sel].color+'15;border:2px solid '+rights[sel].color+'44;border-radius:12px;padding:12px;margin-bottom:8px">'+
+        '<div style="font-size:14px;font-weight:900;color:'+rights[sel].color+';margin-bottom:2px">'+rights[sel].icon+' '+rights[sel].name+'</div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+rights[sel].num+'</div>'+
+        '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">'+
+        rights[sel].rights.map(function(r2){return '<div style="font-size:12px;color:var(--text);padding:5px 0;border-bottom:1px solid var(--border)44;display:flex;gap:6px"><span style="color:'+rights[sel].color+'">•</span>'+r2+'</div>';}).join('')+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);font-style:italic;background:rgba(0,0,0,.2);border-radius:8px;padding:8px">💡 '+rights[sel].note+'</div>'+
+        '</div>'
+        :'<div style="background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border);text-align:center;color:var(--muted);font-size:12px">☝️ Tap a category to explore India\'s constitutional framework</div>')+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">India\'s Constitution is the world\'s longest — 448 articles, 12 schedules! Adopted on 26 November 1949, came into effect 26 January 1950.</div>';
+  }
+  window.constSel=function(i){sel=sel===i?null:i;render();};
+  render();
+};
+
+/* ── 4. GDP HDI (gdp-hdi) ── */
+SIM_REGISTRY['gdp-hdi'] = function(c) {
+  var metric='gdp';
+  var countries=[
+    {name:'🇳🇴 Norway',   gdp:89202, hdi:0.961, pop:5.4},
+    {name:'🇨🇭 Switzerland',gdp:87097,hdi:0.962,pop:8.7},
+    {name:'🇺🇸 USA',      gdp:63543, hdi:0.921, pop:335},
+    {name:'🇨🇳 China',    gdp:12556, hdi:0.768, pop:1412},
+    {name:'🇧🇷 Brazil',   gdp:7507,  hdi:0.754, pop:215},
+    {name:'🇮🇳 India',    gdp:2185,  hdi:0.633, pop:1430},
+    {name:'🇳🇬 Nigeria',  gdp:2065,  hdi:0.535, pop:218},
+    {name:'🇪🇹 Ethiopia', gdp:925,   hdi:0.498, pop:123},
+  ];
+
+  function render(){
+    var key=metric==='gdp'?'gdp':'hdi';
+    var maxVal=Math.max.apply(null,countries.map(function(co){return co[key];}));
+    var bars=countries.map(function(co){
+      var pct=(co[key]/maxVal)*100;
+      var val=metric==='gdp'?'$'+co.gdp.toLocaleString():co.hdi;
+      var color=metric==='gdp'?(co.gdp>30000?'#6BCB77':co.gdp>10000?'#FFD93D':co.gdp>5000?'#FF8C42':'#FF6B6B'):(co.hdi>0.8?'#6BCB77':co.hdi>0.7?'#FFD93D':co.hdi>0.55?'#FF8C42':'#FF6B6B');
+      var isIndia=co.name.includes('India');
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
+        '<div style="min-width:90px;font-size:11px;font-weight:'+(isIndia?'900':'600')+';color:'+(isIndia?'var(--acc)':'var(--text)');+'text-align:right">'+co.name+'</div>'+
+        '<div style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">'+
+        '<div style="height:100%;width:'+pct+'%;background:'+color+(isIndia?'':'')+';border-radius:4px;display:flex;align-items:center;padding:0 4px;transition:width .5s">'+
+        '<span style="font-size:9px;font-weight:800;color:rgba(0,0,0,0.7);white-space:nowrap">'+val+'</span>'+
+        '</div></div></div>';
+    }).join('');
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">GDP & HDI — Measuring Development</div>'+
+      '<div class="ctrl-row" style="margin-bottom:8px">'+
+      '<button onclick="gdpMetric(\'gdp\')" style="padding:6px 14px;border-radius:9px;font-size:12px;border:1.5px solid '+(metric==='gdp'?'var(--acc)':'var(--border)')+';background:'+(metric==='gdp'?'var(--acc-dim)':'var(--surface2)')+';color:'+(metric==='gdp'?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">💰 GDP per Capita</button>'+
+      '<button onclick="gdpMetric(\'hdi\')" style="padding:6px 14px;border-radius:9px;font-size:12px;border:1.5px solid '+(metric==='hdi'?'var(--acc)':'var(--border)')+';background:'+(metric==='hdi'?'var(--acc-dim)':'var(--surface2)')+';color:'+(metric==='hdi'?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">🌍 HDI Score</button>'+
+      '</div>'+
+      bars+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      (metric==='gdp'?'💰 GDP per Capita = total economic output ÷ population. High GDP ≠ happy people! Qatar has high GDP but low on happiness index.':'🌍 HDI = Human Development Index (0–1). Measures life expectancy + education + income. More complete than GDP alone!')+
+      '</div>';
+  }
+  window.gdpMetric=function(m){metric=m;render();};
+  render();
+};
+
+/* ── 5. LIVING SORT (living-sort) ── */
+SIM_REGISTRY['living-sort'] = function(c) {
+  var items=[
+    {name:'Mushroom',  emoji:'🍄', type:'neither', group:'Fungi'},
+    {name:'Mango Tree',emoji:'🌳', type:'plant',   group:'Plant'},
+    {name:'Butterfly', emoji:'🦋', type:'animal',  group:'Animal'},
+    {name:'Bacteria',  emoji:'🦠', type:'neither', group:'Monera'},
+    {name:'Fern',      emoji:'🌿', type:'plant',   group:'Plant'},
+    {name:'Coral',     emoji:'🪸', type:'animal',  group:'Animal'},
+    {name:'Amoeba',    emoji:'🫧', type:'neither', group:'Protista'},
+    {name:'Eagle',     emoji:'🦅', type:'animal',  group:'Animal'},
+    {name:'Moss',      emoji:'🌱', type:'plant',   group:'Plant'},
+  ];
+  var userSort={plant:[],animal:[],neither:[]};
+  var dragging=null;
+  var revealed=false;
+
+  function render(){
+    var placed=userSort.plant.length+userSort.animal.length+userSort.neither.length;
+    var unsorted=items.filter(function(it){return !userSort.plant.includes(it.name)&&!userSort.animal.includes(it.name)&&!userSort.neither.includes(it.name);});
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Living Things — Classification Sort</div>'+
+      /* Items to sort */
+      '<div style="background:var(--surface2);border-radius:10px;padding:8px;margin-bottom:8px;border:1px solid var(--border);min-height:50px">' +
+      '<div style="font-size:10px;font-weight:800;color:var(--muted);margin-bottom:6px">SORT THESE:</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+      unsorted.map(function(it){return '<div onclick="lsClick(\''+it.name+'\')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center;transition:all .2s"><div style="font-size:22px">'+it.emoji+'</div><div style="font-size:10px;color:var(--text)">'+it.name+'</div></div>';}).join('')+
+      '</div></div>'+
+      /* Drop zones */
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">'+
+      [['plant','🌿 Plants','var(--evs)'],['animal','🐾 Animals','var(--sci)'],['neither','🍄 Others','var(--acc)']].map(function(zone){
+        var sorted=userSort[zone[0]].map(function(name){var it=items.find(function(i){return i.name===name;});return it?'<div onclick="lsRemove(\''+name+'\',\''+zone[0]+'\')" style="font-size:18px;cursor:pointer" title="Click to remove">'+it.emoji+'</div>':'';}).join('');
+        return '<div style="background:'+zone[2]+'15;border:2px dashed '+zone[2]+'55;border-radius:10px;padding:8px;min-height:70px;text-align:center">'+
+          '<div style="font-size:10px;font-weight:800;color:'+zone[2]+';margin-bottom:6px">'+zone[1]+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">'+sorted+'</div></div>';
+      }).join('')+'</div>'+
+      /* Controls */
+      '<div class="ctrl-row">'+
+      '<button class="cbtn" onclick="lsReveal()" style="background:var(--acc);color:white;border-color:var(--acc);font-size:12px">👁️ Check Answers</button>'+
+      '<button class="cbtn" onclick="lsReset()" style="font-size:12px">↺ Reset</button>'+
+      '</div>'+
+      (revealed?'<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-top:8px;border:1px solid var(--border);font-size:11px;line-height:1.8">'+
+        items.map(function(it){
+          var placed2=userSort.plant.includes(it.name)?'plant':userSort.animal.includes(it.name)?'animal':userSort.neither.includes(it.name)?'neither':null;
+          var correct=placed2===it.type;
+          return '<span style="color:'+(correct?'var(--evs)':'var(--sci)')+';margin-right:8px">'+(correct?'✅':'❌')+' '+it.emoji+' '+it.name+' → '+it.group+'</span>';
+        }).join('')+'</div>':'');
+
+    window._lsSel=null;
+  }
+
+  window.lsClick=function(name){
+    if(!window._lsSel){window._lsSel=name;render();return;}
+    /* If clicking same item deselect */
+  };
+  window.lsClick=function(name){
+    var zone=prompt('Sort "'+name+'" into: 1=Plants, 2=Animals, 3=Others');
+    var key=zone==='1'?'plant':zone==='2'?'animal':'neither';
+    if(!userSort[key].includes(name)){userSort[key].push(name);}
+    render();
+  };
+  window.lsRemove=function(name,zone){userSort[zone]=userSort[zone].filter(function(n){return n!==name;});render();};
+  window.lsReveal=function(){revealed=true;render();};
+  window.lsReset=function(){userSort={plant:[],animal:[],neither:[]};revealed=false;render();};
+  render();
+};
+
+/* ── 6. CONSUMER RIGHTS (consumer-rights) ── */
+SIM_REGISTRY['consumer-rights'] = function(c) {
+  var sel=null;
+  var rights=[
+    {icon:'🛡️',name:'Right to Safety',         color:'#FF6B6B', desc:'Protection from hazardous goods and services. ISI mark on electrical goods, FSSAI on food.',example:'A defective gas cylinder that explodes is a consumer rights violation.'},
+    {icon:'ℹ️',name:'Right to Information',     color:'#FFD93D', desc:'Consumers must be told about quality, quantity, price, and hazards of products.',example:'Hidden charges on a phone bill violate this right.'},
+    {icon:'🎯',name:'Right to Choose',           color:'#6BCB77', desc:'Freedom to choose from a variety of goods at competitive prices. No monopolies!',example:'Forcing you to buy only one brand at a fair violates this right.'},
+    {icon:'🗣️',name:'Right to be Heard',        color:'#4D96FF', desc:'Consumer complaints must be addressed. Consumer Forums exist at district, state, national level.',example:'Company ignoring your complaint about a defective product.'},
+    {icon:'💰',name:'Right to Redressal',        color:'#C77DFF', desc:'Compensation for unfair trade practices or defective goods. File in Consumer Court!',example:'Getting a full refund or replacement for a faulty appliance.'},
+    {icon:'📚',name:'Right to Education',        color:'#FF8C42', desc:'Know your rights! An educated consumer is an empowered consumer.',example:'Understanding expiry dates, MRP, and return policies.'},
+  ];
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Consumer Rights — Know Your Power!</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      rights.map(function(r,i){
+        var isSel=sel===i;
+        return '<div onclick="consumerSel('+i+')" style="background:'+r.color+'15;border:2px solid '+r.color+(isSel?'88':'22')+';border-radius:10px;padding:10px;cursor:pointer;transition:all .2s">'+
+          '<div style="font-size:20px;margin-bottom:2px">'+r.icon+'</div>'+
+          '<div style="font-size:11px;font-weight:800;color:'+r.color+'">'+r.name+'</div>'+
+          (isSel?'<div style="font-size:11px;color:var(--text);line-height:1.6;margin-top:6px">'+r.desc+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px;font-style:italic">Example: '+r.example+'</div>':'')+
+          '</div>';
+      }).join('')+'</div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:12px;color:var(--text);line-height:1.7">'+
+      '📞 Consumer Helpline: <b>1800-11-4000</b> · Consumer Protection Act 2019 · File complaint at <b>consumerhelpline.gov.in</b></div>';
+  }
+  window.consumerSel=function(i){sel=sel===i?null:i;render();};
+  render();
+};
+
+/* ── 7. SAFETY SIM (safety-sim) ── */
+SIM_REGISTRY['safety-sim'] = function(c) {
+  var scenario=0;
+  var scenarios=[
+    {icon:'🔥',title:'Fire Safety', color:'#FF6B6B',
+     dos:['Shout "Fire!" and alert everyone','Crawl low under smoke — clean air is near the floor','Feel door before opening — if hot, don\'t open','Take stairs NOT elevator','Meet at designated assembly point'],
+     donts:['Never take the lift','Don\'t go back for belongings','Don\'t open windows — feeds oxygen to fire','Don\'t hide in bathroom','Don\'t panic — move calmly'],
+     number:'101 (Fire)', tip:'Most fire deaths are from smoke inhalation, not flames!'},
+    {icon:'⚡',title:'Electrical Safety', color:'#FFD93D',
+     dos:['Switch off before changing bulbs/fuses','Use ISI certified appliances','Keep electrical things away from water','Report sparking sockets immediately','Use proper earthing'],
+     donts:['Never touch switches with wet hands','Don\'t overload sockets','Don\'t put metal in electrical outlets','Don\'t pull cables to unplug','Don\'t let children play near wiring'],
+     number:'1912 (Electric)', tip:'Electricity can kill at just 0.1 Amperes — always respect it!'},
+    {icon:'🌊',title:'Water/Flood Safety', color:'#4D96FF',
+     dos:['Move to higher ground immediately','Store drinking water and medicine','Turn off electricity if flooding inside','Follow official evacuation orders','Know your nearest high ground'],
+     donts:['Don\'t walk in moving floodwater','Don\'t drive through flooded roads','Don\'t touch fallen power lines','Don\'t drink floodwater','Don\'t return home until cleared'],
+     number:'1070 (Disaster)', tip:'12cm of moving water can knock you off your feet. 30cm can sweep away a car!'},
+  ];
+
+  function render(){
+    var s=scenarios[scenario];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Safety Awareness</div>'+
+      '<div class="ctrl-row" style="margin-bottom:8px;flex-wrap:wrap;gap:5px">'+
+      scenarios.map(function(sc,i){return '<button onclick="safetySel('+i+')" style="padding:5px 10px;border-radius:9px;font-size:13px;border:1.5px solid '+(i===scenario?sc.color:'var(--border)')+';background:'+(i===scenario?sc.color+'22':'var(--surface2)')+';cursor:pointer">'+sc.icon+' '+sc.title+'</button>';}).join('')+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--evs);margin-bottom:6px">✅ DO</div>'+
+      s.dos.map(function(d){return '<div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.5">• '+d+'</div>';}).join('')+
+      '</div>'+
+      '<div style="background:var(--sci-dim);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--sci);margin-bottom:6px">❌ DON\'T</div>'+
+      s.donts.map(function(d){return '<div style="font-size:11px;color:var(--text);margin-bottom:4px;line-height:1.5">• '+d+'</div>';}).join('')+
+      '</div></div>'+
+      '<div style="display:flex;gap:8px">'+
+      '<div style="background:var(--sci-dim);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:8px 12px;flex:1;text-align:center">'+
+      '<div style="font-size:10px;color:var(--muted)">Emergency</div>'+
+      '<div style="font-size:16px;font-weight:900;color:var(--sci)">📞 '+s.number+'</div>'+
+      '</div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:8px 12px;flex:2">'+
+      '<div style="font-size:11px;color:var(--text);line-height:1.6">💡 '+s.tip+'</div>'+
+      '</div></div>';
+  }
+  window.safetySel=function(i){scenario=i;render();};
+  render();
+};
+
+/* ── 8. SDG KERALA (sdg-kerala) ── */
+SIM_REGISTRY['sdg-kerala'] = function(c) {
+  var sel=null;
+  var sdgs=[
+    {num:1, icon:'🏠', name:'No Poverty',        color:'#FF6B6B', kerala:'Kerala has the lowest poverty rate in India — 7.1%! Social security nets through PDS and welfare pensions.'},
+    {num:3, icon:'🏥', name:'Good Health',        color:'#6BCB77', kerala:'Kerala has the best health indicators in India. Life expectancy 75 years — among the highest in Asia.'},
+    {num:4, icon:'📚', name:'Quality Education',  color:'#FF8C42', kerala:'94% literacy rate — highest in India! SSLC pass rate consistently above 98%.'},
+    {num:5, icon:'👩', name:'Gender Equality',    color:'#C77DFF', kerala:'Women\'s empowerment through Kudumbashree — 300,000 self-help groups. Kerala model studied worldwide.'},
+    {num:13,icon:'🌍', name:'Climate Action',     color:'#4D96FF', kerala:'Rebuild Kerala Initiative after 2018 floods. India\'s first comprehensive Climate Action Plan developed here.'},
+    {num:14,icon:'🌊', name:'Life Below Water',   color:'#4D96FF', kerala:'590km coastline. Marine conservation, mangrove restoration in Vembanad, turtle protection programs.'},
+    {num:15,icon:'🌳', name:'Life on Land',       color:'#6BCB77', kerala:'Silent Valley National Park saved by people\'s movement in 1980! Western Ghats biodiversity hotspot.'},
+  ];
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">SDGs — Kerala\'s Sustainable Development</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      sdgs.map(function(s,i){return '<button onclick="sdgSel('+i+')" style="width:42px;height:42px;border-radius:10px;font-size:18px;border:2px solid '+(sel===i?s.color:'var(--border)')+';background:'+(sel===i?s.color+'22':'var(--surface2)')+';cursor:pointer">'+s.icon+'</button>';}).join('')+
+      '</div>'+
+      (sel!==null?
+        '<div style="background:'+sdgs[sel].color+'15;border:2px solid '+sdgs[sel].color+'44;border-radius:12px;padding:14px;margin-bottom:8px">'+
+        '<div style="font-size:14px;font-weight:900;color:'+sdgs[sel].color+';margin-bottom:6px">SDG '+sdgs[sel].num+': '+sdgs[sel].icon+' '+sdgs[sel].name+'</div>'+
+        '<div style="font-size:12px;color:var(--text);line-height:1.7">'+sdgs[sel].kerala+'</div>'+
+        '</div>'
+        :'<div style="background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);text-align:center;color:var(--muted);font-size:12px">☝️ Tap an SDG to see Kerala\'s achievements</div>')+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">The UN\'s 17 Sustainable Development Goals aim to end poverty and protect the planet by 2030. Kerala\'s "Kerala Model of Development" is studied globally!</div>';
+  }
+  window.sdgSel=function(i){sel=sel===i?null:i;render();};
+  render();
+};
+
+/* ── 9. TRADE ROUTES (trade-routes) ── */
+SIM_REGISTRY['trade-routes'] = function(c) {
+  var route='silk';
+  var routes={
+    silk:{name:'🐪 Silk Road',   color:'#FFD93D', era:'2nd century BCE – 15th century CE',
+      path:'China → Central Asia → Persia → Arabia → Rome',
+      goods:'Silk, spices, glassware, paper, gunpowder, disease (unfortunately!)',
+      impact:'Connected Eastern and Western civilisations for the first time. Buddhism, Islam, and Christianity all spread along this route.',
+      india:'India exported cotton, spices, and gemstones. Received horses and glass.'},
+    spice:{name:'🌶️ Spice Route', color:'#FF8C42', era:'Ancient times – 16th century',
+      path:'Kerala/Malabar Coast → Arabia → Egypt → Europe',
+      goods:'Pepper, cardamom, cinnamon, cloves, turmeric, ginger',
+      impact:'So valuable that Columbus sailed west looking for India! Vasco da Gama\'s 1498 arrival changed history. European colonialism began partly to control spices.',
+      india:'Kozhikode (Calicut) was one of the most important trading ports in the world!'},
+    maritime:{name:'🚢 Maritime Routes', color:'#4D96FF', era:'15th century – present',
+      path:'European ports → Cape of Good Hope → Indian Ocean → Asia',
+      goods:'All goods, later raw materials and manufactured goods, now everything!',
+      impact:'Led to globalisation, colonisation, and eventual independence movements. Today 90% of world trade travels by sea.',
+      india:'India\'s position at the centre of the Indian Ocean made it a crucial hub — still true today.'},
+  };
+
+  function render(){
+    var r=routes[route];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Historic Trade Routes</div>'+
+      '<div class="ctrl-row" style="margin-bottom:8px;flex-wrap:wrap;gap:5px">'+
+      Object.keys(routes).map(function(k){return '<button onclick="tradeRoute(\''+k+'\')" style="padding:5px 10px;border-radius:9px;font-size:12px;border:1.5px solid '+(k===route?routes[k].color:'var(--border)')+';background:'+(k===route?routes[k].color+'22':'var(--surface2)')+';color:'+(k===route?routes[k].color:'var(--muted)')+';cursor:pointer;font-weight:800">'+routes[k].name+'</button>';}).join('')+
+      '</div>'+
+      '<div style="background:'+r.color+'15;border:2px solid '+r.color+'44;border-radius:12px;padding:12px;margin-bottom:8px">'+
+      '<div style="font-size:14px;font-weight:900;color:'+r.color+';margin-bottom:4px">'+r.name+'</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">📅 '+r.era+'</div>'+
+      [['🗺️ Route',r.path],['📦 Traded',r.goods],['🌍 Impact',r.impact],['🇮🇳 India',r.india]].map(function(row){
+        return '<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:800;color:'+r.color+'">'+row[0]+'</div><div style="font-size:12px;color:var(--text);line-height:1.6">'+row[1]+'</div></div>';
+      }).join('')+
+      '</div>';
+  }
+  window.tradeRoute=function(k){route=k;render();};
+  render();
+};
+
+/* ── 10. RIGHTS AND DUTIES (rights-duties) ── */
+SIM_REGISTRY['rights-duties'] = function(c) {
+  var scenario=0;
+  var scenarios=[
+    {emoji:'📢',title:'Freedom of Speech',color:'#4D96FF',
+     right:'Every citizen has the right to express opinions — speak, write, create.',
+     duty:'Use it responsibly. Hate speech, misinformation, and incitement are NOT protected.',
+     balance:'Article 19(1)(a) gives freedom of speech. Article 19(2) allows reasonable restrictions.'},
+    {emoji:'🗳️',title:'Right to Vote',color:'#6BCB77',
+     right:'Every Indian citizen above 18 can vote — choose their government.',
+     duty:'Vote thoughtfully, not for money or threats. Inform others of their right.',
+     balance:'Voting is called a "right" but also a civic duty. Non-voters give up their voice!'},
+    {emoji:'📚',title:'Right to Education',color:'#FFD93D',
+     right:'Free and compulsory education for all children aged 6-14 (RTE Act 2009).',
+     duty:'Actually attend school! Respect teachers. Help others access education.',
+     balance:'Article 21A gives the right. Article 51A(k) makes it parents\' duty to provide opportunities.'},
+    {emoji:'🌿',title:'Environmental Rights',color:'#6BCB77',
+     right:'Right to a clean and healthy environment — courts have ruled this under Article 21.',
+     duty:'Don\'t litter. Reduce plastic. Plant trees. Report pollution to authorities.',
+     balance:'The "Polluter Pays" principle — those who damage environment must compensate.'},
+  ];
+
+  function render(){
+    var s=scenarios[scenario];
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Rights & Duties — Two Sides of the Coin</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">'+
+      scenarios.map(function(sc,i){return '<button onclick="rdSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:13px;border:1.5px solid '+(i===scenario?sc.color:'var(--border)')+';background:'+(i===scenario?sc.color+'22':'var(--surface2)')+';cursor:pointer">'+sc.emoji+'</button>';}).join('')+
+      '</div>'+
+      '<div style="text-align:center;font-size:32px;margin-bottom:4px">'+s.emoji+'</div>'+
+      '<div style="text-align:center;font-size:14px;font-weight:900;color:'+s.color+';margin-bottom:10px">'+s.title+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+
+      '<div style="background:var(--evs-dim);border:1px solid rgba(107,203,119,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--evs);margin-bottom:6px">✅ Your RIGHT</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+s.right+'</div>'+
+      '</div>'+
+      '<div style="background:var(--life-dim);border:1px solid rgba(77,150,255,.3);border-radius:10px;padding:10px">'+
+      '<div style="font-size:11px;font-weight:800;color:var(--life);margin-bottom:6px">🤝 Your DUTY</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+s.duty+'</div>'+
+      '</div></div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:12px;color:var(--text);line-height:1.7">⚖️ Balance: '+s.balance+'</div>';
+  }
+  window.rdSel=function(i){scenario=i;render();};
+  render();
+};
+
+/* ── 11-42: Remaining 32 simulations using enhanced default renderer ── */
+/* These simIds will use the animated step-by-step virtual experience */
+['active-listen','air-monitor','apology-sim','bayes-prob','biodiversity-survey',
+ 'bone-joints','boundaries-sim','business-plan','career-explore','census-data',
+ 'chores-sim','community-action','conflict-resolve','coop-economy','debate-sim',
+ 'election-sim','fact-check','globalisation','independence-views','kerala-economy',
+ 'leadership-sim','local-map','negotiation','news-history','party-budget',
+ 'plantation-history','polynomial-tiles','public-speaking','resource-map',
+ 'responsibility-chart','turn-taking','weather-diary'
+].forEach(function(id) {
+  if (!SIM_REGISTRY[id]) {
+    SIM_REGISTRY[id] = null; /* Will use rich default */
+  }
+});
+
+
+/* ══════════════════════════════════════
+   FINAL BATCH — 32 Life Skills & Social Science sims
+   ══════════════════════════════════════ */
+
+/* ── 1. ACTIVE LISTENING (active-listen) ── */
+SIM_REGISTRY['active-listen'] = function(c) {
+  var step = 0;
+  var scenarios = [
+    { speaker:'👩‍🏫 Teacher', says:'"Please remember to submit your project by Friday. It should include a cover page, three sections, and a bibliography."', cues:['Make eye contact','Nod to show understanding','Don\'t interrupt','Take notes'], question:'What does the project need?', options:['Cover page, 3 sections, bibliography','Just a cover page','Only 3 sections','No specific requirements'], answer:0 },
+    { speaker:'👦 Friend', says:'"I\'m really upset — I studied hard for the test but still failed. I don\'t know what I\'m doing wrong."', cues:['Show empathy first','Ask open questions','Don\'t give advice immediately','Reflect their feelings'], question:'What\'s the best first response?', options:['"You should study more."','"That sounds really frustrating. What happened?"','"I got 90%, want my notes?"','"Don\'t worry about it."'], answer:1 },
+    { speaker:'🧑‍💼 Elder', says:'"In my time, we walked 5 km to school every day. Children today don\'t appreciate what they have."', cues:['Respect the speaker','Listen without judging','Ask respectful questions','Acknowledge their experience'], question:'Which response shows active listening?', options:['"That\'s not relevant today."','"Times have changed so everything is easier."','"That must have been challenging. What was school like then?"','"OK boomer."'], answer:2 },
+  ];
+  var selected = null, answered = false;
+
+  function render() {
+    var sc = scenarios[step];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Active Listening Skills</div>' +
+      /* Speaker bubble */
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px">' + sc.speaker + ' says:</div>' +
+      '<div style="font-size:13px;color:var(--text);line-height:1.7;font-style:italic">' + sc.says + '</div>' +
+      '</div>' +
+      /* Listening cues */
+      '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">' +
+      sc.cues.map(function(cue) { return '<span style="background:var(--life-dim);color:var(--life);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">✓ ' + cue + '</span>'; }).join('') +
+      '</div>' +
+      /* Question */
+      '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">' + sc.question + '</div>' +
+      /* Options */
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">' +
+      sc.options.map(function(opt, i) {
+        var bg = !answered ? 'var(--surface2)' : i === sc.answer ? 'var(--evs-dim)' : selected === i ? 'var(--sci-dim)' : 'var(--surface2)';
+        var border = !answered ? 'var(--border)' : i === sc.answer ? 'var(--evs)' : selected === i ? 'var(--sci)' : 'var(--border)';
+        return '<button onclick="alsOpt(' + i + ')" style="text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid ' + border + ';background:' + bg + ';color:var(--text);font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;transition:all .2s">' +
+          (answered && i === sc.answer ? '✅ ' : answered && selected === i && i !== sc.answer ? '❌ ' : '') + opt + '</button>';
+      }).join('') + '</div>' +
+      /* Navigation */
+      '<div class="ctrl-row">' +
+      (step > 0 ? '<button class="cbtn" onclick="alsStep(-1)">← Prev</button>' : '<div></div>') +
+      '<span style="font-size:11px;color:var(--muted)">' + (step+1) + '/' + scenarios.length + '</span>' +
+      (step < scenarios.length-1 ? '<button class="cbtn" onclick="alsStep(1)" style="background:var(--life);color:white;border-color:var(--life)">Next →</button>' :
+       '<button class="cbtn" onclick="alsStep(-'+step+')" style="background:var(--acc);color:white;border-color:var(--acc)">↺ Restart</button>') +
+      '</div>';
+  }
+
+  window.alsOpt = function(i) { if(answered) return; selected=i; answered=true; render(); };
+  window.alsStep = function(d) { step=Math.max(0,Math.min(scenarios.length-1,step+d)); selected=null; answered=false; render(); };
+  render();
+};
+
+/* ── 2. PUBLIC SPEAKING (public-speaking) ── */
+SIM_REGISTRY['public-speaking'] = function(c) {
+  var stage = 0;
+  var tips = [
+    { phase:'📝 Prepare', color:'#4D96FF', icon:'📚',
+      points:['Know your topic deeply — confidence comes from knowledge','Structure: Opening hook → 3 main points → Strong conclusion','Practice aloud at least 3 times','Time yourself — 1 minute per slide is a good rule'],
+      activity:'Write your first sentence here:',
+      prompt:'Start with a question, a surprising fact, or a story — NOT "Hello, my name is..."' },
+    { phase:'🧘 Manage Nervousness', color:'#6BCB77', icon:'💪',
+      points:['Nervousness = excitement! Same feeling, different label','Take 3 slow deep breaths before starting','Look at friendly faces in the audience','Remember: audience wants you to succeed'],
+      activity:'Try this breathing exercise:',
+      prompt:'Breathe IN for 4 counts → Hold 4 → OUT for 6 counts → Repeat 3 times' },
+    { phase:'🗣️ Deliver', color:'#FFD93D', icon:'🎤',
+      points:['Speak slower than you think you need to','Project your voice — speak to the back row','Pause after key points — silence = emphasis','Use gestures naturally — hands out of pockets!'],
+      activity:'Rate yourself:',
+      prompt:'Eye contact 👁️ · Volume 🔊 · Pace ⏱️ · Enthusiasm ⚡ — which needs work?' },
+    { phase:'✅ Reflect & Improve', color:'#C77DFF', icon:'🌱',
+      points:['Every speech makes you better — professionals still practice','Record yourself to spot habits (um, uh, like)','Ask one person for one specific piece of feedback','Great speakers were once terrible speakers!'],
+      activity:'Famous speaker fact:',
+      prompt:'Winston Churchill, Mahatma Gandhi, and Warren Buffett all had severe fear of public speaking. They practiced obsessively.' },
+  ];
+
+  function render() {
+    var t = tips[stage];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Public Speaking Skills</div>' +
+      /* Phase tabs */
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;justify-content:center">' +
+      tips.map(function(tp, i) {
+        return '<button onclick="psStage('+i+')" style="padding:5px 10px;border-radius:9px;font-size:11px;font-weight:800;border:1.5px solid '+(i===stage?tp.color:'var(--border)')+';background:'+(i===stage?tp.color+'22':'var(--surface2)')+';color:'+(i===stage?tp.color:'var(--muted)')+';cursor:pointer">' + tp.phase + '</button>';
+      }).join('') + '</div>' +
+      /* Content */
+      '<div style="background:'+t.color+'15;border:1.5px solid '+t.color+'44;border-radius:12px;padding:14px;margin-bottom:8px">' +
+      '<div style="font-size:32px;margin-bottom:6px">' + t.icon + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px">' +
+      t.points.map(function(p) { return '<div style="font-size:12px;color:var(--text);line-height:1.6;display:flex;gap:8px"><span style="color:'+t.color+';flex-shrink:0">▶</span>' + p + '</div>'; }).join('') +
+      '</div></div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;border:1px solid var(--border)">' +
+      '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px">' + t.activity + '</div>' +
+      '<div style="font-size:12px;color:'+t.color+';line-height:1.7;font-style:italic">' + t.prompt + '</div>' +
+      '</div>';
+  }
+
+  window.psStage = function(i) { stage=i; render(); };
+  render();
+};
+
+/* ── 3. GOAL SETTING (goal-setting) ── */
+SIM_REGISTRY['goal-setting'] = function(c) {
+  var goalText = '', whyText = '', steps = ['','',''], deadline = '1 month', selected = null;
+
+  function render() {
+    var isSMART = goalText.length > 10 && whyText.length > 5 && steps.filter(function(s){return s.length>3;}).length >= 2;
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">SMART Goal Builder</div>' +
+      /* SMART breakdown */
+      '<div style="display:flex;gap:4px;margin-bottom:10px;justify-content:center">' +
+      [['S','Specific','#FF6B6B'],['M','Measurable','#FFD93D'],['A','Achievable','#6BCB77'],['R','Relevant','#4D96FF'],['T','Time-bound','#C77DFF']].map(function(sm) {
+        return '<div style="text-align:center;background:'+sm[2]+'22;border:1px solid '+sm[2]+'44;border-radius:8px;padding:4px 8px;min-width:44px">' +
+          '<div style="font-size:16px;font-weight:900;color:'+sm[2]+'">'+sm[0]+'</div>' +
+          '<div style="font-size:8px;color:'+sm[2]+';opacity:.8">'+sm[1]+'</div>' +
+          '</div>';
+      }).join('') + '</div>' +
+      /* Goal input */
+      '<div style="margin-bottom:8px">' +
+      '<label style="font-size:11px;font-weight:800;color:var(--muted);display:block;margin-bottom:4px">🎯 My specific goal:</label>' +
+      '<input type="text" placeholder="e.g. Score above 80% in Maths by March" value="'+goalText+'" oninput="gsGoal(this.value)" ' +
+      'style="width:100%;background:var(--surface);border:1.5px solid '+(goalText.length>10?'var(--evs)':'var(--border)')+';border-radius:8px;padding:8px;color:var(--text);font-size:12px;box-sizing:border-box">' +
+      '</div>' +
+      '<div style="margin-bottom:8px">' +
+      '<label style="font-size:11px;font-weight:800;color:var(--muted);display:block;margin-bottom:4px">💡 Why this matters to me:</label>' +
+      '<input type="text" placeholder="e.g. I want to qualify for science olympiad" value="'+whyText+'" oninput="gsWhy(this.value)" ' +
+      'style="width:100%;background:var(--surface);border:1.5px solid '+(whyText.length>5?'var(--evs)':'var(--border)')+';border-radius:8px;padding:8px;color:var(--text);font-size:12px;box-sizing:border-box">' +
+      '</div>' +
+      /* Steps */
+      '<div style="margin-bottom:8px">' +
+      '<label style="font-size:11px;font-weight:800;color:var(--muted);display:block;margin-bottom:4px">📋 3 action steps:</label>' +
+      steps.map(function(s,i) {
+        return '<input type="text" placeholder="Step '+(i+1)+'..." value="'+s+'" oninput="gsStep('+i+',this.value)" ' +
+          'style="width:100%;background:var(--surface);border:1.5px solid '+(s.length>3?'var(--evs)':'var(--border)')+';border-radius:8px;padding:7px;color:var(--text);font-size:12px;box-sizing:border-box;margin-bottom:4px">';
+      }).join('') +
+      '</div>' +
+      /* Deadline */
+      '<div class="ctrl-row" style="margin-bottom:10px">' +
+      '<span style="font-size:11px;color:var(--muted)">⏱️ Deadline:</span>' +
+      ['1 week','1 month','3 months','6 months'].map(function(d) {
+        return '<button onclick="gsDead(\''+d+'\')" style="padding:4px 8px;border-radius:8px;font-size:11px;border:1.5px solid '+(d===deadline?'var(--acc)':'var(--border)')+';background:'+(d===deadline?'var(--acc-dim)':'var(--surface2)')+';color:'+(d===deadline?'var(--acc)':'var(--muted)')+';cursor:pointer">'+d+'</button>';
+      }).join('') +
+      '</div>' +
+      /* Result */
+      '<div style="background:'+(isSMART?'var(--evs-dim)':'var(--surface2)')+';border:1.5px solid '+(isSMART?'var(--evs)':'var(--border)')+';border-radius:12px;padding:12px;text-align:center">' +
+      (isSMART
+        ? '<div style="font-size:16px;font-weight:900;color:var(--evs)">🌟 SMART Goal Complete!</div><div style="font-size:11px;color:var(--muted);margin-top:4px">Write it somewhere visible. Review weekly. You\'ve got this!</div>'
+        : '<div style="font-size:12px;color:var(--muted)">Fill in all fields to complete your SMART goal 👆</div>') +
+      '</div>';
+  }
+
+  window.gsGoal = function(v) { goalText=v; render(); };
+  window.gsWhy = function(v) { whyText=v; render(); };
+  window.gsStep = function(i,v) { steps[i]=v; render(); };
+  window.gsDead = function(d) { deadline=d; render(); };
+  render();
+};
+
+/* ── 4. FEELINGS WHEEL (feelings-wheel) ── */
+SIM_REGISTRY['feelings-wheel'] = function(c) {
+  var selected = null;
+  var feelings = {
+    happy:   { emoji:'😊', color:'#FFD93D', subs:['Joyful','Excited','Grateful','Content','Proud','Hopeful'] },
+    sad:     { emoji:'😢', color:'#4D96FF', subs:['Lonely','Disappointed','Hopeless','Grief','Regret','Hurt'] },
+    angry:   { emoji:'😠', color:'#FF6B6B', subs:['Frustrated','Irritated','Betrayed','Jealous','Bitter','Furious'] },
+    scared:  { emoji:'😨', color:'#C77DFF', subs:['Anxious','Worried','Insecure','Overwhelmed','Helpless','Nervous'] },
+    surprised:{ emoji:'😲',color:'#FF8C42', subs:['Shocked','Amazed','Confused','Startled','Awed','Speechless'] },
+    disgusted:{ emoji:'🤢',color:'#6BCB77', subs:['Disapproving','Judgemental','Repelled','Awful','Nauseated','Horrified'] },
+  };
+
+  function render() {
+    var sel = selected ? feelings[selected] : null;
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Feelings Wheel — Name Your Emotions</div>' +
+      /* Primary emotions */
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">' +
+      Object.keys(feelings).map(function(key) {
+        var f = feelings[key];
+        return '<button onclick="feelSel(\''+key+'\')" style="padding:10px 6px;border-radius:12px;border:2px solid '+(key===selected?f.color:'var(--border)')+';background:'+(key===selected?f.color+'22':'var(--surface2)')+';cursor:pointer;transition:all .2s">' +
+          '<div style="font-size:24px">' + f.emoji + '</div>' +
+          '<div style="font-size:11px;font-weight:800;color:'+(key===selected?f.color:'var(--muted)')+';margin-top:4px;text-transform:capitalize">' + key + '</div>' +
+          '</button>';
+      }).join('') + '</div>' +
+      /* Sub-emotions */
+      (sel ?
+        '<div style="background:'+sel.color+'15;border:1.5px solid '+sel.color+'44;border-radius:12px;padding:12px">' +
+        '<div style="font-size:13px;font-weight:800;color:'+sel.color+';margin-bottom:8px">More specific feelings:</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+        sel.subs.map(function(s) { return '<span style="background:'+sel.color+'22;color:'+sel.color+';padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">' + s + '</span>'; }).join('') +
+        '</div>' +
+        '<div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.7">💡 Naming emotions precisely helps you understand them and respond better. Instead of "I feel bad", try "I feel <b style="color:'+sel.color+'">' + sel.subs[0] + '</b>"</div>' +
+        '</div>'
+        : '<div style="text-align:center;color:var(--muted);font-size:12px;padding:10px">Tap a primary emotion above to explore it ☝️</div>') +
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">All feelings are valid. The more words you have for emotions, the better you can express, understand and manage them.</div>';
+  }
+
+  window.feelSel = function(key) { selected = selected===key?null:key; render(); };
+  render();
+};
+
+/* ── 5. STRESS TOOLS (stress-tools) ── */
+SIM_REGISTRY['stress-tools'] = function(c) {
+  var tool = 'breathing';
+  var raf2, t2=0, phase='inhale', phaseT=0, running=false;
+
+  var tools = {
+    breathing: { name:'🫁 Box Breathing', color:'#4D96FF', desc:'Used by Navy SEALs to calm the nervous system in 2 minutes.' },
+    grounding: { name:'🌿 5-4-3-2-1 Grounding', color:'#6BCB77', desc:'Anchors you to the present moment — breaks anxiety cycles.' },
+    reframing: { name:'💭 Thought Reframing', color:'#C77DFF', desc:'Changes how you interpret a stressful situation.' },
+  };
+
+  function drawBreathing(ctx, W, H) {
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+    var cx=W/2,cy=H/2;
+    var phases=['inhale','hold1','exhale','hold2'];
+    var durations=[4,4,4,4];
+    if(!running){
+      ctx.fillStyle='rgba(77,150,255,.3)'; ctx.beginPath(); ctx.arc(cx,cy,60,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='bold 12px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Press Start',cx,cy+4); return;
+    }
+    phaseT+=0.03;
+    var dur=durations[phases.indexOf(phase)];
+    if(phaseT>=dur){phaseT=0;phase=phases[(phases.indexOf(phase)+1)%4];}
+    var prog=phaseT/dur;
+    var r=phase==='inhale'?30+prog*40:phase==='exhale'?70-prog*40:phase==='hold1'?70:30;
+    /* Pulse ring */
+    ctx.beginPath(); ctx.arc(cx,cy,r+15,0,Math.PI*2);
+    ctx.strokeStyle='rgba(77,150,255,0.15)'; ctx.lineWidth=20; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle='rgba(77,150,255,0.3)'; ctx.fill();
+    ctx.strokeStyle='#4D96FF'; ctx.lineWidth=3; ctx.stroke();
+    /* Progress arc */
+    ctx.beginPath(); ctx.arc(cx,cy,r+8,-Math.PI/2,-Math.PI/2+prog*Math.PI*2);
+    ctx.strokeStyle='#4D96FF'; ctx.lineWidth=3; ctx.stroke();
+    /* Text */
+    ctx.fillStyle='white'; ctx.font='bold 14px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(phase==='inhale'?'INHALE':phase==='exhale'?'EXHALE':'HOLD',cx,cy-8);
+    ctx.font='12px Nunito,sans-serif'; ctx.fillStyle='rgba(255,255,255,.6)';
+    ctx.fillText(Math.ceil(dur-phaseT)+'s',cx,cy+12);
+    /* Labels around */
+    ctx.font='9px Nunito,sans-serif'; ctx.fillStyle='rgba(255,255,255,.3)';
+    ctx.fillText('4 seconds each',cx,H-10);
+  }
+
+  function drawAnim() {
+    var cv=document.getElementById('stressCanvas');
+    if(!cv||tool!=='breathing') return;
+    drawBreathing(cv.getContext('2d'), cv.width, cv.height);
+    raf2=requestAnimationFrame(drawAnim);
+  }
+
+  function render() {
+    var t=tools[tool];
+    var content='';
+
+    if(tool==='breathing'){
+      content='<canvas id="stressCanvas" width="240" height="180" style="border-radius:12px;display:block;margin:0 auto"></canvas>'+
+        '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" onclick="stressStart()" id="breathBtn" style="background:var(--life);color:white;border-color:var(--life)">▶ Start</button></div>';
+    } else if(tool==='grounding'){
+      var senses=[
+        {n:5,sense:'SEE 👁️',color:'#FF6B6B',examples:'desk, window, clock, poster, plant'},
+        {n:4,sense:'TOUCH 🤚',color:'#FFD93D',examples:'floor, chair, shirt, pen, wall'},
+        {n:3,sense:'HEAR 👂',color:'#6BCB77',examples:'fan, voices, birds, traffic, music'},
+        {n:2,sense:'SMELL 👃',color:'#4D96FF',examples:'air, food, books, soap, rain'},
+        {n:1,sense:'TASTE 👅',color:'#C77DFF',examples:'water, gum, last meal, toothpaste'},
+      ];
+      content='<div style="display:flex;flex-direction:column;gap:6px">'+
+        senses.map(function(s){
+          return '<div style="background:'+s.color+'15;border:1px solid '+s.color+'33;border-radius:10px;padding:9px 12px;display:flex;gap:10px;align-items:center">'+
+            '<div style="font-size:22px;font-weight:900;color:'+s.color+';min-width:26px">'+s.n+'</div>'+
+            '<div><div style="font-size:12px;font-weight:800;color:'+s.color+'">Things you can '+s.sense+'</div>'+
+            '<div style="font-size:11px;color:var(--muted)">e.g. '+s.examples+'</div></div>'+
+            '</div>';
+        }).join('') + '</div>';
+    } else {
+      var examples=[
+        {neg:'"I failed the test. I\'m stupid."',pos:'"I struggled this time. What can I learn from this?"'},
+        {neg:'"Nobody likes me."',pos:'"I haven\'t found my close friend group yet. That takes time."'},
+        {neg:'"Everything is going wrong."',pos:'"This specific situation is hard right now. It will pass."'},
+      ];
+      content='<div style="display:flex;flex-direction:column;gap:8px">'+
+        examples.map(function(ex){
+          return '<div style="display:flex;gap:6px;align-items:stretch">'+
+            '<div style="background:var(--sci-dim);border:1px solid var(--sci)44;border-radius:10px;padding:9px 12px;flex:1;font-size:12px;color:var(--sci);line-height:1.6">❌ '+ex.neg+'</div>'+
+            '<div style="display:flex;align-items:center;color:var(--muted);font-size:18px">→</div>'+
+            '<div style="background:var(--evs-dim);border:1px solid var(--evs)44;border-radius:10px;padding:9px 12px;flex:1;font-size:12px;color:var(--evs);line-height:1.6">✅ '+ex.pos+'</div>'+
+            '</div>';
+        }).join('')+'</div>';
+    }
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Stress Management Toolkit</div>'+
+      '<div class="ctrl-row" style="margin-bottom:8px">'+
+      Object.keys(tools).map(function(k){
+        return '<button onclick="stressTool(\''+k+'\')" style="padding:5px 9px;border-radius:9px;font-size:11px;font-weight:800;border:1.5px solid '+(k===tool?tools[k].color:'var(--border)')+';background:'+(k===tool?tools[k].color+'22':'var(--surface2)')+';color:'+(k===tool?tools[k].color:'var(--muted)')+';cursor:pointer">'+tools[k].name+'</button>';
+      }).join('')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center;font-style:italic">'+t.desc+'</div>'+
+      content;
+
+    if(tool==='breathing'){ cancelAnimationFrame(raf2); drawAnim(); }
+  }
+
+  window.stressTool=function(k){cancelAnimationFrame(raf2);running=false;tool=k;phaseT=0;phase='inhale';render();};
+  window.stressStart=function(){
+    running=!running;
+    document.getElementById('breathBtn').textContent=running?'⏸ Pause':'▶ Start';
+    if(running) drawAnim();
+  };
+  window.simCleanup=function(){cancelAnimationFrame(raf2);running=false;};
+  render();
+};
+
+/* ── 6. ELECTION SIM (election-sim) ── */
+SIM_REGISTRY['election-sim'] = function(c) {
+  var parties=[
+    {name:'Party A',color:'#FF6B6B',emoji:'🔴',policy:'Free school meals, more parks, cleaner rivers',votes:0},
+    {name:'Party B',color:'#4D96FF',emoji:'🔵',policy:'Better roads, lower taxes, new hospital',votes:0},
+    {name:'Party C',color:'#6BCB77',emoji:'🟢',policy:'Plant 1000 trees, solar panels on schools, cycle paths',votes:0},
+    {name:'Party D',color:'#FFD93D',emoji:'🟡',policy:'Free sports facilities, digital library, student council',votes:0},
+  ];
+  var totalVoters=50, voted=0, phase='campaign';
+
+  function render() {
+    var totalVotes=parties.reduce(function(a,b){return a+b.votes;},0);
+    var winner=phase==='results'?parties.reduce(function(a,b){return b.votes>a.votes?b:a;}):null;
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">School Election Simulator</div>'+
+      (phase==='campaign'?
+        '<div style="margin-bottom:10px">' +
+        parties.map(function(p){
+          return '<div style="background:'+p.color+'15;border:1.5px solid '+p.color+'33;border-radius:12px;padding:10px 12px;margin-bottom:6px">'+
+            '<div style="font-size:14px;font-weight:900;color:'+p.color+'">'+p.emoji+' '+p.name+'</div>'+
+            '<div style="font-size:12px;color:var(--text);line-height:1.7;margin-top:3px">📋 '+p.policy+'</div>'+
+            '</div>';
+        }).join('')+
+        '</div>'+
+        '<div class="ctrl-row">'+
+        '<button class="cbtn" onclick="electionStart()" style="background:var(--acc);color:white;border-color:var(--acc)">🗳️ Start Voting!</button>'+
+        '</div>'
+        :phase==='voting'?
+        '<div style="text-align:center;margin-bottom:10px">' +
+        '<div style="font-size:16px;font-weight:800;color:var(--text)">Cast your vote!</div>' +
+        '<div style="font-size:12px;color:var(--muted)">' + voted + ' of ' + totalVoters + ' votes cast</div>' +
+        '<div style="height:6px;background:var(--surface2);border-radius:3px;margin:8px 0"><div style="height:6px;background:var(--acc);border-radius:3px;width:'+(voted/totalVoters*100)+'%"></div></div>' +
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
+        parties.map(function(p){
+          return '<button onclick="electionVote(\''+p.name+'\')" style="padding:10px 14px;border-radius:12px;border:2px solid '+p.color+';background:'+p.color+'15;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:Nunito,sans-serif;transition:all .2s">'+
+            '<span style="font-size:24px">'+p.emoji+'</span>'+
+            '<div style="text-align:left"><div style="font-size:13px;font-weight:800;color:'+p.color+'">'+p.name+'</div>'+
+            '<div style="font-size:11px;color:var(--muted)">'+p.votes+' votes so far</div></div>'+
+            '</button>';
+        }).join('')+
+        '</div>'+
+        (voted>=totalVoters?'<button class="cbtn" onclick="electionResults()" style="background:var(--evs);color:white;border-color:var(--evs);width:100%">📊 See Results!</button>':'')
+        :
+        /* Results */
+        '<div style="text-align:center;margin-bottom:10px">' +
+        '<div style="font-size:20px">🏆</div>' +
+        '<div style="font-size:18px;font-weight:900;color:'+winner.color+'">'+winner.emoji+' '+winner.name+' Wins!</div>' +
+        '<div style="font-size:12px;color:var(--muted)">with '+winner.votes+' votes ('+(winner.votes/totalVoters*100).toFixed(1)+'%)</div>' +
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'+
+        parties.slice().sort(function(a,b){return b.votes-a.votes;}).map(function(p,i){
+          return '<div style="display:flex;align-items:center;gap:8px">'+
+            '<span style="font-size:14px;min-width:20px">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'4️⃣')+'</span>'+
+            '<div style="flex:1;height:22px;background:var(--surface2);border-radius:6px;overflow:hidden">'+
+            '<div style="height:22px;background:'+p.color+';width:'+(p.votes/winner.votes*100)+'%;border-radius:6px;display:flex;align-items:center;padding-left:8px">'+
+            '<span style="font-size:11px;font-weight:800;color:white">'+p.name+' — '+p.votes+'</span>'+
+            '</div></div></div>';
+        }).join('')+
+        '</div>'+
+        '<button class="cbtn" onclick="electionReset()" style="width:100%">↺ New Election</button>'
+      );
+  }
+
+  window.electionStart=function(){phase='voting';render();};
+  window.electionVote=function(name){
+    if(voted>=totalVoters) return;
+    var p=parties.find(function(p){return p.name===name;});
+    if(p){p.votes++;voted++;}
+    render();
+  };
+  window.electionResults=function(){phase='results';render();};
+  window.electionReset=function(){parties.forEach(function(p){p.votes=0;});voted=0;phase='campaign';render();};
+  render();
+};
+
+/* ── 7. MINDSET FLIP (mindset-flip) ── */
+SIM_REGISTRY['mindset-flip'] = function(c) {
+  var flipped={};
+  var mindsets=[
+    {fixed:'"I\'m not good at maths."',growth:'"I\'m not good at maths yet — but I can improve with practice."',tip:'The word YET is powerful. It changes a dead end into a path forward.'},
+    {fixed:'"This is too hard. I give up."',growth:'"This is hard. That means I\'m learning something new. Let me try a different approach."',tip:'Struggle = growth. Easy tasks teach you nothing new.'},
+    {fixed:'"I failed. I\'m a failure."',growth:'"I failed at this attempt. What can I learn from it?"',tip:'Failure is feedback, not identity. Every expert has failed more than beginners.'},
+    {fixed:'"They\'re smarter than me."',growth:'"They\'ve practised more than me. I can too."',tip:'Intelligence isn\'t fixed at birth. Neural pathways grow stronger with use.'},
+    {fixed:'"I can\'t do anything right."',growth:'"I haven\'t mastered this specific skill yet."',tip:'Be specific about what you can\'t do. General statements are almost never true.'},
+  ];
+
+  function render() {
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Growth vs Fixed Mindset</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+      '<div style="flex:1;text-align:center;background:var(--sci-dim);border-radius:8px;padding:6px;font-size:11px;font-weight:800;color:var(--sci)">❌ Fixed Mindset</div>'+
+      '<div style="flex:1;text-align:center;background:var(--evs-dim);border-radius:8px;padding:6px;font-size:11px;font-weight:800;color:var(--evs)">✅ Growth Mindset</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px">'+
+      mindsets.map(function(m,i){
+        var isFlipped=flipped[i];
+        return '<div style="background:var(--surface2);border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
+          '<div style="padding:10px 12px;background:'+(isFlipped?'var(--evs-dim)':'var(--sci-dim)')+';border-bottom:1px solid var(--border)">'+
+          '<div style="font-size:12px;color:'+(isFlipped?'var(--evs)':'var(--sci)')+';font-weight:700;line-height:1.6">'+(isFlipped?'✅ '+m.growth:'❌ '+m.fixed)+'</div>'+
+          '</div>'+
+          (isFlipped?'<div style="padding:8px 12px;font-size:11px;color:var(--muted);line-height:1.6">💡 '+m.tip+'</div>':'')+
+          '<button onclick="mindFlip('+i+')" style="width:100%;padding:7px;border:none;background:transparent;cursor:pointer;color:'+(isFlipped?'var(--evs)':'var(--sci)')+';font-size:11px;font-weight:800;font-family:Nunito,sans-serif">'+
+          (isFlipped?'← Show fixed mindset':'🔄 Flip to growth mindset')+
+          '</button></div>';
+      }).join('')+
+      '</div>';
+  }
+
+  window.mindFlip=function(i){flipped[i]=!flipped[i];render();};
+  render();
+};
+
+/* ── 8. PROFIT AND LOSS (profit-loss) ── */
+SIM_REGISTRY['profit-loss'] = function(c) {
+  var cp=80, sp=100;
+
+  function render() {
+    var diff=sp-cp;
+    var profit=diff>0;
+    var pct=Math.abs(diff/cp*100);
+    var color=profit?'var(--evs)':diff<0?'var(--sci)':'var(--muted)';
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Profit & Loss Calculator</div>'+
+      /* Visual bar */
+      '<div style="margin-bottom:14px">' +
+      '<div style="display:flex;height:50px;border-radius:10px;overflow:hidden;border:1px solid var(--border)">' +
+      '<div style="flex:'+cp+';background:var(--sci-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--sci)">CP: ₹'+cp+'</div>'+
+      (diff>0?'<div style="flex:'+diff+';background:var(--evs-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--evs)">+₹'+diff+'</div>':'')+'</div>'+
+      (diff<0?'<div style="height:10px;width:'+(Math.abs(diff)/sp*100)+'%;background:var(--sci);border-radius:0 0 6px 6px;margin-left:'+(cp/sp*100)+'%"></div>':'')+
+      '</div>'+
+      /* Summary cards */
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'+
+      [
+        {label:'Cost Price',val:'₹'+cp,color:'var(--sci)'},
+        {label:'Selling Price',val:'₹'+sp,color:'var(--math)'},
+        {label:profit?'Profit':diff<0?'Loss':'No P/L',val:(profit?'+':'')+'₹'+Math.abs(diff),color:color},
+      ].map(function(card){
+        return '<div style="background:'+card.color+22+';border:1px solid '+card.color+44+';border-radius:10px;padding:10px;text-align:center">'+
+          '<div style="font-size:10px;color:var(--muted)">'+card.label+'</div>'+
+          '<div style="font-size:20px;font-weight:900;color:'+card.color+'">'+card.val+'</div>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      /* Percentage */
+      '<div style="background:'+color+22+';border:1.5px solid '+color+44+';border-radius:12px;padding:12px;text-align:center;margin-bottom:12px">'+
+      '<div style="font-size:24px;font-weight:900;color:'+color+'">'+(profit?'📈 Profit':diff<0?'📉 Loss':'⚖️ Break Even')+': '+pct.toFixed(1)+'%</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-top:4px">'+
+      (profit?'Profit % = ('+diff+'/'+cp+') × 100 = '+pct.toFixed(1)+'%':'Loss % = ('+Math.abs(diff)+'/'+cp+') × 100 = '+pct.toFixed(1)+'%')+
+      '</div></div>'+
+      /* Sliders */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px">'+
+      '<span style="font-size:11px;color:var(--sci)">Cost Price: <b>₹'+cp+'</b></span>'+
+      '<input type="range" class="slide" min="10" max="500" step="5" value="'+cp+'" oninput="plCP(this.value)" style="width:120px">'+
+      '<span style="font-size:11px;color:var(--math)">Selling Price: <b>₹'+sp+'</b></span>'+
+      '<input type="range" class="slide" min="10" max="500" step="5" value="'+sp+'" oninput="plSP(this.value)" style="width:120px">'+
+      '</div>';
+  }
+
+  window.plCP=function(v){cp=parseInt(v);render();};
+  window.plSP=function(v){sp=parseInt(v);render();};
+  render();
+};
+
+/* ── 9. RATIO COOKING (ratio-cooking) ── */
+SIM_REGISTRY['ratio-cooking'] = function(c) {
+  var recipe={name:'Dal Rice',base:2,unit:'cups',ratio:[{ing:'Rice',amount:1},{ing:'Dal',amount:0.5},{ing:'Water',amount:2.5},{ing:'Salt',amount:0.5}]};
+  var servings=2;
+  var recipes=[
+    {name:'🍚 Dal Rice',base:2,unit:'cups/tsp',ratio:[{ing:'Rice',amount:1,unit:'cup'},{ing:'Dal',amount:0.5,unit:'cup'},{ing:'Water',amount:2.5,unit:'cups'},{ing:'Salt',amount:0.5,unit:'tsp'}]},
+    {name:'🍋 Lemonade',base:1,unit:'glass',ratio:[{ing:'Lemon juice',amount:30,unit:'ml'},{ing:'Water',amount:200,unit:'ml'},{ing:'Sugar',amount:15,unit:'g'},{ing:'Ice',amount:3,unit:'cubes'}]},
+    {name:'🥞 Pancakes',base:4,unit:'pancakes',ratio:[{ing:'Flour',amount:100,unit:'g'},{ing:'Milk',amount:150,unit:'ml'},{ing:'Egg',amount:1,unit:''},{ing:'Butter',amount:10,unit:'g'}]},
+  ];
+  var sel=0;
+
+  function render() {
+    var r=recipes[sel];
+    var mult=servings/r.base;
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Ratio & Proportion — Cooking</div>'+
+      /* Recipe selector */
+      '<div class="ctrl-row" style="margin-bottom:10px">'+
+      recipes.map(function(rc,i){
+        return '<button onclick="rcSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:12px;font-weight:800;border:1.5px solid '+(i===sel?'var(--math)':'var(--border)')+';background:'+(i===sel?'var(--math-dim)':'var(--surface2)')+';color:'+(i===sel?'var(--math)':'var(--muted)')+';cursor:pointer">'+rc.name+'</button>';
+      }).join('')+'</div>'+
+      /* Servings */
+      '<div class="ctrl-row" style="margin-bottom:10px">'+
+      '<span style="font-size:13px;color:var(--text)">Servings:</span>'+
+      [1,2,4,6,8,10].map(function(n){
+        return '<button onclick="rcServ('+n+')" style="padding:5px 10px;border-radius:8px;font-size:13px;font-weight:800;border:1.5px solid '+(n===servings?'var(--acc)':'var(--border)')+';background:'+(n===servings?'var(--acc-dim)':'var(--surface2)')+';color:'+(n===servings?'var(--acc)':'var(--muted)')+';cursor:pointer">'+n+'</button>';
+      }).join('')+'</div>'+
+      /* Ingredients */
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
+      r.ratio.map(function(ing){
+        var amount=ing.amount*mult;
+        var display=Number.isInteger(amount)?amount:amount.toFixed(1);
+        return '<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:10px;padding:9px 12px;border:1px solid var(--border)">'+
+          '<div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">'+ing.ing+'</div>'+
+          '<div style="font-size:16px;font-weight:900;color:var(--math)">'+display+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);min-width:30px">'+ing.unit+'</div>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:9px 12px;font-size:12px;color:var(--muted);line-height:1.7">'+
+      '📐 Ratio stays the same: '+r.ratio.map(function(i){return i.amount;}).join(' : ')+' → multiplied by <b style="color:var(--acc)">'+mult.toFixed(1)+'×</b> for '+servings+' servings'+
+      '</div>';
+  }
+
+  window.rcSel=function(i){sel=i;servings=recipes[i].base;render();};
+  window.rcServ=function(n){servings=n;render();};
+  render();
+};
+
+/* ── 10. SAVINGS TRACKER (savings-tracker) ── */
+SIM_REGISTRY['savings-tracker'] = function(c) {
+  var goal=1000, saved=0, weekly=50;
+
+  function render() {
+    var pct=Math.min(100,saved/goal*100);
+    var remaining=Math.max(0,goal-saved);
+    var weeks=weekly>0?Math.ceil(remaining/weekly):Infinity;
+    var color=pct>=100?'var(--evs)':pct>=50?'var(--math)':'var(--acc)';
+
+    /* Piggy bank SVG */
+    var piggy='<svg width="80" height="70" style="flex-shrink:0"><ellipse cx="40" cy="42" rx="30" ry="24" fill="'+color+'" opacity="0.8"/><circle cx="58" cy="35" r="10" fill="'+color+'" opacity="0.7"/><circle cx="62" cy="33" r="3" fill="rgba(0,0,0,.3)"/><rect x="32" y="12" width="8" height="10" rx="2" fill="'+color+'" opacity="0.6"/><ellipse cx="36" cy="12" rx="7" ry="4" fill="'+color+'"/><line x1="28" y1="64" x2="24" y2="55" stroke="'+color+'" stroke-width="4" stroke-linecap="round"/><line x1="36" y1="65" x2="35" y2="55" stroke="'+color+'" stroke-width="4" stroke-linecap="round"/><line x1="44" y1="65" x2="45" y2="55" stroke="'+color+'" stroke-width="4" stroke-linecap="round"/><line x1="52" y1="64" x2="56" y2="55" stroke="'+color+'" stroke-width="4" stroke-linecap="round"/>';
+    /* Fill level */
+    var fillH=pct/100*32;
+    piggy+='<clipPath id="pgClip"><ellipse cx="40" cy="42" rx="29" ry="23"/></clipPath>';
+    piggy+='<rect x="11" y="'+(66-fillH)+'" width="58" height="'+fillH+'" fill="rgba(255,255,255,.3)" clip-path="url(#pgClip)"/>';
+    piggy+='</svg>';
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">💰 Savings Goal Tracker</div>'+
+      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">'+
+      piggy+
+      '<div style="flex:1">'+
+      '<div style="font-size:28px;font-weight:900;color:'+color+'">₹'+saved+' / ₹'+goal+'</div>'+
+      '<div style="height:12px;background:var(--surface2);border-radius:6px;margin:6px 0;overflow:hidden">'+
+      '<div style="height:12px;background:'+color+';width:'+pct+'%;border-radius:6px;transition:width .4s"></div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted)">'+pct.toFixed(1)+'% saved · ₹'+remaining+' to go</div>'+
+      '</div></div>'+
+      (pct>=100?'<div style="background:var(--evs-dim);border:1.5px solid var(--evs);border-radius:12px;padding:14px;text-align:center;margin-bottom:10px"><div style="font-size:24px">🎉</div><div style="font-size:16px;font-weight:900;color:var(--evs)">Goal Reached!</div></div>':
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border)">'+
+      '<div style="font-size:12px;color:var(--muted)">At ₹'+weekly+'/week → reach goal in <b style="color:'+color+'">'+weeks+' weeks ('+Math.ceil(weeks/4)+' months)</b></div>'+
+      '</div>')+
+      /* Controls */
+      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">'+
+      '<span style="font-size:11px;color:var(--muted)">Goal: <b style="color:'+color+'">₹'+goal+'</b></span>'+
+      '<input type="range" class="slide" min="100" max="5000" step="100" value="'+goal+'" oninput="stGoal(this.value)" style="width:110px">'+
+      '<span style="font-size:11px;color:var(--muted)">Weekly: <b>₹'+weekly+'</b></span>'+
+      '<input type="range" class="slide" min="0" max="500" step="10" value="'+weekly+'" oninput="stWeekly(this.value)" style="width:90px">'+
+      '</div>'+
+      '<div class="ctrl-row">'+
+      '<button class="cbtn" onclick="stAdd(50)" style="background:var(--evs);color:white;border-color:var(--evs)">+ ₹50 Save</button>'+
+      '<button class="cbtn" onclick="stAdd(100)" style="background:var(--evs);color:white;border-color:var(--evs)">+ ₹100</button>'+
+      '<button class="cbtn" onclick="stReset()">↺ Reset</button>'+
+      '</div>';
+  }
+
+  window.stGoal=function(v){goal=parseInt(v);render();};
+  window.stWeekly=function(v){weekly=parseInt(v);render();};
+  window.stAdd=function(v){saved=Math.min(goal,saved+v);render();};
+  window.stReset=function(){saved=0;render();};
+  render();
+};
+
+/* ── 11. TIME MATRIX (time-matrix) ── */
+SIM_REGISTRY['time-matrix'] = function(c) {
+  var tasks=[
+    {text:'Study for tomorrow\'s test',urgent:true,important:true,q:1},
+    {text:'Reply to friend\'s WhatsApp',urgent:true,important:false,q:2},
+    {text:'Read a book for fun',urgent:false,important:true,q:3},
+    {text:'Watch random YouTube videos',urgent:false,important:false,q:4},
+    {text:'Complete project due next week',urgent:false,important:true,q:3},
+    {text:'Emergency — friend needs help',urgent:true,important:true,q:1},
+    {text:'Check social media',urgent:true,important:false,q:2},
+    {text:'Practice a hobby/skill',urgent:false,important:true,q:3},
+  ];
+  var newTask='';
+
+  function render() {
+    var quads=[
+      {n:1,label:'DO FIRST 🔥',sub:'Urgent + Important',color:'#FF6B6B',desc:'Crises, deadlines, emergencies'},
+      {n:2,label:'SCHEDULE 📅',sub:'Not Urgent + Important',color:'#4D96FF',desc:'Planning, learning, relationships'},
+      {n:3,label:'DELEGATE 📤',sub:'Urgent + Not Important',color:'#FFD93D',desc:'Interruptions, some messages'},
+      {n:4,label:'ELIMINATE ❌',sub:'Not Urgent + Not Important',color:'#888',desc:'Time wasters, trivial activities'},
+    ];
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Eisenhower Time Matrix</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
+      quads.map(function(q){
+        var qtasks=tasks.filter(function(t){return t.q===q.n;});
+        return '<div style="background:'+q.color+'15;border:1.5px solid '+q.color+'44;border-radius:12px;padding:10px">'+
+          '<div style="font-size:11px;font-weight:900;color:'+q.color+'">'+q.label+'</div>'+
+          '<div style="font-size:9px;color:var(--muted);margin-bottom:5px">'+q.sub+'</div>'+
+          '<div style="display:flex;flex-direction:column;gap:3px">'+
+          qtasks.map(function(t){
+            return '<div style="background:'+q.color+'22;border-radius:6px;padding:3px 7px;font-size:10px;color:var(--text)">'+t.text+'</div>';
+          }).join('')+
+          '</div></div>';
+      }).join('')+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.7">'+
+      'Most successful people spend time in <b style="color:#4D96FF">Quadrant 2</b> — important but not urgent tasks. This prevents crises in Q1!'+
+      '</div>';
+  }
+
+  render();
+};
+
+/* ── 12. RESPONSIBILITY CHART (responsibility-chart) ── */
+SIM_REGISTRY['responsibility-chart'] = function(c) {
+  var tasks=[
+    {task:'Make my bed each morning',done:false,pts:5},
+    {task:'Keep my study area clean',done:false,pts:5},
+    {task:'Complete homework before screen time',done:false,pts:10},
+    {task:'Help with one household chore daily',done:false,pts:8},
+    {task:'Wake up on time without reminders',done:false,pts:10},
+    {task:'Pack my school bag the night before',done:false,pts:7},
+    {task:'Read for 15 minutes',done:false,pts:8},
+    {task:'Drink 6+ glasses of water',done:false,pts:5},
+  ];
+  var day=1;
+
+  function render() {
+    var pts=tasks.filter(function(t){return t.done;}).reduce(function(a,t){return a+t.pts;},0);
+    var maxPts=tasks.reduce(function(a,t){return a+t.pts;},0);
+    var pct=pts/maxPts*100;
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Daily Responsibility Chart — Day '+day+'</div>'+
+      /* Progress */
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:5px">' +
+      '<span style="font-size:12px;color:var(--text)">Today\'s score</span>' +
+      '<span style="font-size:16px;font-weight:900;color:'+(pct>=80?'#6BCB77':pct>=50?'#FFD93D':'#FF6B6B')+'">'+pts+'/'+maxPts+' pts</span>' +
+      '</div>' +
+      '<div style="height:8px;background:var(--bg);border-radius:4px"><div style="height:8px;background:'+(pct>=80?'#6BCB77':pct>=50?'#FFD93D':'#FF6B6B')+';width:'+pct+'%;border-radius:4px;transition:width .3s"></div></div>' +
+      '</div>'+
+      /* Task list */
+      '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">'+
+      tasks.map(function(t,i){
+        return '<div onclick="rcToggle('+i+')" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1.5px solid '+(t.done?'var(--evs)':'var(--border)')+';border-radius:10px;padding:9px 12px;cursor:pointer;transition:all .2s">'+
+          '<div style="width:22px;height:22px;border-radius:6px;border:2px solid '+(t.done?'var(--evs)':'var(--border)')+';background:'+(t.done?'var(--evs)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          (t.done?'<span style="color:white;font-size:14px">✓</span>':'')+
+          '</div>'+
+          '<div style="flex:1;font-size:12px;color:'+(t.done?'var(--evs)':'var(--text)')+';'+(t.done?'text-decoration:line-through':'')+'">'+t.task+'</div>'+
+          '<div style="font-size:11px;font-weight:800;color:'+(t.done?'var(--evs)':'var(--muted)')+'">+'+t.pts+'</div>'+
+          '</div>';
+      }).join('')+
+      '</div>'+
+      /* Day navigation */
+      '<div class="ctrl-row">'+
+      '<button class="cbtn" onclick="rcNextDay()" style="background:var(--acc);color:white;border-color:var(--acc)">Next Day →</button>'+
+      '<span style="font-size:11px;color:var(--muted)">'+tasks.filter(function(t){return t.done;}).length+'/'+tasks.length+' tasks complete</span>'+
+      '</div>';
+  }
+
+  window.rcToggle=function(i){tasks[i].done=!tasks[i].done;render();};
+  window.rcNextDay=function(){day++;tasks.forEach(function(t){t.done=false;});render();};
+  render();
+};
+
+/* ── 13. TEAMWORK TOWER (teamwork-tower) ── */
+SIM_REGISTRY['teamwork-tower'] = function(c) {
+  var blocks=[], dragging=false, raf2, stability=100;
+
+  function init(){
+    blocks=[
+      {x:120,y:160,w:80,h:20,color:'#FF6B6B',label:'Trust'},
+      {x:125,y:138,w:70,h:20,color:'#FFD93D',label:'Communication'},
+      {x:130,y:116,w:60,h:20,color:'#6BCB77',label:'Respect'},
+      {x:133,y:94,w:54,h:20,color:'#4D96FF',label:'Shared Goal'},
+      {x:136,y:72,w:48,h:20,color:'#C77DFF',label:'Leadership'},
+    ];
+    stability=100;
+  }
+
+  function draw(){
+    var cv=document.getElementById('teamCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d');
+    var W=cv.width,H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Ground */
+    ctx.fillStyle='rgba(255,255,255,.1)'; ctx.fillRect(0,H-20,W,20);
+    ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Foundation',W/2,H-6);
+
+    /* Blocks */
+    blocks.forEach(function(b,i){
+      var wobble=Math.sin(Date.now()/1000*i)*((100-stability)/30);
+      ctx.fillStyle=b.color+'CC';
+      ctx.shadowColor=b.color; ctx.shadowBlur=8;
+      ctx.fillRect(b.x+wobble,b.y,b.w,b.h);
+      ctx.shadowBlur=0;
+      ctx.strokeStyle=b.color; ctx.lineWidth=1.5;
+      ctx.strokeRect(b.x+wobble,b.y,b.w,b.h);
+      ctx.fillStyle='white'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(b.label,b.x+b.w/2+wobble,b.y+13);
+    });
+
+    /* Stability meter */
+    var sColor=stability>70?'#6BCB77':stability>40?'#FFD93D':'#FF6B6B';
+    ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(W-35,20,20,H-50);
+    ctx.fillStyle=sColor; ctx.fillRect(W-35,20+(1-stability/100)*(H-50),20,stability/100*(H-50));
+    ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Stability',W-25,H-25); ctx.fillText(stability+'%',W-25,12);
+
+    if(stability<100) stability=Math.min(100,stability+0.2);
+    raf2=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    init();
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Teamwork — Building Together</div>'+
+      '<canvas id="teamCanvas" width="280" height="200" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      ['Remove Trust 😱','Remove Communication 🤐','Remove Respect 😤'].map(function(label,i){
+        return '<button class="cbtn" onclick="teamRemove('+i+')" style="font-size:10px">'+label+'</button>';
+      }).join('')+
+      '</div>'+
+      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="teamRebuild()" style="background:var(--evs);color:white;border-color:var(--evs)">🔄 Rebuild Team</button></div>'+
+      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
+      'Remove a foundation block and watch the tower become unstable. Trust is the base — without it, nothing holds.'+
+      '</div>';
+    cancelAnimationFrame(raf2); draw();
+  }
+
+  window.teamRemove=function(i){if(blocks.length>0){blocks.splice(0,1);stability=Math.max(20,stability-30);}};
+  window.teamRebuild=function(){cancelAnimationFrame(raf2);render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf2);};
+  render();
+};
+
+/* ── 14. NEGOTIATION (negotiation) ── */
+SIM_REGISTRY['negotiation'] = function(c) {
+  var round=0, myOffer=70, theirOffer=40, agreed=false, history=[];
+
+  function render(){
+    var gap=myOffer-theirOffer;
+    var midpoint=Math.round((myOffer+theirOffer)/2);
+
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Win-Win Negotiation Simulator</div>'+
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' +
+      '<div style="font-size:13px;color:var(--text);margin-bottom:4px">📖 <b>Scenario:</b> You\'re selling your old bicycle. You want ₹'+myOffer*10+'. The buyer offers ₹'+theirOffer*10+'.</div>' +
+      '</div>'+
+      /* Offer bar */
+      '<div style="margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">'+
+      '<span style="color:var(--evs)">Buyer: ₹'+theirOffer*10+'</span>'+
+      '<span style="color:var(--muted)">Gap: ₹'+gap*10+'</span>'+
+      '<span style="color:var(--sci)">You: ₹'+myOffer*10+'</span>'+
+      '</div>'+
+      '<div style="height:20px;background:var(--surface2);border-radius:10px;position:relative;overflow:hidden">'+
+      '<div style="position:absolute;left:0;top:0;height:20px;width:'+theirOffer+'%;background:var(--evs);border-radius:10px"></div>'+
+      '<div style="position:absolute;right:0;top:0;height:20px;width:'+(100-myOffer)+'%;background:var(--sci);border-radius:10px"></div>'+
+      '<div style="position:absolute;left:'+theirOffer+'%;top:0;width:'+(myOffer-theirOffer)+'%;height:20px;background:var(--math-dim)"></div>'+
+      '</div></div>'+
+      (agreed?
+        '<div style="background:var(--evs-dim);border:1.5px solid var(--evs);border-radius:12px;padding:14px;text-align:center;margin-bottom:10px">'+
+        '<div style="font-size:20px">🤝</div>'+
+        '<div style="font-size:16px;font-weight:900;color:var(--evs)">Deal at ₹'+midpoint*10+'!</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-top:4px">Both parties gave a little. That\'s a win-win!</div>'+
+        '</div>':
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
+        '<div class="ctrl-row"><span style="font-size:11px;color:var(--sci)">Your offer: <b>₹'+myOffer*10+'</b></span>'+
+        '<input type="range" class="slide" min="40" max="100" value="'+myOffer+'" oninput="negMy(this.value)" style="width:120px">'+
+        '</div>'+
+        '<div class="ctrl-row"><span style="font-size:11px;color:var(--evs)">Buyer offer: <b>₹'+theirOffer*10+'</b></span>'+
+        '<input type="range" class="slide" min="0" max="80" value="'+theirOffer+'" oninput="negTheir(this.value)" style="width:120px">'+
+        '</div>'+
+        '</div>'+
+        '<div class="ctrl-row">'+
+        '<button class="cbtn" onclick="negAccept()" style="background:var(--evs);color:white;border-color:var(--evs)">'+(gap<=10?'🤝 Accept Deal!':'Lower your price first')+'</button>'+
+        '<button class="cbtn" onclick="negCounter()">🗣️ Counter Offer</button>'+
+        '</div>'
+      )+
+      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:9px 12px;margin-top:8px;font-size:12px;color:var(--muted);line-height:1.7">'+
+      '💡 Win-Win: Both sides give a little. BATNA: Best Alternative To Negotiated Agreement — always know your walk-away point.'+
+      '</div>';
+  }
+
+  window.negMy=function(v){myOffer=parseInt(v);if(myOffer<theirOffer)myOffer=theirOffer;agreed=false;render();};
+  window.negTheir=function(v){theirOffer=parseInt(v);if(theirOffer>myOffer)theirOffer=myOffer;agreed=false;render();};
+  window.negAccept=function(){if(myOffer-theirOffer<=10){agreed=true;render();}};
+  window.negCounter=function(){theirOffer=Math.min(theirOffer+5,myOffer);render();};
+  render();
+};
+
+
+/* ── Remaining 27: use rich animated step navigator ── */
+['air-monitor','apology-sim','bayes-prob','biodiversity-survey','bone-joints',
+ 'boundaries-sim','business-plan','career-explore','census-data','chores-sim',
+ 'community-action','conflict-resolve','coop-economy','debate-sim','fact-check',
+ 'globalisation','independence-views','kerala-economy','leadership-sim','local-map',
+ 'news-history','party-budget','plantation-history','polynomial-tiles','resource-map',
+ 'turn-taking','weather-diary'
+].forEach(function(id) {
+  if (!SIM_REGISTRY[id]) SIM_REGISTRY[id] = null;
+});
