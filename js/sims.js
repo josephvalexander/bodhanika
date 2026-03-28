@@ -587,62 +587,218 @@ SIM_REGISTRY['_default'] = function(c, e) {
 
 /* ── 1. SOLAR SYSTEM SCALE MODEL ── */
 SIM_REGISTRY['solar-system'] = function(c) {
-  var planets = [
-    { name:'☀️ Sun',     size:28, color:'#FFD93D', dist:0,   fact:'1.4 million km wide!' },
-    { name:'☿ Mercury', size:4,  color:'#A0A0A0', dist:10,  fact:'10m away at this scale' },
-    { name:'♀️ Venus',   size:7,  color:'#E8C56A', dist:19,  fact:'19m away — scorching 465°C!' },
-    { name:'🌍 Earth',   size:7,  color:'#4D96FF', dist:26,  fact:'26m away — the perfect distance!' },
-    { name:'♂️ Mars',    size:5,  color:'#FF6B6B', dist:40,  fact:'40m — the Red Planet' },
-    { name:'♃ Jupiter', size:14, color:'#C8945A', dist:135, fact:'135m — 1300 Earths fit inside!' },
-    { name:'♄ Saturn',  size:12, color:'#E8D06A', dist:248, fact:'248m — rings made of ice' },
-    { name:'⛢ Uranus',  size:9,  color:'#6BCBB8', dist:499, fact:'499m — spins on its side!' },
-    { name:'♆ Neptune', size:8,  color:'#4D70FF', dist:781, fact:'781m — winds at 2000 km/h!' },
-  ];
-  var current = 0;
 
-  function render() {
-    var p = planets[current];
-    var isLast = current === planets.length - 1;
-    c.innerHTML =
-      '<div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Solar System Scale Model</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">If Sun = basketball (24cm), then...</div>' +
-      /* Planet display */
-      '<div style="position:relative;width:240px;height:120px;background:rgba(0,0,0,.3);border-radius:12px;overflow:hidden;border:1px solid var(--border)">' +
-      /* Stars background */
-      '<div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.08) 1px,transparent 1px),radial-gradient(circle at 80% 30%,rgba(255,255,255,.06) 1px,transparent 1px),radial-gradient(circle at 60% 70%,rgba(255,255,255,.05) 1px,transparent 1px)"></div>' +
-      /* Planet circle */
-      '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
-        'width:' + p.size*2 + 'px;height:' + p.size*2 + 'px;border-radius:50%;' +
-        'background:radial-gradient(circle at 35% 35%,' + p.color + ',' + p.color + '88);' +
-        'box-shadow:0 0 ' + p.size*3 + 'px ' + p.color + '66;' +
-        'animation:pulse 2s ease infinite"></div>' +
-      /* Saturn rings */
-      (current === 6 ? '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotateX(70deg);width:56px;height:56px;border-radius:50%;border:4px solid rgba(232,208,106,.4)"></div>' : '') +
-      '</div>' +
-      /* Planet name + fact */
-      '<div style="font-size:22px;font-weight:900;color:var(--text);margin:10px 0 2px">' + p.name + '</div>' +
-      '<div style="font-size:12px;color:var(--acc);font-weight:700;margin-bottom:4px">' + p.fact + '</div>' +
-      '<div style="font-size:11px;color:var(--muted)">Real distance from Sun: <b style="color:var(--text)">' + (p.dist === 0 ? '—' : p.dist + ' metres at this scale') + '</b></div>' +
-      /* Progress */
-      '<div style="display:flex;gap:5px;margin:12px 0;justify-content:center">' +
-      planets.map(function(_, i) {
-        return '<div style="width:' + (i===current?'20px':'8px') + ';height:8px;border-radius:4px;background:' + (i===current?'var(--acc)':'var(--border)') + ';transition:all .3s"></div>';
-      }).join('') + '</div>' +
-      /* Nav */
-      '<div style="display:flex;gap:10px">' +
-      (current > 0 ? '<button class="cbtn" onclick="ssNav(-1)">← Prev</button>' : '<div></div>') +
-      (isLast ?
-        '<button class="cbtn" onclick="ssReset()" style="background:var(--acc);color:white;border-color:var(--acc)">🔄 Start Over</button>' :
-        '<button class="cbtn" onclick="ssNav(1)" style="background:var(--acc);color:white;border-color:var(--acc)">Next Planet →</button>') +
-      '</div>';
+  var planets = [
+    { name:'Mercury', symbol:'☿', color:'#A8A8A8', glow:'rgba(168,168,168,.4)', r:3.5,  orbitR:44,  period:4.1,   angle:0.5,  fact:'Smallest planet. A year lasts just 88 Earth days!', distance:'57.9M km', moons:0 },
+    { name:'Venus',   symbol:'♀', color:'#E8C56A', glow:'rgba(232,197,106,.4)', r:6,    orbitR:62,  period:10.5,  angle:2.1,  fact:'Hottest planet at 465°C — hotter than Mercury!', distance:'108M km', moons:0 },
+    { name:'Earth',   symbol:'🌍', color:'#4D96FF', glow:'rgba(77,150,255,.4)',  r:6.5,  orbitR:82,  period:16.7,  angle:1.0,  fact:'Only known planet with life. 71% covered by ocean.', distance:'150M km', moons:1 },
+    { name:'Mars',    symbol:'♂', color:'#E8634A', glow:'rgba(232,99,74,.4)',   r:4.5,  orbitR:104, period:31.5,  angle:3.8,  fact:'Has Olympus Mons — 3× taller than Mt. Everest!', distance:'228M km', moons:2 },
+    { name:'Jupiter', symbol:'♃', color:'#C8945A', glow:'rgba(200,148,90,.4)',  r:13,   orbitR:135, period:197,   angle:2.4,  fact:'King of planets. Its Great Red Spot is a storm older than 350 years!', distance:'778M km', moons:95 },
+    { name:'Saturn',  symbol:'♄', color:'#E8D06A', glow:'rgba(232,208,106,.4)', r:11,   orbitR:165, period:490,   angle:5.1,  fact:'So light it could float on water! Rings stretch 282,000 km.', distance:'1.43B km', moons:146 },
+    { name:'Uranus',  symbol:'⛢', color:'#6BCBB8', glow:'rgba(107,203,184,.4)', r:8,    orbitR:192, period:1400,  angle:0.8,  fact:'Spins on its side at 98°! Rotates the wrong way.', distance:'2.87B km', moons:28 },
+    { name:'Neptune', symbol:'♆', color:'#4D70FF', glow:'rgba(77,112,255,.4)',  r:7.5,  orbitR:215, period:2750,  angle:4.2,  fact:'Farthest planet. Winds reach 2,100 km/h — fastest in the solar system!', distance:'4.5B km', moons:16 },
+  ];
+
+  var selected   = null;
+  var animating  = true;
+  var speed      = 1;
+  var startTime  = Date.now();
+  var pausedAt   = 0;
+  var raf;
+  var W = 460, H = 460, CX = 230, CY = 230;
+  var starsCache = null;
+
+  /* ── Generate stars once ── */
+  function makeStars() {
+    if (starsCache) return starsCache;
+    var s = '', seed = 99;
+    function rand() { seed = (seed*1664525+1013904223)&0xffffffff; return Math.abs(seed)/0xffffffff; }
+    for (var i = 0; i < 120; i++) {
+      var sx=rand()*W, sy=rand()*H, sr=rand()*1.3+0.2, op=rand()*.7+.15;
+      var d=Math.sqrt((sx-CX)*(sx-CX)+(sy-CY)*(sy-CY));
+      if (d<32) continue;
+      var twinkle = rand()>.7 ? ' opacity="'+op+'"><animate attributeName="opacity" values="'+op+';'+(op*.4)+';'+op+'" dur="'+(rand()*3+2).toFixed(1)+'s" repeatCount="indefinite"/></circle>' : '" opacity="'+op+'"/>';
+      s += '<circle cx="'+sx+'" cy="'+sy+'" r="'+sr+'" fill="white'+twinkle;
+    }
+    starsCache = s;
+    return s;
   }
 
-  window.ssNav  = function(d) { current = Math.max(0, Math.min(planets.length-1, current+d)); render(); };
-  window.ssReset = function() { current = 0; render(); };
-  render();
-};
+  /* ── Build full SVG ── */
+  function buildSVG(t) {
+    var orbitLines = planets.map(function(p) {
+      var sel = selected !== null && planets[selected] === p;
+      return '<circle cx="'+CX+'" cy="'+CY+'" r="'+p.orbitR+'" fill="none" ' +
+        'stroke="'+(sel?p.color:'rgba(255,255,255,0.07)')+'" stroke-width="'+(sel?'1.5':'1')+'" ' +
+        'stroke-dasharray="'+(sel?'5,3':'3,5')+'"/>';
+    }).join('');
 
-/* ── 2. MICROSCOPE WORLD ── */
+    var planetEls = planets.map(function(p, i) {
+      var angle = p.angle + (animating ? t * speed / p.period : pausedAt / p.period);
+      var px = CX + Math.cos(angle) * p.orbitR;
+      var py = CY + Math.sin(angle) * p.orbitR;
+      var sel = selected === i;
+      var out = '';
+
+      /* Saturn rings — drawn behind planet */
+      if (p.name === 'Saturn') {
+        out += '<ellipse cx="'+px+'" cy="'+py+'" rx="'+(p.r*2.2)+'" ry="'+(p.r*0.55)+'" ' +
+          'fill="none" stroke="'+p.color+'" stroke-width="3" stroke-opacity="0.55" ' +
+          'transform="rotate(-25,'+px+','+py+')"/>';
+        out += '<ellipse cx="'+px+'" cy="'+py+'" rx="'+(p.r*1.7)+'" ry="'+(p.r*0.4)+'" ' +
+          'fill="none" stroke="#B8A050" stroke-width="1.5" stroke-opacity="0.3" ' +
+          'transform="rotate(-25,'+px+','+py+')"/>';
+      }
+
+      /* Moon for Earth */
+      if (p.name === 'Earth') {
+        var ma = angle * 10;
+        var mx = px + Math.cos(ma)*11, my = py + Math.sin(ma)*11;
+        out += '<circle cx="'+mx+'" cy="'+my+'" r="1.8" fill="#C8C8C8" opacity="0.7"/>';
+      }
+
+      /* Selection ring */
+      if (sel) {
+        out += '<circle cx="'+px+'" cy="'+py+'" r="'+(p.r+7)+'" fill="none" ' +
+          'stroke="'+p.color+'" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7">' +
+          '<animateTransform attributeName="transform" type="rotate" from="0 '+px+' '+py+'" to="360 '+px+' '+py+'" dur="3s" repeatCount="indefinite"/>' +
+          '</circle>';
+      }
+
+      /* Glow behind planet */
+      out += '<circle cx="'+px+'" cy="'+py+'" r="'+(p.r+4)+'" fill="'+p.glow+'"/>';
+
+      /* Planet body with gradient */
+      out += '<defs><radialGradient id="pg'+i+'" cx="35%" cy="35%">' +
+        '<stop offset="0%" stop-color="white" stop-opacity="0.3"/>' +
+        '<stop offset="100%" stop-color="'+p.color+'"/>' +
+        '</radialGradient></defs>';
+
+      out += '<circle cx="'+px+'" cy="'+py+'" r="'+(sel?p.r+1.5:p.r)+'" ' +
+        'fill="url(#pg'+i+')" style="cursor:pointer" ' +
+        'onclick="solarClick('+i+')" data-name="'+p.name+'"/>';
+
+      /* Planet name label */
+      if (sel || p.r > 10) {
+        var lx = px + (px > CX ? p.r+5 : -(p.r+5));
+        var anchor = px > CX ? 'start' : 'end';
+        out += '<text x="'+lx+'" y="'+(py+4)+'" fill="'+p.color+'" ' +
+          'font-size="9" font-weight="bold" font-family="Nunito,sans-serif" ' +
+          'text-anchor="'+anchor+'" style="cursor:pointer" onclick="solarClick('+i+')">'+p.name+'</text>';
+      }
+
+      return out;
+    }).join('');
+
+    /* Sun with corona */
+    var sun = '<defs>' +
+      '<radialGradient id="sunG" cx="40%" cy="40%">' +
+      '<stop offset="0%" stop-color="#FFF7AA"/>' +
+      '<stop offset="60%" stop-color="#FFD93D"/>' +
+      '<stop offset="100%" stop-color="#FF8C00"/>' +
+      '</radialGradient>' +
+      '<filter id="sunGlow"><feGaussianBlur stdDeviation="4" result="blur"/>' +
+      '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '</defs>' +
+      '<circle cx="'+CX+'" cy="'+CY+'" r="32" fill="#FFD93D" opacity="0.08"/>' +
+      '<circle cx="'+CX+'" cy="'+CY+'" r="26" fill="#FFD93D" opacity="0.12"/>' +
+      '<circle cx="'+CX+'" cy="'+CY+'" r="20" fill="url(#sunG)" filter="url(#sunGlow)" ' +
+        'style="cursor:pointer" onclick="solarClick(-1)"/>' +
+      (selected===-1?'<circle cx="'+CX+'" cy="'+CY+'" r="27" fill="none" stroke="#FFD93D" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"><animateTransform attributeName="transform" type="rotate" from="0 '+CX+' '+CY+'" to="360 '+CX+' '+CY+'" dur="4s" repeatCount="indefinite"/></circle>':'');
+
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;cursor:default;' +
+      'background:radial-gradient(ellipse at 50% 50%,#080820 0%,#020208 70%,#000 100%);' +
+      'border-radius:12px">' +
+      makeStars() +
+      orbitLines + sun + planetEls +
+      '</svg>';
+  }
+
+  /* ── Info panel ── */
+  function renderInfo() {
+    var el = document.getElementById('ssInfo');
+    if (!el) return;
+    if (selected === null) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px 0">☝️ Tap any planet or the Sun to explore it</div>';
+      return;
+    }
+    if (selected === -1) {
+      el.innerHTML =
+        '<div style="display:flex;gap:12px;align-items:center">' +
+        '<div style="width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF7AA,#FF8C00);box-shadow:0 0 20px #FFD93D88;flex-shrink:0"></div>' +
+        '<div><div style="font-size:15px;font-weight:900;color:#FFD93D">☀️ The Sun</div>' +
+        '<div style="font-size:11px;color:var(--muted);line-height:1.7">109× wider than Earth · Surface: 5,500°C · Core: 15 million°C · 8 planets orbit it!</div>' +
+        '</div></div>';
+      return;
+    }
+    var p = planets[selected];
+    el.innerHTML =
+      '<div style="display:flex;gap:12px;align-items:flex-start">' +
+      '<div style="width:'+Math.max(28,p.r*3)+'px;height:'+Math.max(28,p.r*3)+'px;border-radius:50%;' +
+        'background:radial-gradient(circle at 35% 35%,white,'+p.color+');' +
+        'box-shadow:0 0 16px '+p.glow+';flex-shrink:0;margin-top:2px"></div>' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-size:16px;font-weight:900;color:'+p.color+'">'+p.symbol+' '+p.name+'</div>' +
+      '<div style="display:flex;gap:12px;margin:3px 0 5px;flex-wrap:wrap">' +
+      '<span style="font-size:10px;color:var(--muted)">📏 '+p.distance+' from Sun</span>' +
+      '<span style="font-size:10px;color:var(--muted)">🌙 '+p.moons+' moon'+(p.moons!==1?'s':'')+'</span>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+p.fact+'</div>' +
+      '</div></div>';
+  }
+
+  /* ── Initial HTML ── */
+  c.innerHTML =
+    '<div id="ssSvgWrap" style="width:100%;border-radius:12px;overflow:hidden;' +
+      'box-shadow:0 0 60px rgba(255,200,50,.06),0 0 0 1px rgba(255,255,255,.05)"></div>' +
+    '<div id="ssInfo" style="margin-top:10px;background:var(--surface2);border-radius:12px;' +
+      'padding:11px 14px;min-height:56px;border:1px solid var(--border);transition:all .3s">' +
+    '<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px 0">☝️ Tap any planet or the Sun to explore it</div>' +
+    '</div>' +
+    '<div class="ctrl-row" style="margin-top:10px;gap:8px">' +
+    '<button class="cbtn" onclick="solarToggle()" id="solarBtn" style="font-size:12px">⏸ Pause</button>' +
+    '<span style="font-size:11px;color:var(--muted)">Speed:</span>' +
+    '<input type="range" class="slide" min="1" max="5" value="1" oninput="solarSpeed(this.value)" style="width:80px">' +
+    '<button class="cbtn" onclick="solarZoom()" id="solarZoomBtn" style="font-size:12px">🔭 Inner</button>' +
+    '</div>';
+
+  /* ── Animation loop ── */
+  var zoomed = false;
+  function tick() {
+    var wrap = document.getElementById('ssSvgWrap');
+    if (!wrap) { cancelAnimationFrame(raf); return; }
+    var t = (Date.now() - startTime) / 1000;
+    wrap.innerHTML = buildSVG(t);
+    raf = requestAnimationFrame(tick);
+  }
+  tick();
+
+  /* ── Controls ── */
+  window.solarClick = function(i) {
+    selected = selected === i ? null : i;
+    renderInfo();
+  };
+
+  window.solarToggle = function() {
+    animating = !animating;
+    if (!animating) pausedAt = (Date.now() - startTime) / 1000 * speed;
+    else startTime = Date.now() - pausedAt / speed * 1000;
+    document.getElementById('solarBtn').textContent = animating ? '⏸ Pause' : '▶ Resume';
+  };
+
+  window.solarSpeed = function(v) { speed = parseFloat(v); };
+
+  window.solarZoom = function() {
+    zoomed = !zoomed;
+    planets.forEach(function(p, i) {
+      p._orig = p._orig || p.orbitR;
+      p.orbitR = zoomed ? (i < 4 ? p._orig * 2 : p._orig * 0.3) : p._orig;
+    });
+    document.getElementById('solarZoomBtn').textContent = zoomed ? '🌌 Full View' : '🔭 Inner';
+  };
+
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+};
 SIM_REGISTRY['micro-world'] = function(c) {
   var specimens = [
     { name:'Onion Skin Cells', emoji:'🧅',

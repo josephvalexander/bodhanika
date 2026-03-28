@@ -62,10 +62,7 @@
 
     if (simFn) {
       body.innerHTML =
-        '<div class="sim-box" id="simBox">' +
-        '<div class="sim-label">Interactive Simulation</div>' +
-        '<div id="simContainer" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:10px"></div>' +
-        '</div>' +
+        '<div id="simContainer" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px"></div>' +
         renderBuddy(e);
       simFn(document.getElementById('simContainer'), e);
     } else {
