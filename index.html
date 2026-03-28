@@ -53,6 +53,7 @@
   <div class="hdr-right">
     <input class="search-box" id="searchBox" placeholder="🔍 Search experiments…" oninput="applyAll()">
     <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    <button class="theme-btn" id="installBtn" onclick="installPWA()" title="Install App" style="display:none">📲</button>
   </div>
 </header>
 
@@ -148,6 +149,113 @@ window.toggleTheme = function() {
   localStorage.setItem('bodhanika-theme', next);
   document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
 };
+</script>
+
+<!-- ══ UPDATE TOAST ══ -->
+<div id="updateToast" style="
+  display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:var(--acc); color:white; border-radius:14px;
+  padding:12px 20px; font-size:13px; font-weight:700;
+  box-shadow:0 8px 32px rgba(0,0,0,.3); z-index:9999;
+  display:none; align-items:center; gap:12px; white-space:nowrap;
+  animation:slideUp .3s ease;
+" id="updateToast">
+  <span>🔄 New version available!</span>
+  <button onclick="applyUpdate()" style="
+    background:white; color:var(--acc); border:none; border-radius:8px;
+    padding:5px 12px; font-size:12px; font-weight:800; cursor:pointer;
+  ">Refresh</button>
+  <button onclick="dismissUpdate()" style="
+    background:transparent; border:none; color:white;
+    font-size:16px; cursor:pointer; padding:0 4px; line-height:1;
+  ">✕</button>
+</div>
+
+<!-- ══ PWA SERVICE WORKER ══ -->
+<script>
+(function() {
+  if (!('serviceWorker' in navigator)) return;
+
+  var newWorker = null;
+
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+
+    /* Check for updates every 60 seconds while page is open */
+    setInterval(function() { reg.update(); }, 60000);
+
+    /* A new service worker is waiting to activate */
+    reg.addEventListener('updatefound', function() {
+      var installing = reg.installing;
+      installing.addEventListener('statechange', function() {
+        if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker = installing;
+          showUpdateToast();
+        }
+      });
+    });
+
+  }).catch(function(err) {
+    console.log('SW registration failed:', err);
+  });
+
+  /* When new SW takes control, reload the page */
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    window.location.reload();
+  });
+
+  window.showUpdateToast = function() {
+    var t = document.getElementById('updateToast');
+    if (t) { t.style.display = 'flex'; }
+  };
+
+  window.applyUpdate = function() {
+    if (newWorker) {
+      newWorker.postMessage('SKIP_WAITING');
+    } else {
+      window.location.reload();
+    }
+    dismissUpdate();
+  };
+
+  window.dismissUpdate = function() {
+    var t = document.getElementById('updateToast');
+    if (t) t.style.display = 'none';
+  };
+
+  /* ── PWA Install prompt ── */
+  var deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBtn();
+  });
+
+  window.addEventListener('appinstalled', function() {
+    deferredPrompt = null;
+    hideInstallBtn();
+  });
+
+  window.showInstallBtn = function() {
+    var btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'flex';
+  };
+
+  window.hideInstallBtn = function() {
+    var btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'none';
+  };
+
+  window.installPWA = function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choice) {
+      deferredPrompt = null;
+      hideInstallBtn();
+    });
+  };
+
+})();
 </script>
 
 </body>

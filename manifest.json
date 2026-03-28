@@ -1,12 +1,34 @@
 {
-  "name": "Bodhanika",
+  "name": "Bodhanika — Hands-On Learning",
   "short_name": "Bodhanika",
   "description": "Hands-On Science and Maths Experiments for Classes 1–10. Don't just learn it — understand it.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0F1117",
   "theme_color": "#C77DFF",
   "orientation": "portrait-primary",
   "categories": ["education", "kids"],
-  "lang": "en-IN"
+  "lang": "en-IN",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Science Experiments",
+      "url": "/?sub=Science",
+      "description": "Browse Science experiments"
+    },
+    {
+      "name": "Maths Activities",
+      "url": "/?sub=Maths",
+      "description": "Browse Maths activities"
+    }
+  ]
 }
