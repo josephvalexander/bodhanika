@@ -580,3 +580,687 @@ SIM_REGISTRY['_default'] = function(c, e) {
   c.innerHTML = '<div style="font-size:52px;margin-bottom:8px">' + e.icon + '</div>' +
     '<div style="font-size:13px;color:var(--muted);text-align:center;max-width:320px;line-height:1.7">' + e.why + '</div>';
 };
+
+/* ══════════════════════════════════════════════════
+   FLAGSHIP SIMULATIONS — 6 fully interactive sims
+   ══════════════════════════════════════════════════ */
+
+/* ── 1. SOLAR SYSTEM SCALE MODEL ── */
+SIM_REGISTRY['solar-system'] = function(c) {
+  var planets = [
+    { name:'☀️ Sun',     size:28, color:'#FFD93D', dist:0,   fact:'1.4 million km wide!' },
+    { name:'☿ Mercury', size:4,  color:'#A0A0A0', dist:10,  fact:'10m away at this scale' },
+    { name:'♀️ Venus',   size:7,  color:'#E8C56A', dist:19,  fact:'19m away — scorching 465°C!' },
+    { name:'🌍 Earth',   size:7,  color:'#4D96FF', dist:26,  fact:'26m away — the perfect distance!' },
+    { name:'♂️ Mars',    size:5,  color:'#FF6B6B', dist:40,  fact:'40m — the Red Planet' },
+    { name:'♃ Jupiter', size:14, color:'#C8945A', dist:135, fact:'135m — 1300 Earths fit inside!' },
+    { name:'♄ Saturn',  size:12, color:'#E8D06A', dist:248, fact:'248m — rings made of ice' },
+    { name:'⛢ Uranus',  size:9,  color:'#6BCBB8', dist:499, fact:'499m — spins on its side!' },
+    { name:'♆ Neptune', size:8,  color:'#4D70FF', dist:781, fact:'781m — winds at 2000 km/h!' },
+  ];
+  var current = 0;
+
+  function render() {
+    var p = planets[current];
+    var isLast = current === planets.length - 1;
+    c.innerHTML =
+      '<div style="font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Solar System Scale Model</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">If Sun = basketball (24cm), then...</div>' +
+      /* Planet display */
+      '<div style="position:relative;width:240px;height:120px;background:rgba(0,0,0,.3);border-radius:12px;overflow:hidden;border:1px solid var(--border)">' +
+      /* Stars background */
+      '<div style="position:absolute;inset:0;background:radial-gradient(circle at 20% 50%,rgba(255,255,255,.08) 1px,transparent 1px),radial-gradient(circle at 80% 30%,rgba(255,255,255,.06) 1px,transparent 1px),radial-gradient(circle at 60% 70%,rgba(255,255,255,.05) 1px,transparent 1px)"></div>' +
+      /* Planet circle */
+      '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+        'width:' + p.size*2 + 'px;height:' + p.size*2 + 'px;border-radius:50%;' +
+        'background:radial-gradient(circle at 35% 35%,' + p.color + ',' + p.color + '88);' +
+        'box-shadow:0 0 ' + p.size*3 + 'px ' + p.color + '66;' +
+        'animation:pulse 2s ease infinite"></div>' +
+      /* Saturn rings */
+      (current === 6 ? '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotateX(70deg);width:56px;height:56px;border-radius:50%;border:4px solid rgba(232,208,106,.4)"></div>' : '') +
+      '</div>' +
+      /* Planet name + fact */
+      '<div style="font-size:22px;font-weight:900;color:var(--text);margin:10px 0 2px">' + p.name + '</div>' +
+      '<div style="font-size:12px;color:var(--acc);font-weight:700;margin-bottom:4px">' + p.fact + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Real distance from Sun: <b style="color:var(--text)">' + (p.dist === 0 ? '—' : p.dist + ' metres at this scale') + '</b></div>' +
+      /* Progress */
+      '<div style="display:flex;gap:5px;margin:12px 0;justify-content:center">' +
+      planets.map(function(_, i) {
+        return '<div style="width:' + (i===current?'20px':'8px') + ';height:8px;border-radius:4px;background:' + (i===current?'var(--acc)':'var(--border)') + ';transition:all .3s"></div>';
+      }).join('') + '</div>' +
+      /* Nav */
+      '<div style="display:flex;gap:10px">' +
+      (current > 0 ? '<button class="cbtn" onclick="ssNav(-1)">← Prev</button>' : '<div></div>') +
+      (isLast ?
+        '<button class="cbtn" onclick="ssReset()" style="background:var(--acc);color:white;border-color:var(--acc)">🔄 Start Over</button>' :
+        '<button class="cbtn" onclick="ssNav(1)" style="background:var(--acc);color:white;border-color:var(--acc)">Next Planet →</button>') +
+      '</div>';
+  }
+
+  window.ssNav  = function(d) { current = Math.max(0, Math.min(planets.length-1, current+d)); render(); };
+  window.ssReset = function() { current = 0; render(); };
+  render();
+};
+
+/* ── 2. MICROSCOPE WORLD ── */
+SIM_REGISTRY['micro-world'] = function(c) {
+  var specimens = [
+    { name:'Onion Skin Cells', emoji:'🧅',
+      draw: function(ctx, w, h) {
+        ctx.fillStyle='rgba(255,230,150,.15)';
+        ctx.fillRect(0,0,w,h);
+        for(var row=0;row<5;row++) for(var col=0;col<4;col++) {
+          var x=col*(w/4)+8, y=row*(h/5)+8, cw=w/4-4, ch=h/5-4;
+          ctx.strokeStyle='rgba(255,180,50,.8)'; ctx.lineWidth=1.5;
+          ctx.strokeRect(x,y,cw,ch);
+          ctx.fillStyle='rgba(200,100,50,.6)';
+          ctx.beginPath(); ctx.arc(x+cw/2,y+ch/2,Math.min(cw,ch)*.2,0,Math.PI*2); ctx.fill();
+        }
+      }, fact:'Rectangular cells — plant cell walls clearly visible! Nucleus = dark dot in centre.' },
+    { name:'Pond Water Organisms', emoji:'💧',
+      draw: function(ctx, w, h) {
+        ctx.fillStyle='rgba(77,150,255,.08)';
+        ctx.fillRect(0,0,w,h);
+        var org = [
+          {x:60,y:80,r:12,color:'rgba(107,203,119,.8)',shape:'amoeba'},
+          {x:150,y:60,r:6,color:'rgba(255,217,61,.8)',shape:'circle'},
+          {x:200,y:130,r:18,color:'rgba(199,125,255,.6)',shape:'oval'},
+          {x:80,y:150,r:5,color:'rgba(107,203,119,.7)',shape:'circle'},
+          {x:250,y:70,r:8,color:'rgba(255,107,107,.7)',shape:'circle'},
+        ];
+        org.forEach(function(o) {
+          ctx.fillStyle=o.color;
+          ctx.beginPath();
+          if(o.shape==='oval') { ctx.ellipse(o.x,o.y,o.r*1.8,o.r,0,0,Math.PI*2); }
+          else { ctx.arc(o.x,o.y,o.r,0,Math.PI*2); }
+          ctx.fill();
+          /* cilia */
+          for(var a=0;a<8;a++) {
+            var ang=a/8*Math.PI*2;
+            ctx.strokeStyle=o.color; ctx.lineWidth=1;
+            ctx.beginPath();
+            ctx.moveTo(o.x+Math.cos(ang)*o.r, o.y+Math.sin(ang)*o.r);
+            ctx.lineTo(o.x+Math.cos(ang)*(o.r+6), o.y+Math.sin(ang)*(o.r+6));
+            ctx.stroke();
+          }
+        });
+      }, fact:'Tiny living organisms! Paramecia, algae, and amoeba all live in a single drop of pond water.' },
+    { name:'Butterfly Wing Scale', emoji:'🦋',
+      draw: function(ctx, w, h) {
+        ctx.fillStyle='rgba(199,125,255,.05)';
+        ctx.fillRect(0,0,w,h);
+        var colors=['rgba(199,125,255,.7)','rgba(255,107,107,.6)','rgba(255,217,61,.6)','rgba(77,150,255,.6)'];
+        for(var row=0;row<8;row++) for(var col=0;col<10;col++) {
+          var ci=(row+col)%4;
+          ctx.fillStyle=colors[ci];
+          var x=col*28+4, y=row*20+4;
+          ctx.beginPath();
+          ctx.ellipse(x+12,y+8,10,7,0.2,0,Math.PI*2);
+          ctx.fill();
+          ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=.5; ctx.stroke();
+        }
+      }, fact:'Butterfly wings are covered in thousands of tiny overlapping scales — like roof tiles — that create their colour through light reflection!' },
+  ];
+
+  var current = 0;
+  var zoom = 1;
+  var raf;
+
+  function render() {
+    var s = specimens[current];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔬 Virtual Microscope</div>' +
+      '<div style="position:relative;width:240px;height:160px;border-radius:50%;overflow:hidden;' +
+        'border:6px solid var(--surface2);box-shadow:0 0 0 3px var(--border),0 0 40px rgba(0,0,0,.3);' +
+        'background:#000;margin:0 auto">' +
+      '<canvas id="microCanvas" width="240" height="160" style="width:100%;height:100%;' +
+        'transform:scale(' + zoom + ');transform-origin:center;transition:transform .4s"></canvas>' +
+      /* Lens crosshair */
+      '<div style="position:absolute;inset:0;pointer-events:none;' +
+        'background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.4) 100%)"></div>' +
+      '</div>' +
+      '<div style="font-size:15px;font-weight:900;color:var(--text);margin:10px 0 2px">' + s.emoji + ' ' + s.name + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);max-width:240px;text-align:center;line-height:1.6;margin-bottom:10px">' + s.fact + '</div>' +
+      '<div class="ctrl-row">' +
+      '<button class="cbtn" onclick="microZoom(-1)">🔍−</button>' +
+      '<span style="font-size:11px;color:var(--muted);font-weight:700" id="microZoomLabel">Zoom: 1×</span>' +
+      '<button class="cbtn" onclick="microZoom(1)">🔍+</button>' +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-top:8px">' +
+      specimens.map(function(sp,i) {
+        return '<button class="cbtn" onclick="microSpecimen(' + i + ')" style="font-size:11px;' +
+          (i===current?'background:var(--sci-dim);border-color:var(--sci);color:var(--sci)':'') + '">' + sp.emoji + '</button>';
+      }).join('') +
+      '</div>';
+
+    var cv = document.getElementById('microCanvas');
+    var ctx = cv.getContext('2d');
+    ctx.clearRect(0,0,240,160);
+    s.draw(ctx, 240, 160);
+
+    /* Animate organisms in pond water */
+    if(current === 1) {
+      var t = 0;
+      raf = setInterval(function() {
+        t += 0.05;
+        ctx.clearRect(0,0,240,160);
+        ctx.fillStyle='rgba(77,150,255,.08)'; ctx.fillRect(0,0,240,160);
+        var orgs = [
+          {bx:60,by:80,r:12,color:'rgba(107,203,119,.8)',vx:0.8,vy:0.3},
+          {bx:150,by:60,r:6,color:'rgba(255,217,61,.8)',vx:-0.5,vy:0.7},
+          {bx:200,by:130,r:18,color:'rgba(199,125,255,.6)',vx:0.3,vy:-0.4},
+          {bx:80,by:150,r:5,color:'rgba(107,203,119,.7)',vx:-0.7,vy:-0.5},
+          {bx:250,by:70,r:8,color:'rgba(255,107,107,.7)',vx:0.6,vy:0.8},
+        ];
+        orgs.forEach(function(o) {
+          var x = o.bx + Math.sin(t * o.vx * 2) * 15;
+          var y = o.by + Math.cos(t * o.vy * 2) * 10;
+          ctx.fillStyle = o.color;
+          ctx.beginPath(); ctx.ellipse(x,y,o.r*1.8,o.r,t*o.vx,0,Math.PI*2); ctx.fill();
+        });
+      }, 50);
+    }
+  }
+
+  window.microZoom = function(d) {
+    zoom = Math.max(1, Math.min(4, zoom + d * 0.5));
+    var cv = document.getElementById('microCanvas');
+    if(cv) cv.style.transform = 'scale(' + zoom + ')';
+    var lbl = document.getElementById('microZoomLabel');
+    if(lbl) lbl.textContent = 'Zoom: ' + zoom + '×';
+  };
+  window.microSpecimen = function(i) {
+    clearInterval(raf);
+    current = i;
+    zoom = 1;
+    render();
+  };
+  window.simCleanup = function() { clearInterval(raf); };
+  render();
+};
+
+/* ── 3. STATES OF MATTER ── */
+SIM_REGISTRY['states-matter'] = function(c) {
+  var state = 'solid';
+  var raf;
+  var particles = [];
+
+  var configs = {
+    solid:  { speed:0.3, spread:false, color:'var(--life)',  label:'❄️ Solid',  temp:'−10°C', desc:'Molecules locked in place — just vibrating in position.' },
+    liquid: { speed:1.5, spread:false, color:'var(--sci)',   label:'💧 Liquid', temp:'25°C',  desc:'Molecules flow freely — taking the shape of their container.' },
+    gas:    { speed:4.0, spread:true,  color:'var(--acc)',   label:'💨 Gas',    temp:'120°C', desc:'Molecules move fast and spread far apart in all directions.' },
+  };
+
+  function initParticles(s) {
+    particles = [];
+    var cfg = configs[s];
+    var count = s==='gas' ? 18 : 24;
+    for(var i=0;i<count;i++) {
+      var col = Math.floor(i % 6), row = Math.floor(i / 6);
+      particles.push({
+        x: s==='gas' ? 20+Math.random()*200 : 30+col*32,
+        y: s==='gas' ? 20+Math.random()*120 : 30+row*32,
+        vx: (Math.random()-.5)*cfg.speed,
+        vy: (Math.random()-.5)*cfg.speed,
+        r: s==='gas' ? 5 : 7,
+      });
+    }
+  }
+
+  function render() {
+    var cfg = configs[state];
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">States of Matter</div>' +
+      /* Thermometer + temperature */
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">' +
+      '<div style="width:16px;height:80px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);position:relative;overflow:hidden">' +
+      '<div style="position:absolute;bottom:0;left:0;right:0;border-radius:8px;transition:height .6s;height:' +
+        (state==='solid'?'20%':state==='liquid'?'55%':'90%') + ';background:' + cfg.color + '"></div></div>' +
+      '<div><div style="font-size:28px;font-weight:900;color:' + cfg.color + '">' + cfg.temp + '</div>' +
+      '<div style="font-size:13px;font-weight:800;color:var(--text)">' + cfg.label + '</div></div></div>' +
+      /* Canvas */
+      '<canvas id="stateCanvas" width="240" height="140" style="border-radius:12px;background:var(--surface);border:1px solid var(--border);display:block"></canvas>' +
+      '<div style="font-size:12px;color:var(--muted);margin:8px 0;text-align:center;min-height:36px;line-height:1.7">' + cfg.desc + '</div>' +
+      /* Buttons */
+      '<div class="ctrl-row">' +
+      ['solid','liquid','gas'].map(function(s2) {
+        return '<button class="cbtn" onclick="setState(\'' + s2 + '\')" style="' +
+          (s2===state?'background:'+cfg.color+';color:white;border-color:'+cfg.color:'') + '">' +
+          configs[s2].label + '</button>';
+      }).join('') + '</div>';
+
+    initParticles(state);
+    clearInterval(raf);
+    var cv = document.getElementById('stateCanvas');
+    var ctx = cv.getContext('2d');
+    raf = setInterval(function() {
+      ctx.clearRect(0,0,240,140);
+      var cfg2 = configs[state];
+      particles.forEach(function(p) {
+        if(state==='solid') {
+          p.x += (Math.random()-.5)*0.8;
+          p.y += (Math.random()-.5)*0.8;
+        } else {
+          p.x += p.vx; p.y += p.vy;
+          if(p.x<p.r||p.x>240-p.r) p.vx*=-1;
+          if(p.y<p.r||p.y>140-p.r) p.vy*=-1;
+        }
+        /* Draw molecule */
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=cfg2.color; ctx.fill();
+        /* Draw bonds for solid */
+        if(state==='solid') {
+          ctx.strokeStyle=cfg2.color+'44'; ctx.lineWidth=1;
+        }
+      });
+      /* Draw bonds for solid/liquid */
+      if(state!=='gas') {
+        particles.forEach(function(p,i) {
+          particles.slice(i+1).forEach(function(q) {
+            var d=Math.hypot(p.x-q.x,p.y-q.y);
+            if(d < (state==='solid'?40:55)) {
+              ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+              ctx.strokeStyle=configs[state].color+'33'; ctx.lineWidth=1; ctx.stroke();
+            }
+          });
+        });
+      }
+    }, 40);
+  }
+
+  window.setState = function(s) { state=s; render(); };
+  window.simCleanup = function() { clearInterval(raf); };
+  render();
+};
+
+/* ── 4. NEWTON'S THREE LAWS ── */
+SIM_REGISTRY['newtons-laws'] = function(c) {
+  var law = 1;
+  var raf;
+
+  var laws = {
+    1: {
+      title: "Law 1: Inertia",
+      subtitle: "Objects stay still or keep moving unless a force acts",
+      color: 'var(--sci)',
+      run: function(canvas) {
+        var ctx = canvas.getContext('2d');
+        var x = 30, moving = false, friction = false;
+        canvas.onclick = function(e) {
+          moving = !moving;
+        };
+        document.getElementById('frictionBtn').onclick = function() {
+          friction = !friction;
+          document.getElementById('frictionBtn').textContent = friction ? '🧱 Friction ON' : '🫧 No Friction';
+        };
+        clearInterval(raf);
+        raf = setInterval(function() {
+          ctx.clearRect(0,0,280,120);
+          /* Surface */
+          ctx.fillStyle = friction ? '#8B4513' : '#1A1D27';
+          ctx.fillRect(0,100,280,20);
+          if(friction) {
+            ctx.fillStyle='rgba(255,255,255,.2)';
+            for(var i=0;i<14;i++) { ctx.fillRect(i*20+4,104,12,4); }
+          }
+          /* Ball */
+          if(moving) { x += friction ? 1.5 : 3; if(x>260) x=20; }
+          ctx.beginPath(); ctx.arc(x,90,12,0,Math.PI*2);
+          ctx.fillStyle='var(--sci)';
+          ctx.shadowColor='var(--sci)'; ctx.shadowBlur=10;
+          ctx.fill(); ctx.shadowBlur=0;
+          /* Arrow if moving */
+          if(moving) {
+            ctx.fillStyle='var(--math)'; ctx.font='bold 20px sans-serif';
+            ctx.fillText('→', x+15, 95);
+          }
+          /* Label */
+          ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='11px Nunito,sans-serif';
+          ctx.fillText(moving?(friction?'Friction slowing it down!':'Keeps going forever in space!'):'Tap canvas to push the ball',10,20);
+        },40);
+      }
+    },
+    2: {
+      title: "Law 2: F = ma",
+      subtitle: "More mass needs more force for the same acceleration",
+      color: 'var(--math)',
+      run: function(canvas) {
+        var ctx = canvas.getContext('2d');
+        var force = 3;
+        document.getElementById('forceSlider').oninput = function() {
+          force = parseInt(this.value);
+          document.getElementById('forceLabel').textContent = 'Force: ' + force + 'N';
+        };
+        var x1=20, x2=20;
+        clearInterval(raf);
+        raf = setInterval(function() {
+          ctx.clearRect(0,0,280,120);
+          /* Light object — mass 1 */
+          x1 += force * 0.05; if(x1>240) x1=20;
+          ctx.beginPath(); ctx.arc(x1,45,12,0,Math.PI*2);
+          ctx.fillStyle='var(--math)';
+          ctx.shadowColor='var(--math)'; ctx.shadowBlur=8;
+          ctx.fill(); ctx.shadowBlur=0;
+          ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='10px Nunito,sans-serif';
+          ctx.fillText('m=1kg',x1-16,75);
+          /* Heavy object — mass 4 */
+          x2 += force * 0.012; if(x2>240) x2=20;
+          ctx.beginPath(); ctx.arc(x2,100,20,0,Math.PI*2);
+          ctx.fillStyle='var(--muted)';
+          ctx.fill();
+          ctx.fillStyle='rgba(255,255,255,.7)';
+          ctx.fillText('m=4kg',x2-16,120);
+          /* Labels */
+          ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='11px Nunito,sans-serif';
+          ctx.fillText('Same force → light object moves faster!',10,15);
+        },40);
+      }
+    },
+    3: {
+      title: "Law 3: Action & Reaction",
+      subtitle: "Every action has an equal and opposite reaction",
+      color: 'var(--acc)',
+      run: function(canvas) {
+        var ctx = canvas.getContext('2d');
+        var rocketX = 140, exhaust = [];
+        var launched = false;
+        document.getElementById('launchBtn').onclick = function() { launched=!launched; };
+        clearInterval(raf);
+        raf = setInterval(function() {
+          ctx.clearRect(0,0,280,120);
+          if(launched && rocketX > 20) rocketX -= 2.5;
+          if(!launched && rocketX < 140) rocketX += 1;
+          /* Exhaust particles */
+          if(launched) {
+            exhaust.push({x:rocketX+30,y:60,vx:3+Math.random()*3,vy:(Math.random()-.5)*3,life:1});
+          }
+          exhaust = exhaust.filter(function(p){return p.life>0;});
+          exhaust.forEach(function(p) {
+            p.x+=p.vx; p.y+=p.vy; p.life-=0.05;
+            ctx.beginPath(); ctx.arc(p.x,p.y,3*p.life,0,Math.PI*2);
+            ctx.fillStyle='rgba(255,107,107,'+p.life+')'; ctx.fill();
+          });
+          /* Rocket body */
+          ctx.fillStyle='var(--acc)';
+          ctx.beginPath(); ctx.moveTo(rocketX,50); ctx.lineTo(rocketX+10,35);
+          ctx.lineTo(rocketX+20,50); ctx.closePath(); ctx.fill();
+          ctx.fillRect(rocketX,50,20,25);
+          /* Fins */
+          ctx.fillStyle='var(--life)';
+          ctx.beginPath(); ctx.moveTo(rocketX,72); ctx.lineTo(rocketX-8,82); ctx.lineTo(rocketX,75); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(rocketX+20,72); ctx.lineTo(rocketX+28,82); ctx.lineTo(rocketX+20,75); ctx.fill();
+          /* Arrows */
+          if(launched) {
+            ctx.fillStyle='var(--math)'; ctx.font='bold 16px sans-serif';
+            ctx.fillText('←🚀', rocketX-20, 65);
+            ctx.fillText('💨→', rocketX+30, 65);
+            ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Nunito,sans-serif';
+            ctx.fillText('Action: gas pushed back',rocketX+40,85);
+            ctx.fillText('Reaction: rocket goes forward',rocketX-80,95);
+          }
+          ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='11px Nunito,sans-serif';
+          ctx.fillText('Tap Launch to fire rocket!',10,15);
+        },40);
+      }
+    }
+  };
+
+  function render() {
+    var l = laws[law];
+    c.innerHTML =
+      '<div style="font-size:14px;font-weight:900;color:' + l.color + ';margin-bottom:2px">' + l.title + '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">' + l.subtitle + '</div>' +
+      '<canvas id="newtonCanvas" width="280" height="120" style="border-radius:12px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:block;width:100%"></canvas>' +
+      /* Law-specific controls */
+      (law===1 ? '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" id="frictionBtn">🫧 No Friction</button><div style="font-size:11px;color:var(--muted)">Tap canvas to push ball</div></div>' : '') +
+      (law===2 ? '<div class="ctrl-row" style="margin-top:8px"><span style="font-size:12px;color:var(--muted)">Force:</span><input id="forceSlider" type="range" class="slide" min="1" max="10" value="3" style="width:120px"><span id="forceLabel" style="font-size:12px;color:var(--math);font-weight:700">Force: 3N</span></div>' : '') +
+      (law===3 ? '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" id="launchBtn" style="background:var(--acc);color:white;border-color:var(--acc)">🚀 Launch!</button></div>' : '') +
+      /* Law selector */
+      '<div class="ctrl-row" style="margin-top:10px">' +
+      [1,2,3].map(function(n) {
+        return '<button class="cbtn" onclick="newtonLaw(' + n + ')" style="' +
+          (n===law?'background:'+l.color+';color:white;border-color:'+l.color:'') + '">Law ' + n + '</button>';
+      }).join('') + '</div>';
+
+    var canvas = document.getElementById('newtonCanvas');
+    l.run(canvas);
+  }
+
+  window.newtonLaw = function(n) { clearInterval(raf); law=n; render(); };
+  window.simCleanup = function() { clearInterval(raf); };
+  render();
+};
+
+/* ── 5. DNA EXTRACTION ── */
+SIM_REGISTRY['dna-extraction'] = function(c) {
+  var step = 0;
+  var raf;
+
+  var steps = [
+    { label:'🍓 Mash Strawberries', color:'rgba(255,107,107,.8)',
+      draw: function(ctx) {
+        /* Strawberry being mashed */
+        ctx.fillStyle='#E74C3C';
+        ctx.beginPath(); ctx.ellipse(120,70,40,35,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#27AE60';
+        ctx.beginPath(); ctx.moveTo(120,35); ctx.lineTo(110,20); ctx.lineTo(130,20); ctx.closePath(); ctx.fill();
+        /* Seeds */
+        ctx.fillStyle='rgba(255,255,255,.5)';
+        [[100,55],[125,60],[140,70],[115,80],[135,85]].forEach(function(p){
+          ctx.beginPath(); ctx.ellipse(p[0],p[1],3,2,0.5,0,Math.PI*2); ctx.fill();
+        });
+        /* Fist */
+        ctx.fillStyle='#F5CBA7';
+        ctx.beginPath(); ctx.roundRect(95,100,50,30,8); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.6)'; ctx.font='12px sans-serif';
+        ctx.fillText('Squeeze & mash!',70,150);
+      }},
+    { label:'🧴 Add Soap + Salt', color:'rgba(77,150,255,.8)',
+      draw: function(ctx) {
+        /* Beaker */
+        ctx.strokeStyle='var(--border)'; ctx.lineWidth=2;
+        ctx.strokeRect(75,40,90,100);
+        /* Liquid */
+        ctx.fillStyle='rgba(255,107,107,.3)'; ctx.fillRect(77,90,86,48);
+        /* Soap drop */
+        ctx.fillStyle='rgba(77,150,255,.7)';
+        ctx.beginPath(); ctx.arc(120,55,10,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px sans-serif';
+        ctx.fillText('Soap breaks cell walls',60,160);
+        ctx.fillText('Salt clumps DNA together',55,175);
+      }},
+    { label:'🫗 Filter the Liquid', color:'rgba(107,203,119,.8)',
+      draw: function(ctx) {
+        /* Filter funnel */
+        ctx.fillStyle='rgba(255,255,255,.15)';
+        ctx.beginPath(); ctx.moveTo(80,40); ctx.lineTo(160,40); ctx.lineTo(130,100); ctx.lineTo(110,100); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle='var(--border)'; ctx.lineWidth=1.5; ctx.stroke();
+        /* Coffee filter texture */
+        ctx.fillStyle='rgba(200,150,80,.3)';
+        ctx.beginPath(); ctx.moveTo(82,42); ctx.lineTo(158,42); ctx.lineTo(128,98); ctx.lineTo(112,98); ctx.closePath(); ctx.fill();
+        /* Drip */
+        ctx.fillStyle='rgba(255,107,107,.6)';
+        for(var i=0;i<3;i++) {
+          ctx.beginPath(); ctx.arc(120,115+i*15,3-i*0.5,0,Math.PI*2); ctx.fill();
+        }
+        /* Glass */
+        ctx.strokeStyle='var(--border)'; ctx.lineWidth=2;
+        ctx.strokeRect(95,145,50,35);
+        ctx.fillStyle='rgba(255,107,107,.3)'; ctx.fillRect(97,165,46,13);
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px sans-serif';
+        ctx.fillText('Liquid passes through,',60,195); ctx.fillText('pulp stays in filter',65,207);
+      }},
+    { label:'🍶 Add Cold Alcohol', color:'rgba(199,125,255,.8)',
+      draw: function(ctx) {
+        /* Glass with two layers */
+        ctx.strokeStyle='var(--border)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.roundRect(70,50,100,120,4); ctx.stroke();
+        /* Red liquid layer */
+        ctx.fillStyle='rgba(255,107,107,.4)'; ctx.fillRect(72,110,96,58);
+        /* Alcohol layer being poured */
+        ctx.fillStyle='rgba(199,125,255,.25)'; ctx.fillRect(72,65,96,45);
+        /* Bottle */
+        ctx.fillStyle='rgba(199,125,255,.6)';
+        ctx.beginPath(); ctx.roundRect(145,20,20,40,4); ctx.fill();
+        /* Pour stream */
+        ctx.strokeStyle='rgba(199,125,255,.5)'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(155,60); ctx.quadraticCurveTo(145,80,120,65); ctx.stroke();
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px sans-serif';
+        ctx.fillText('Pour slowly down glass side',50,185);
+        ctx.fillText('Two layers form!',75,198);
+      }},
+    { label:'🧬 DNA Appears!', color:'rgba(107,203,119,.8)',
+      draw: function(ctx, t) {
+        /* Glass */
+        ctx.strokeStyle='var(--border)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.roundRect(70,40,100,130,4); ctx.stroke();
+        /* Liquid */
+        ctx.fillStyle='rgba(255,107,107,.3)'; ctx.fillRect(72,110,96,58);
+        ctx.fillStyle='rgba(199,125,255,.15)'; ctx.fillRect(72,50,96,60);
+        /* DNA strands floating up */
+        ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=2;
+        for(var s2=0;s2<5;s2++) {
+          var sx = 90+s2*10, sy = 100 - (t*2 + s2*8)%40;
+          ctx.beginPath();
+          for(var i=0;i<20;i++) {
+            var y = sy+i*3;
+            var x = sx + Math.sin(i*0.8 + s2)*6;
+            i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+          }
+          ctx.stroke();
+        }
+        /* Glow */
+        ctx.fillStyle='rgba(107,203,119,.4)';
+        ctx.beginPath(); ctx.ellipse(120,90,30,15,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='bold 12px sans-serif';
+        ctx.fillText('✨ White DNA strands!',60,195);
+        ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px sans-serif';
+        ctx.fillText('Millions of DNA molecules',60,210);
+      }},
+  ];
+
+  function render() {
+    clearInterval(raf);
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">DNA Extraction Lab</div>' +
+      '<div style="display:flex;gap:4px;margin-bottom:10px;justify-content:center">' +
+      steps.map(function(_,i) {
+        return '<div style="width:' + (i===step?'24px':'8px') + ';height:8px;border-radius:4px;' +
+          'background:' + (i<=step?'var(--evs)':'var(--border)') + ';transition:all .3s"></div>';
+      }).join('') + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:var(--evs);margin-bottom:8px">' + steps[step].label + '</div>' +
+      '<canvas id="dnaCanvas" width="240" height="220" style="border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:block;margin:0 auto"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:10px">' +
+      (step>0?'<button class="cbtn" onclick="dnaStep(-1)">← Back</button>':'<div></div>') +
+      (step<steps.length-1?'<button class="cbtn" onclick="dnaStep(1)" style="background:var(--evs);color:white;border-color:var(--evs)">Next Step →</button>':
+        '<button class="cbtn" onclick="dnaStep(-' + step + ')" style="background:var(--acc);color:white;border-color:var(--acc)">🔄 Restart</button>') +
+      '</div>';
+
+    var cv = document.getElementById('dnaCanvas');
+    var ctx = cv.getContext('2d');
+    var t = 0;
+    if(step === steps.length-1) {
+      raf = setInterval(function() {
+        ctx.clearRect(0,0,240,220);
+        steps[step].draw(ctx,t++);
+      },50);
+    } else {
+      ctx.clearRect(0,0,240,220);
+      steps[step].draw(ctx,0);
+    }
+  }
+
+  window.dnaStep = function(d) {
+    clearInterval(raf);
+    step = Math.max(0, Math.min(steps.length-1, step+d));
+    render();
+  };
+  window.simCleanup = function() { clearInterval(raf); };
+  render();
+};
+
+/* ── 6. PUNNETT SQUARE ── */
+SIM_REGISTRY['punnett'] = function(c) {
+  var p1 = 'Tt', p2 = 'Tt';
+  var trait = 'height';
+
+  var traits = {
+    height:  { dom:'T', rec:'t', domName:'Tall',    recName:'Short',    domEmoji:'🌲', recEmoji:'🌱' },
+    colour:  { dom:'B', rec:'b', domName:'Brown eye',recName:'Blue eye', domEmoji:'🟤', recEmoji:'🔵' },
+    tongue:  { dom:'R', rec:'r', domName:'Can roll', recName:"Can't roll",domEmoji:'👅', recEmoji:'😶' },
+  };
+
+  function cross(p1g, p2g) {
+    return [p1g[0]+p2g[0], p1g[0]+p2g[1], p1g[1]+p2g[0], p1g[1]+p2g[1]];
+  }
+
+  function isDom(g, dom) { return g.includes(dom); }
+
+  function render() {
+    var tr = traits[trait];
+    var offspring = cross(p1, p2);
+    var domCount = offspring.filter(function(g){ return isDom(g,tr.dom); }).length;
+    var recCount = 4 - domCount;
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Punnett Square</div>' +
+      /* Trait selector */
+      '<div class="ctrl-row" style="margin-bottom:10px">' +
+      Object.keys(traits).map(function(k) {
+        return '<button class="cbtn" onclick="punnettTrait(\'' + k + '\')" style="font-size:11px;' +
+          (k===trait?'background:var(--math-dim);border-color:var(--math);color:var(--math)':'') + '">' + k + '</button>';
+      }).join('') + '</div>' +
+      /* Parent selector */
+      '<div style="display:flex;gap:12px;justify-content:center;margin-bottom:12px">' +
+      ['p1','p2'].map(function(p,pi) {
+        var val = pi===0?p1:p2;
+        return '<div style="text-align:center">' +
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Parent ' + (pi+1) + '</div>' +
+          '<select onchange="punnettParent(' + pi + ',this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);font-size:13px;font-weight:700">' +
+          [tr.dom+tr.dom, tr.dom+tr.rec, tr.rec+tr.rec].map(function(opt) {
+            return '<option value="' + opt + '"' + (opt===val?' selected':'') + '>' + opt + '</option>';
+          }).join('') + '</select></div>';
+      }).join('') + '</div>' +
+      /* Punnett grid */
+      '<div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;max-width:200px;margin:0 auto 12px">' +
+      /* Corner */
+      '<div></div>' +
+      /* Column headers */
+      [p2[0],p2[1]].map(function(a) {
+        return '<div style="text-align:center;font-weight:900;color:var(--math);font-size:16px">' + a + '</div>';
+      }).join('') +
+      /* Rows */
+      [0,1].map(function(row) {
+        return '<div style="font-weight:900;color:var(--math);font-size:16px;display:flex;align-items:center">' + p1[row] + '</div>' +
+          [0,1].map(function(col) {
+            var g = offspring[row*2+col];
+            var dom = isDom(g, tr.dom);
+            return '<div style="background:' + (dom?'var(--evs-dim)':'var(--sci-dim)') + ';' +
+              'border:1.5px solid ' + (dom?'var(--evs)':'var(--sci)') + ';' +
+              'border-radius:8px;padding:8px;text-align:center">' +
+              '<div style="font-size:14px;font-weight:900;color:' + (dom?'var(--evs)':'var(--sci)') + '">' + g + '</div>' +
+              '<div style="font-size:14px">' + (dom?tr.domEmoji:tr.recEmoji) + '</div>' +
+              '</div>';
+          }).join('');
+      }).join('') +
+      '</div>' +
+      /* Result */
+      '<div style="background:var(--surface2);border-radius:12px;padding:12px;text-align:center">' +
+      '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px">Offspring Chances</div>' +
+      '<div style="display:flex;gap:8px;justify-content:center">' +
+      '<div style="background:var(--evs-dim);border-radius:8px;padding:8px 12px;text-align:center">' +
+      '<div style="font-size:20px">' + tr.domEmoji + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:var(--evs)">' + domCount + '/4</div>' +
+      '<div style="font-size:10px;color:var(--muted)">' + tr.domName + '</div></div>' +
+      (recCount>0?'<div style="background:var(--sci-dim);border-radius:8px;padding:8px 12px;text-align:center">' +
+      '<div style="font-size:20px">' + tr.recEmoji + '</div>' +
+      '<div style="font-size:14px;font-weight:900;color:var(--sci)">' + recCount + '/4</div>' +
+      '<div style="font-size:10px;color:var(--muted)">' + tr.recName + '</div></div>':'') +
+      '</div></div>';
+  }
+
+  window.punnettTrait  = function(t) { trait=t; var tr=traits[t]; p1=tr.dom+tr.rec; p2=tr.dom+tr.rec; render(); };
+  window.punnettParent = function(i,v) { if(i===0)p1=v; else p2=v; render(); };
+  render();
+};
+

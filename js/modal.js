@@ -69,49 +69,147 @@
         renderBuddy(e);
       simFn(document.getElementById('simContainer'), e);
     } else {
-      /* Rich default — shows quiz-style interaction */
       body.innerHTML = renderRichDefault(e) + renderBuddy(e);
     }
   }
 
-  /* ── Rich default simulation: interactive quiz + visual ── */
+  /* ── Subject colour themes ── */
+  var THEMES = {
+    'Science':     { color:'var(--sci)',  bg:'var(--sci-dim)',  glow:'rgba(255,107,107,.2)'  },
+    'Maths':       { color:'var(--math)', bg:'var(--math-dim)', glow:'rgba(255,217,61,.2)'   },
+    'EVS':         { color:'var(--evs)',  bg:'var(--evs-dim)',  glow:'rgba(107,203,119,.2)'  },
+    'Life Skills': { color:'var(--life)', bg:'var(--life-dim)', glow:'rgba(77,150,255,.2)'   },
+  };
+
+  /* ── Extract emojis from a string ── */
+  function extractEmojis(str) {
+    var re = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu;
+    var m = str.match(re);
+    return m ? m.slice(0, 3).join(' ') : '';
+  }
+
+  /* ── Rich animated virtual experience ── */
   function renderRichDefault(e) {
-    var steps = e.steps || [];
-    var stepsHtml = steps.map(function(s, i) {
-      return '<div class="def-step" id="ds' + i + '" style="display:' + (i===0?'flex':'none') + ';gap:10px;align-items:flex-start;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;animation:fadeUp .3s ease">' +
-             '<div style="width:28px;height:28px;border-radius:50%;background:var(--acc);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">' + (i+1) + '</div>' +
-             '<div style="flex:1;font-size:13px;line-height:1.7;">' + s + '</div>' +
-             '</div>';
+    var steps  = e.steps || [];
+    var theme  = THEMES[e.subject] || THEMES['Science'];
+    var total  = steps.length;
+
+    /* Progress bar dots */
+    var dots = steps.map(function(_, i) {
+      return '<div id="dot' + i + '" onclick="defJump(' + i + ')" style="' +
+        'width:' + (i===0?'24px':'10px') + ';height:10px;border-radius:8px;cursor:pointer;' +
+        'background:' + (i===0 ? theme.color : 'var(--border)') + ';' +
+        'transition:all .35s ease"></div>';
     }).join('');
 
-    return '<div class="sim-box">' +
-           '<div style="font-size:52px;margin-bottom:4px;">' + e.icon + '</div>' +
-           '<div class="sim-label">Step-by-Step Guide</div>' +
-           '<div id="defStepsWrap" style="width:100%;text-align:left;">' + stepsHtml + '</div>' +
-           '<div class="ctrl-row" style="margin-top:4px;">' +
-           '<button class="cbtn" id="defPrev" onclick="defNav(-1)" style="display:none">← Prev</button>' +
-           '<span id="defCounter" style="font-size:11px;color:var(--muted);font-weight:700;">Step 1 of ' + steps.length + '</span>' +
-           '<button class="cbtn" id="defNext" onclick="defNav(1)">Next →</button>' +
-           '</div>' +
-           '<div class="why-box" style="margin-top:12px;text-align:left;">' +
-           '<h4>🔬 The Science Behind It</h4><p>' + e.why + '</p>' +
-           '</div>' +
-           '</div>';
+    /* Step cards */
+    var cards = steps.map(function(s, i) {
+      var emojis = extractEmojis(s);
+      var isFirst = i === 0;
+      return '<div id="ds' + i + '" style="' +
+        'display:' + (isFirst?'flex':'none') + ';flex-direction:column;' +
+        'align-items:center;gap:14px;width:100%;' +
+        'animation:fadeUp .35s ease both">' +
+        /* Emoji showcase */
+        (emojis ? '<div style="font-size:56px;line-height:1;' +
+          'filter:drop-shadow(0 0 16px ' + theme.glow + ');' +
+          'animation:pulse 2s ease infinite">' + emojis + '</div>' : 
+          '<div style="font-size:56px;animation:pulse 2s ease infinite">' + e.icon + '</div>') +
+        /* Step pill */
+        '<div style="background:' + theme.color + ';color:white;' +
+          'font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;' +
+          'padding:3px 12px;border-radius:20px">Step ' + (i+1) + ' of ' + total + '</div>' +
+        /* Step text card */
+        '<div style="background:' + theme.bg + ';border:1.5px solid ' + theme.color + '44;' +
+          'border-radius:14px;padding:16px 18px;width:100%;' +
+          'font-size:14px;line-height:1.8;font-weight:600;color:var(--text);' +
+          'text-align:center">' + s + '</div>' +
+        '</div>';
+    }).join('');
+
+    /* Completion screen */
+    var done = '<div id="ds' + total + '" style="' +
+      'display:none;flex-direction:column;align-items:center;gap:14px;' +
+      'animation:fadeUp .35s ease both">' +
+      '<div style="font-size:72px;animation:pulse 1s ease infinite">🎉</div>' +
+      '<div style="font-size:18px;font-weight:900;color:var(--evs)">You did it!</div>' +
+      '<div style="font-size:13px;color:var(--muted);text-align:center;' +
+        'line-height:1.8;max-width:280px">' +
+        'Amazing work! Now switch to <b style="color:var(--text)">Do at Home</b> ' +
+        'to try this experiment for real.</div>' +
+      '<button onclick="switchMode(\'h\')" style="' +
+        'background:var(--evs);color:white;border:none;border-radius:12px;' +
+        'padding:12px 24px;font-family:Nunito,sans-serif;font-size:14px;' +
+        'font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px">' +
+        '🏠 Try at Home</button>' +
+      '</div>';
+
+    return '<div class="sim-box" style="gap:16px;padding:20px">' +
+      /* Progress dots */
+      '<div style="display:flex;gap:6px;justify-content:center;align-items:center">' +
+      dots + '</div>' +
+      /* Cards area */
+      '<div style="width:100%;min-height:180px;display:flex;align-items:center;' +
+        'justify-content:center">' +
+      cards + done + '</div>' +
+      /* Nav buttons */
+      '<div style="display:flex;gap:10px;align-items:center;justify-content:center">' +
+      '<button id="defPrev" onclick="defNav(-1)" style="' +
+        'display:none;padding:10px 20px;border-radius:12px;' +
+        'border:1.5px solid var(--border);background:var(--surface);' +
+        'color:var(--text);font-family:Nunito,sans-serif;font-size:13px;' +
+        'font-weight:800;cursor:pointer;transition:all .18s">← Back</button>' +
+      '<button id="defNext" onclick="defNav(1)" style="' +
+        'padding:12px 28px;border-radius:12px;' +
+        'border:none;background:' + theme.color + ';' +
+        'color:white;font-family:Nunito,sans-serif;font-size:14px;' +
+        'font-weight:900;cursor:pointer;' +
+        'box-shadow:0 4px 20px ' + theme.glow + ';' +
+        'transition:all .18s">Let\'s go! 🚀</button>' +
+      '</div></div>';
   }
 
   var defCurrent = 0;
-  window.defNav = function(dir) {
+
+  window.defJump = function(i) { _defGo(i); };
+  window.defNav  = function(dir) { _defGo(defCurrent + dir); };
+
+  function _defGo(next) {
     var e = window.EXP_MAP[currentId];
     if (!e) return;
-    var steps = e.steps || [];
-    var prev = document.getElementById('ds' + defCurrent);
-    if (prev) prev.style.display = 'none';
-    defCurrent = Math.max(0, Math.min(steps.length - 1, defCurrent + dir));
-    var curr = document.getElementById('ds' + defCurrent);
-    if (curr) curr.style.display = 'flex';
-    document.getElementById('defCounter').textContent = 'Step ' + (defCurrent+1) + ' of ' + steps.length;
-    document.getElementById('defPrev').style.display = defCurrent === 0 ? 'none' : '';
-    document.getElementById('defNext').style.display = defCurrent === steps.length-1 ? 'none' : '';
+    var total = (e.steps || []).length;
+
+    /* Hide + un-highlight current */
+    var prevEl  = document.getElementById('ds'  + defCurrent);
+    var prevDot = document.getElementById('dot' + defCurrent);
+    if (prevEl)  prevEl.style.display = 'none';
+    if (prevDot) { prevDot.style.width = '10px'; prevDot.style.background = 'var(--border)'; }
+
+    defCurrent = Math.max(0, Math.min(total, next));
+
+    /* Show + highlight next */
+    var currEl  = document.getElementById('ds'  + defCurrent);
+    var currDot = document.getElementById('dot' + defCurrent);
+    if (currEl)  currEl.style.display = 'flex';
+    if (currDot) {
+      var theme = THEMES[e.subject] || THEMES['Science'];
+      currDot.style.width      = '24px';
+      currDot.style.background = defCurrent >= total ? 'var(--evs)' : theme.color;
+    }
+
+    /* Update buttons */
+    var prevBtn = document.getElementById('defPrev');
+    var nextBtn = document.getElementById('defNext');
+    if (prevBtn) prevBtn.style.display = defCurrent === 0 ? 'none' : '';
+    if (nextBtn) {
+      if (defCurrent >= total) {
+        nextBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = '';
+        nextBtn.textContent = defCurrent === total - 1 ? 'Finish! ✅' : 'Next →';
+      }
+    }
+  }
     if (defCurrent === steps.length-1) {
       document.getElementById('defNext').textContent = '✅ Done!';
     }
