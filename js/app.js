@@ -38,13 +38,13 @@
   /* ── Filter & render ── */
   function applyAll() {
     state.q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
-    var cards = document.querySelectorAll('.exp-card');
+    var cards = document.querySelectorAll('#grid .exp-card');
     var shown = 0;
     cards.forEach(function (card) {
       var ok = true;
-      if (state.cls !== 'All' && card.dataset.classes.indexOf(state.cls) === -1) ok = false;
+      if (state.cls !== 'All' && (card.dataset.classes || '').indexOf(state.cls) === -1) ok = false;
       if (state.sub !== 'All' && card.dataset.s !== state.sub) ok = false;
-      if (state.q && card.dataset.search.indexOf(state.q) === -1) ok = false;
+      if (state.q && (card.dataset.search || '').indexOf(state.q) === -1) ok = false;
       card.classList.toggle('hidden', !ok);
       if (ok) shown++;
     });
