@@ -88,127 +88,175 @@ body::before {
 @keyframes glow    { 0%,100%{filter:drop-shadow(0 0 8px currentColor)} 50%{filter:drop-shadow(0 0 20px currentColor)} }
 
 /* ══════════════════════════════════════════
-   FAVOURITES
+   FAVOURITES — heart button + My Lab drawer
    ══════════════════════════════════════════ */
 
-/* Heart button on each card */
+/* Heart button on each grid card */
 .fav-btn {
   position: absolute;
   top: 8px; right: 8px;
-  width: 30px; height: 30px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.32);
   backdrop-filter: blur(6px);
-  color: rgba(255,255,255,0.75);
-  font-size: 15px;
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: background .18s, color .18s, transform .18s;
+  transition: background .15s, transform .15s;
   z-index: 2;
 }
-.fav-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.12); }
-.fav-btn.fav-on { color: #f43f5e; background: rgba(244,63,94,0.18); }
-.fav-btn.fav-on:hover { background: rgba(244,63,94,0.28); }
-
-/* Card must be relative for absolute heart */
+.fav-btn:hover { background: rgba(255,255,255,0.18); transform: scale(1.12); }
+.fav-btn.fav-on { color: #f43f5e; background: rgba(244,63,94,0.2); }
+.fav-btn.fav-on:hover { background: rgba(244,63,94,0.3); }
 .exp-card { position: relative; }
+[data-theme="light"] .fav-btn { background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.35); }
 
-/* My Lab section */
-.mylab-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 0 4px 10px;
+/* Header My Lab toggle button */
+.mylab-toggle-btn {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
 }
-.mylab-title {
-  font-size: 14px; font-weight: 800;
+.mylab-hrt { font-size: 16px; line-height: 1; transition: color .2s; }
+.mylab-badge {
+  position: absolute;
+  top: -2px; right: -3px;
+  min-width: 16px; height: 16px;
+  background: #f43f5e;
+  color: white;
+  font-size: 9px; font-weight: 800;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--bg);
+  pointer-events: none;
+}
+
+/* ── My Lab slide-in drawer ── */
+.mylab-backdrop {
+  display: none;
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,0);
+  transition: background .25s;
+}
+.mylab-backdrop.open {
+  display: block;
+  background: rgba(0,0,0,0.45);
+}
+
+.mylab-drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(340px, 90vw);
+  z-index: 160;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+}
+.mylab-drawer.open { transform: translateX(0); }
+
+.mylab-drawer-inner {
+  flex: 1;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border-left: 1.5px solid var(--border);
+  height: 100%;
+  overflow: hidden;
+}
+
+.mylab-drawer-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 18px 14px;
+  font-family: 'DM Serif Display','Fraunces',serif;
+  font-size: 18px;
   color: #f43f5e;
-  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
-.mylab-count {
-  font-size: 11px; font-weight: 700;
-  background: rgba(244,63,94,0.15);
-  color: #f43f5e;
-  padding: 2px 8px; border-radius: 20px;
+.mylab-close-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 50%; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 13px; color: var(--muted);
+  transition: all .15s;
 }
+.mylab-close-btn:hover { background: var(--border); color: var(--text); }
+
+.mylab-drawer-body {
+  flex: 1; overflow-y: auto;
+  padding: 14px;
+}
+.mylab-drawer-body::-webkit-scrollbar { width: 4px; }
+.mylab-drawer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.mylab-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* Cards inside drawer — 2-column compact grid */
 .mylab-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-bottom: 28px;
 }
-.mylab-grid .exp-card { font-size: 13px; }
-.mylab-grid .card-title { font-size: 12px; font-weight: 700; -webkit-line-clamp: 2; }
-.mylab-grid .card-desc  { display: none; }
-.mylab-grid .card-top   { padding: 14px 10px; font-size: 28px; }
+.mylab-grid .exp-card .card-desc  { display: none; }
+.mylab-grid .exp-card .card-top   { padding: 14px 10px; font-size: 28px; }
+.mylab-grid .exp-card .card-title { font-size: 12px; font-weight: 700; -webkit-line-clamp: 2; }
+.mylab-grid .exp-card .card-meta  { gap: 3px; }
+.mylab-grid .exp-card .tag        { font-size: 9px; padding: 1px 5px; }
 
-#myLabSection {
-  padding: 20px 18px 4px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
-}
-[data-theme="light"] .fav-btn { background: rgba(0,0,0,0.12); color: rgba(0,0,0,0.4); }
+/* Prevent body scroll when drawer open */
+body.drawer-open { overflow: hidden; }
+
 
 /* ══════════════════════════════════════════
-   FULLSCREEN BUTTON
+   FULLSCREEN — entire modal goes fullscreen
    ══════════════════════════════════════════ */
 
-.fs-btn {
-  position: absolute;
-  top: 8px; right: 8px;
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(0,0,0,0.4);
-  backdrop-filter: blur(8px);
-  color: rgba(255,255,255,0.85);
-  cursor: pointer;
+/* FS button in modal header (sits next to ✕) */
+.fs-modal-btn {
   display: flex; align-items: center; justify-content: center;
-  transition: background .18s, transform .18s;
-  z-index: 10;
 }
-.fs-btn:hover {
-  background: rgba(255,255,255,0.18);
-  transform: scale(1.08);
-}
-.fs-btn svg { pointer-events: none; }
+.fs-modal-btn svg { pointer-events: none; }
 
-/* When canvas itself is fullscreen */
-canvas:fullscreen, canvas:-webkit-full-screen {
-  width: 100vw !important;
-  height: 100vh !important;
+/* When overlay itself is fullscreen — expand everything to fill screen */
+#overlay:fullscreen,
+#overlay:-webkit-full-screen,
+#overlay:-moz-full-screen {
+  background: rgba(0,0,0,0.96) !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+}
+#overlay:fullscreen .modal,
+#overlay:-webkit-full-screen .modal,
+#overlay:-moz-full-screen .modal {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  height: 100% !important;
   border-radius: 0 !important;
+  border: none !important;
+}
+/* Canvas fills available space in fullscreen */
+#overlay:fullscreen canvas,
+#overlay:-webkit-full-screen canvas,
+#overlay:-moz-full-screen canvas {
+  max-height: 70vh;
+  width: 100% !important;
   object-fit: contain;
-  background: #0d1b2a;
-}
-#simContainer:fullscreen, #simContainer:-webkit-full-screen {
-  width: 100vw !important;
-  height: 100vh !important;
-  background: #0d1b2a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0 !important;
-  overflow: auto;
-  padding: 16px;
-}
-#simContainer:fullscreen canvas,
-#simContainer:-webkit-full-screen canvas {
-  max-width: 100%;
-  height: auto !important;
-  border-radius: 12px !important;
-}
-/* FS button repositions itself inside fullscreen container */
-#simContainer:fullscreen .fs-btn,
-#simContainer:-webkit-full-screen .fs-btn {
-  position: fixed;
-  top: 16px; right: 16px;
 }
 
-/* Modal wider on tablet+ */
+/* Modal wider on tablet and desktop */
 @media (min-width: 768px) {
   .modal { max-width: 720px; }
 }
 @media (min-width: 1024px) {
-  .modal { max-width: 840px; }
+  .modal { max-width: 860px; }
 }
