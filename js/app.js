@@ -1,6 +1,5 @@
 /* app.js — filter state, grid rendering, navigation */
 (function () {
-  /* ── State ── */
   var state = { cls: 'All', sub: 'All', q: '' };
 
   /* ── Filter & render ── */
@@ -16,9 +15,6 @@
       card.classList.toggle('hidden', !ok);
       if (ok) shown++;
     });
-    document.getElementById('countShown').textContent = shown;
-    document.getElementById('labelClass').textContent = state.cls;
-    document.getElementById('labelSub').textContent = state.sub;
     var empty = document.getElementById('emptyState');
     if (empty) empty.classList.toggle('hidden', shown > 0);
   }
@@ -45,13 +41,12 @@
     var grid = document.getElementById('grid');
     if (!grid) return;
     var html = '';
-    var total = window.EXPERIMENTS.length;
 
     window.EXPERIMENTS.forEach(function (e, i) {
       var tagCls = window.subjectTagClass(e.subject);
       var clsList = e.classes.join(',');
-      var searchStr = (e.title + ' ' + e.subject + ' ' + e.desc + ' ' + e.ncert).toLowerCase();
-      var delay = Math.min(i * 30, 600); // stagger animation, cap at 600ms
+      var searchStr = (e.title + ' ' + e.subject + ' ' + e.desc).toLowerCase();
+      var delay = Math.min(i * 20, 500);
 
       html += '<div class="exp-card" data-id="' + e.id + '" data-s="' + e.subject + '"' +
               ' data-classes="' + clsList + '" data-search="' + searchStr + '"' +
@@ -66,21 +61,16 @@
               '</div>' +
               '<div class="card-title">' + e.title + '</div>' +
               '<div class="card-desc">' + e.desc + '</div>' +
-              '<div class="card-ncert">' + e.ncert + '</div>' +
               '</div></div>';
     });
 
-    /* Empty state */
     html += '<div class="empty-state hidden" id="emptyState">' +
             '<div class="big">🔭</div>' +
-            '<div>No experiments match your filters.</div>' +
+            '<div>No experiments match your search.</div>' +
             '</div>';
 
     grid.innerHTML = html;
-    document.getElementById('countTotal').textContent = total;
-    document.getElementById('countShown').textContent = total;
   }
 
-  /* ── Init on DOM ready ── */
   document.addEventListener('DOMContentLoaded', buildGrid);
 })();

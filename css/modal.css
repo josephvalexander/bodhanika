@@ -41,3 +41,10 @@
 .buddy-av{font-size:20px;flex-shrink:0;}
 .buddy-n{font-size:10px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
 .buddy-t{font-size:12px;line-height:1.7;}
+
+/* ── Light theme modal adjustments ── */
+[data-theme="light"] .overlay { background:rgba(0,0,0,0.5); }
+[data-theme="light"] .sim-box { background:var(--surface2); }
+[data-theme="light"] .why-box { background:var(--acc-dim); }
+[data-theme="light"] .buddy   { background:rgba(124,58,237,0.06); border-color:rgba(124,58,237,0.15); }
+[data-theme="light"] .m-close:hover { background:var(--sci-dim); }
