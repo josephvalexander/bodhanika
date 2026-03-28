@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bodhanika | Hands-On Experiments for Classes 1–10</title>
+<meta name="description" content="Bodhanika brings Science, Maths, EVS and Life Skills to life through hands-on experiments and interactive simulations for Classes 1–10. Don't just learn it — understand it.">
+<meta name="keywords" content="hands-on experiments, practical learning, science experiments for kids, maths activities, EVS projects, Classes 1-10, interactive learning India, learn by doing">
+<meta property="og:title" content="Bodhanika — Don't Just Learn It. Understand It.">
+<meta property="og:description" content="Hands-On Science and Maths Experiments for Classes 1–10">
+<meta property="og:type" content="website">
+<link rel="manifest" href="manifest.json">
+<link rel="canonical" href="https://bodhanika.in/">
+<meta name="theme-color" content="#C77DFF">
+<meta name="robots" content="index, follow">
+
+<!-- Structured Data for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Bodhanika",
+  "url": "https://bodhanika.in",
+  "description": "Hands-On Science and Maths Experiments for Classes 1–10. Don't just learn it — understand it.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student",
+    "audienceType": "Children aged 6–16, Classes 1–10"
+  },
+  "educationalAlignment": [
+    { "@type": "AlignmentObject", "alignmentType": "educationalSubject", "targetName": "Science" },
+    { "@type": "AlignmentObject", "alignmentType": "educationalSubject", "targetName": "Mathematics" },
+    { "@type": "AlignmentObject", "alignmentType": "educationalSubject", "targetName": "EVS" },
+    { "@type": "AlignmentObject", "alignmentType": "educationalFramework", "targetName": "Classes 1-10" }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fraunces:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div>
+    <div class="logo">Bodhanika</div>
+    <div class="logo-sub">Don't Just Learn It. Understand It.</div>
+  </div>
+  <div class="hdr-right">
+    <input class="search-box" id="searchBox" placeholder="🔍 Search experiments…" oninput="applyAll()">
+  </div>
+</header>
+
+<!-- ══ CLASS TABS ══ -->
+<div class="class-nav">
+  <div class="ctab active" onclick="setClass('All',this)">All Classes</div>
+  <div class="ctab" onclick="setClass('1',this)">Class 1</div>
+  <div class="ctab" onclick="setClass('2',this)">Class 2</div>
+  <div class="ctab" onclick="setClass('3',this)">Class 3</div>
+  <div class="ctab" onclick="setClass('4',this)">Class 4</div>
+  <div class="ctab" onclick="setClass('5',this)">Class 5</div>
+  <div class="ctab" onclick="setClass('6',this)">Class 6</div>
+  <div class="ctab" onclick="setClass('7',this)">Class 7</div>
+  <div class="ctab" onclick="setClass('8',this)">Class 8</div>
+  <div class="ctab" onclick="setClass('9',this)">Class 9</div>
+  <div class="ctab" onclick="setClass('10',this)">Class 10</div>
+</div>
+
+<!-- ══ SUBJECT FILTER ══ -->
+<div class="sub-nav">
+  <div class="stab active" data-s="All"         onclick="setSub('All',this)">✦ All Subjects</div>
+  <div class="stab" data-s="Science"            onclick="setSub('Science',this)">🔬 Science</div>
+  <div class="stab" data-s="Maths"              onclick="setSub('Maths',this)">📐 Maths</div>
+  <div class="stab" data-s="EVS"                onclick="setSub('EVS',this)">🌿 EVS</div>
+  <div class="stab" data-s="Life Skills"        onclick="setSub('Life Skills',this)">💡 Life Skills</div>
+</div>
+
+<!-- ══ STATS BAR ══ -->
+<div class="stats-bar">
+  <div class="stat">Showing <span id="countShown">…</span> of <span id="countTotal">…</span> experiments</div>
+  <div class="stat">Class: <span id="labelClass">All</span></div>
+  <div class="stat">Subject: <span id="labelSub">All</span></div>
+</div>
+
+<!-- ══ EXPERIMENT GRID ══ -->
+<div class="grid" id="grid"></div>
+
+<!-- ══ MODAL ══ -->
+<div class="overlay" id="overlay" onclick="closeCheck(event)">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <div class="m-icon" id="mIcon"></div>
+      <div class="m-titles">
+        <div class="m-title" id="mTitle"></div>
+        <div class="m-tags" id="mTags"></div>
+      </div>
+      <div class="m-close" onclick="closeModal()">✕</div>
+    </div>
+
+    <div class="mode-toggle">
+      <button class="mbtn active" id="bVirt" onclick="switchMode('v')">🖥️ Try Virtually</button>
+      <button class="mbtn"        id="bHome" onclick="switchMode('h')">🏠 Do at Home</button>
+    </div>
+
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer style="position:relative;z-index:5;border-top:1px solid var(--border);padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:2;">
+  <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:900;background:linear-gradient(135deg,var(--acc),var(--life));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;">Bodhanika</div>
+  <div style="font-size:13px;color:var(--text);font-weight:700;margin-bottom:12px;">Don't Just Learn It. Understand It.</div>
+  <div style="max-width:560px;margin:0 auto 16px;">
+    Hands-On Science and Maths Experiments for Classes 1–10 · Interactive simulations · Home experiments · EVS · Life Skills
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;">
+    <span style="background:var(--sci-dim);color:var(--sci);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">🔬 Science</span>
+    <span style="background:var(--math-dim);color:var(--math);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">📐 Maths</span>
+    <span style="background:var(--evs-dim);color:var(--evs);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">🌿 EVS</span>
+    <span style="background:var(--life-dim);color:var(--life);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">💡 Life Skills</span>
+    <span style="background:var(--surface2);color:var(--muted);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">Classes 1–10</span>
+  </div>
+  <div>© 2025 Bodhanika · बोधनिका · Where understanding begins</div>
+</footer>
+
+<!-- ══ DATA (load order matters) ══ -->
+<script src="js/data-1-5.js"></script>
+<script src="js/data-6-10-science.js"></script>
+<script src="js/data-6-10-maths.js"></script>
+<script src="js/data-6-10-evs-life.js"></script>
+<script src="js/data.js"></script>
+
+<!-- ══ APP LOGIC ══ -->
+<script src="js/sims.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
