@@ -1,13 +1,16 @@
 # robots.txt for bodhanika.in
+# Allow all search engines and good bots
 
-# Allow all search engines
 User-agent: *
 Allow: /
+Disallow: /sw.js
 
-# Sitemap location
+# Sitemap
 Sitemap: https://bodhanika.in/sitemap.xml
 
-# Block AI training scrapers specifically
+# Block known AI training scrapers
+# (Google Search and Googlebot are NOT blocked — needed for SEO and AdSense)
+
 User-agent: GPTBot
 Disallow: /
 
@@ -17,5 +20,17 @@ Disallow: /
 User-agent: anthropic-ai
 Disallow: /
 
+User-agent: Claude-Web
+Disallow: /
+
 User-agent: Google-Extended
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Bytespider
 Disallow: /
