@@ -1,0 +1,43 @@
+# .github/workflows/deploy.yml
+# Runs on every push to main.
+# Injects a new version timestamp into sw.js so all
+# clients automatically detect the update and refresh.
+
+name: Deploy Bodhanika
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump service worker version
+        run: |
+          # Generate version from current timestamp e.g. v2026.03.28.1045
+          VERSION="v$(date +'%Y.%m.%d.%H%M')"
+          echo "New version: $VERSION"
+          # Replace the VERSION line in sw.js
+          sed -i "s/const VERSION = '[^']*'/const VERSION = '$VERSION'/" sw.js
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Commit updated sw.js
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sw.js
+          # Only commit if sw.js actually changed
+          git diff --staged --quiet || git commit -m "chore: bump SW version to ${{ env.VERSION }}"
+
+      - name: Push changes
+        run: git push
