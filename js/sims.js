@@ -14,366 +14,1193 @@ function label(t)     { return '<div class="sim-label">' + t + '</div>'; }
 /* ══════════ SCIENCE SIMULATIONS ══════════ */
 
 /* Sink or Float */
+/* ══════════════════════════════════════
+   FIXED SIMS — replacing weak early ones
+   ══════════════════════════════════════ */
+
+/* ── SINK OR FLOAT (canvas, physics animation) ── */
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
-    {name:'🍃 Leaf', floats:true}, {name:'🪙 Coin', floats:false},
-    {name:'🧴 Cap', floats:true},  {name:'🪨 Stone', floats:false},
-    {name:'🧽 Sponge', floats:true},{name:'✏️ Pencil', floats:true},
+    { name:'Leaf',   floats:true,  color:'#22c55e', shape:'leaf',   fact:'Waxy surface traps air!' },
+    { name:'Coin',   floats:false, color:'#a0a0a0', shape:'circle', fact:'Metal is denser than water.' },
+    { name:'Cap',    floats:true,  color:'#3b82f6', shape:'cap',    fact:'Hollow shape traps air.' },
+    { name:'Stone',  floats:false, color:'#78716c', shape:'rect',   fact:'Rock is 2.7× denser than water.' },
+    { name:'Sponge', floats:true,  color:'#f59e0b', shape:'rect',   fact:'Full of air pockets!' },
+    { name:'Pencil', floats:true,  color:'#f97316', shape:'rect',   fact:'Wood is less dense than water.' },
   ];
-  var results = {};
-  c.innerHTML = label('Drop items into the water') +
-    row(items.map(function(it){
-      return '<button class="cbtn" onclick="sfTest(\'' + it.name + '\',' + it.floats + ')">' + it.name + '</button>';
-    }).join('')) +
-    '<div id="sfPool" style="width:240px;height:100px;background:rgba(77,150,255,.15);border:2px solid var(--life);border-radius:10px;border-top:none;display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:8px;flex-wrap:wrap;font-size:20px;margin-top:8px"></div>' +
-    '<div id="sfMsg" style="font-size:12px;color:var(--muted);margin-top:6px;min-height:20px"></div>';
-  window.sfTest = function(name, floats) {
-    var pool = document.getElementById('sfPool');
-    var msg = document.getElementById('sfMsg');
-    var span = document.createElement('span');
-    span.title = floats ? 'Floats!' : 'Sinks!';
-    span.textContent = name.split(' ')[0];
-    span.style.cssText = floats
-      ? 'transform:translateY(-30px);transition:transform .4s'
-      : 'transform:translateY(0);opacity:.5;transition:transform .4s';
-    pool.appendChild(span);
-    msg.textContent = name + (floats ? ' floats — less dense than water!' : ' sinks — denser than water!');
-  };
-};
+  var dropped = [];
+  var raf;
 
-/* Colour Mixing */
-SIM_REGISTRY['colour-mixing'] = function(c) {
-  var mixes = {
-    'Red+Blue':'#9B59B6 (Purple)', 'Blue+Yellow':'#27AE60 (Green)',
-    'Red+Yellow':'#E67E22 (Orange)', 'All three':'#6B4226 (Brown)'
-  };
-  var resultStr = Object.keys(mixes).map(function(k) {
-    return '<button class="cbtn" onclick="cmMix(\'' + k + '\')">' + k + '</button>';
-  }).join('');
-  c.innerHTML = label('Mix primary colours') + row(resultStr) +
-    '<div id="cmRes" style="width:100px;height:100px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;padding:8px;margin-top:8px;transition:background .4s">Pick a mix</div>';
-  window.cmMix = function(k) {
-    var hex = mixes[k].split(' ')[0];
-    var name = mixes[k].split(' ').slice(1).join(' ');
-    var el = document.getElementById('cmRes');
-    el.style.background = hex;
-    el.style.color = '#fff';
-    el.textContent = name;
-  };
-};
+  function draw() {
+    var cv = document.getElementById('sfCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
 
-/* Shadow Play */
-SIM_REGISTRY['shadow-play'] = function(c) {
-  var dist = 50;
-  c.innerHTML = label('Move the object — watch shadow size change') +
-    '<div style="position:relative;width:280px;height:130px;background:rgba(0,0,0,.3);border-radius:10px;overflow:hidden;margin:4px 0" id="shadowStage">' +
-    '<div id="torchIcon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:24px">🔦</div>' +
-    '<div id="shadowObj" style="position:absolute;font-size:28px;top:50%;transform:translateY(-50%);transition:left .2s">✋</div>' +
-    '<div id="shadowCast" style="position:absolute;right:0;top:0;height:100%;background:rgba(0,0,0,.5);transition:width .2s"></div>' +
-    '</div>' +
-    row('<span style="font-size:12px;color:var(--muted)">Distance from light:</span>' +
-        '<input type="range" class="slide" min="20" max="80" value="50" oninput="spUpdate(this.value)" style="width:120px">') +
-    '<div id="spInfo" style="font-size:12px;color:var(--muted);margin-top:4px">Shadow is medium-sized</div>';
-  window.spUpdate = function(v) {
-    dist = parseInt(v);
-    var pct = (80 - dist) / 60;
-    document.getElementById('shadowObj').style.left = (10 + dist * 2.5) + 'px';
-    var sw = Math.max(10, 100 - dist * 1.2);
-    document.getElementById('shadowCast').style.width = sw + 'px';
-    document.getElementById('spInfo').textContent = dist < 35
-      ? 'Object close to light → BIG shadow!'
-      : dist > 65 ? 'Object far from light → small shadow' : 'Shadow is medium-sized';
-  };
-};
+    /* Sky */
+    ctx.fillStyle = '#e0f2fe';
+    ctx.fillRect(0, 0, W, H * 0.45);
 
-/* States of Matter */
-SIM_REGISTRY['states-matter'] = function(c) {
-  var states = {
-    'Solid ❄️': {desc:'Molecules packed tight, barely moving.', color:'var(--life)'},
-    'Liquid 💧': {desc:'Molecules move freely, flow together.', color:'var(--sci)'},
-    'Gas 💨': {desc:'Molecules spread far apart, move rapidly.', color:'var(--acc)'},
-  };
-  c.innerHTML = label('Tap a state to see molecular behaviour') +
-    row(Object.keys(states).map(function(s){
-      return '<button class="cbtn" onclick="smShow(\'' + s + '\')">' + s + '</button>';
-    }).join('')) +
-    '<canvas id="smCanvas" width="220" height="120" style="border-radius:10px;background:var(--surface);margin-top:8px"></canvas>' +
-    '<div id="smDesc" style="font-size:12px;color:var(--muted);margin-top:6px;text-align:center">Choose a state</div>';
-  var anim; window.simCleanup = function(){ clearInterval(anim); };
-  window.smShow = function(s) {
-    clearInterval(anim);
-    var info = states[s]; document.getElementById('smDesc').textContent = info.desc;
-    var cv = document.getElementById('smCanvas'), ctx = cv.getContext('2d');
-    var count = s.includes('Solid') ? 20 : s.includes('Liquid') ? 20 : 15;
-    var spread = s.includes('Solid') ? 0.3 : s.includes('Liquid') ? 1.2 : 3;
-    var particles = Array.from({length:count}, function(_,i){
-      return { x: 30 + (i%5)*35, y: 25 + Math.floor(i/5)*25,
-               vx:(Math.random()-.5)*spread, vy:(Math.random()-.5)*spread };
+    /* Water */
+    var wg = ctx.createLinearGradient(0, H * 0.45, 0, H);
+    wg.addColorStop(0, 'rgba(59,130,246,0.7)');
+    wg.addColorStop(1, 'rgba(29,78,216,0.9)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(0, H * 0.45, W, H * 0.55);
+
+    /* Water surface line */
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var wx = 0; wx < W; wx += 4) {
+      var wy = H * 0.45 + Math.sin((wx + Date.now() * 0.03) * 0.08) * 3;
+      wx === 0 ? ctx.moveTo(wx, wy) : ctx.lineTo(wx, wy);
+    }
+    ctx.stroke();
+
+    /* Draw dropped items */
+    dropped.forEach(function(item, i) {
+      var x = 30 + i * 44;
+      var targetY = item.floats ? H * 0.38 : H * 0.72;
+      if (Math.abs(item.y - targetY) > 0.5) {
+        item.y += (targetY - item.y) * 0.08;
+      }
+
+      ctx.save();
+      ctx.shadowColor = item.color;
+      ctx.shadowBlur = 6;
+
+      /* Draw shape */
+      ctx.fillStyle = item.color;
+      if (item.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(x, item.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (item.shape === 'leaf') {
+        ctx.beginPath();
+        ctx.ellipse(x, item.y, 15, 8, Math.PI * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#16a34a';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x - 10, item.y + 3);
+        ctx.lineTo(x + 10, item.y - 3);
+        ctx.stroke();
+      } else if (item.shape === 'cap') {
+        ctx.beginPath();
+        ctx.arc(x, item.y, 14, Math.PI, 0);
+        ctx.rect(x - 14, item.y, 28, 6);
+        ctx.fill();
+      } else {
+        var rw = item.name === 'Pencil' ? 28 : 20;
+        var rh = item.name === 'Pencil' ? 8 : 14;
+        ctx.fillRect(x - rw / 2, item.y - rh / 2, rw, rh);
+      }
+      ctx.restore();
+
+      /* Label */
+      ctx.fillStyle = item.floats ? '#1e3a5f' : 'rgba(255,255,255,0.9)';
+      ctx.font = 'bold 9px Nunito,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(item.name, x, item.y + (item.floats ? -18 : 20));
+
+      /* Float/sink badge */
+      ctx.font = '10px sans-serif';
+      ctx.fillText(item.floats ? '🏄' : '⬇️', x, item.y + (item.floats ? -28 : 30));
     });
-    anim = setInterval(function(){
-      ctx.clearRect(0,0,220,120);
-      particles.forEach(function(p){
-        p.x += p.vx; p.y += p.vy;
-        if(p.x<6||p.x>214) p.vx*=-1;
-        if(p.y<6||p.y>114) p.vy*=-1;
-        ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
-        ctx.fillStyle = info.color; ctx.fill();
-      });
-    }, 40);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Sink or Float?</div>' +
+      '<canvas id="sfCanvas" width="280" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center">' +
+      items.map(function(item) {
+        return '<button onclick="sfDrop(\'' + item.name + '\')" style="padding:6px 12px;border-radius:10px;border:2px solid ' + item.color + ';background:' + item.color + '22;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif">' + item.name + '</button>';
+      }).join('') +
+      '</div>' +
+      '<div id="sfFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7;text-align:center">Drop an object into the water!</div>' +
+      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="sfReset()">↺ Clear</button></div>';
+
+    cancelAnimationFrame(raf);
+    draw();
+  }
+
+  window.sfDrop = function(name) {
+    var item = items.find(function(i) { return i.name === name; });
+    if (!item || dropped.find(function(d) { return d.name === name; })) return;
+    if (dropped.length >= 6) return;
+    dropped.push({ name: item.name, floats: item.floats, color: item.color, shape: item.shape, y: 10 });
+    document.getElementById('sfFact').innerHTML =
+      '<b style="color:' + item.color + '">' + item.name + '</b> ' +
+      (item.floats ? '<span style="color:var(--evs)">floats</span>' : '<span style="color:var(--sci)">sinks</span>') +
+      ' — ' + item.fact;
   };
+  window.sfReset = function() { dropped = []; };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
 };
 
-/* Magnet */
+/* ── SHADOW PLAY (canvas, real-time shadow) ── */
+SIM_REGISTRY['shadow-play'] = function(c) {
+  var dist = 50, objType = 'hand', raf;
+
+  var objects = {
+    hand:   { draw: function(ctx, x, y) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d97706';
+      for (var f = 0; f < 4; f++) {
+        ctx.fillRect(x - 8 + f * 6, y - 22, 5, 14);
+      }
+      ctx.fillRect(x - 16, y - 10, 5, 12);
+    }},
+    tree:   { draw: function(ctx, x, y) {
+      ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(x, y - 14, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#92400e'; ctx.fillRect(x - 4, y, 8, 20);
+    }},
+    bird:   { draw: function(ctx, x, y) {
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath(); ctx.ellipse(x, y, 16, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x - 12, y - 4, 10, 5, -0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 12, y - 4, 10, 5, 0.4, 0, Math.PI * 2); ctx.fill();
+    }},
+  };
+
+  function draw() {
+    var cv = document.getElementById('shadowCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+
+    /* Background - wall */
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, W, H);
+
+    /* Ground */
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, H - 24, W, 24);
+
+    /* Light source */
+    var lightX = 30, lightY = H * 0.35;
+    var objX = 50 + dist * 2;
+    var wallX = W - 20;
+
+    /* Light rays */
+    ctx.strokeStyle = 'rgba(253,224,71,0.25)';
+    ctx.lineWidth = 1;
+    for (var ray = -3; ray <= 3; ray++) {
+      ctx.beginPath();
+      ctx.moveTo(lightX, lightY);
+      ctx.lineTo(wallX, lightY + ray * 40);
+      ctx.stroke();
+    }
+
+    /* Shadow on wall */
+    var shadowScale = Math.max(0.3, (wallX - objX) / (objX - lightX + 0.1));
+    var shadowH = Math.min(100, 30 * shadowScale);
+    ctx.fillStyle = 'rgba(0,0,0,' + Math.min(0.5, 0.2 + shadowScale * 0.1) + ')';
+    ctx.fillRect(wallX - 8, H - 24 - shadowH, 12, shadowH);
+
+    /* Object */
+    objects[objType].draw(ctx, objX, H - 55);
+
+    /* Light bulb */
+    ctx.beginPath(); ctx.arc(lightX, lightY, 12, 0, Math.PI * 2);
+    ctx.fillStyle = '#fde68a'; ctx.shadowColor = '#fcd34d'; ctx.shadowBlur = 15; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(lightX - 4, lightY + 12, 8, 6);
+
+    /* Labels */
+    ctx.fillStyle = '#64748b'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Light', lightX, lightY - 18);
+    ctx.fillText(dist < 35 ? 'BIG shadow!' : dist > 65 ? 'Small shadow' : 'Medium shadow', wallX - 10, H - 30);
+
+    /* Shadow size indicator */
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.font = '9px Nunito,sans-serif';
+    ctx.fillText('Shadow: ' + Math.round(shadowH) + 'px tall', W / 2, 16);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Shadow Play</div>' +
+      '<canvas id="shadowCanvas" width="300" height="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">' +
+      '<span style="font-size:11px;color:var(--muted)">Object distance:</span>' +
+      '<input type="range" class="slide" min="10" max="80" value="50" oninput="shadowDist(this.value)" style="width:130px">' +
+      '<span style="font-size:11px;color:var(--muted)">Object:</span>' +
+      ['hand','tree','bird'].map(function(o) {
+        return '<button onclick="shadowObj(\'' + o + '\')" style="padding:4px 9px;border-radius:8px;font-size:11px;border:1.5px solid ' + (o === objType ? 'var(--math)' : 'var(--border)') + ';background:' + (o === objType ? 'var(--math-dim)' : 'var(--surface2)') + ';color:' + (o === objType ? 'var(--math)' : 'var(--muted)') + ';cursor:pointer">' + o + '</button>';
+      }).join('') +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '📐 Closer to light = bigger shadow. Further = smaller. The wall blocks the rays — that\'s all a shadow is!' +
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+
+  window.shadowDist = function(v) { dist = parseInt(v); };
+  window.shadowObj = function(o) { objType = o; cancelAnimationFrame(raf); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── ELECTRIC CIRCUIT (canvas, visual objects, bulb glows) ── */
+SIM_REGISTRY['circuit-sim'] = function(c) {
+  var selected = null;
+  var materials = [
+    { name:'Wire',    conducts:true,  color:'#a78bfa', desc:'Copper wire — excellent conductor. Electrons flow freely through metal!' },
+    { name:'Coin',    conducts:true,  color:'#fcd34d', desc:'Metal coin — conductors! Even old coins let current flow.' },
+    { name:'Nail',    conducts:true,  color:'#94a3b8', desc:'Iron nail — metals are conductors. Electrons move through them easily.' },
+    { name:'Foil',    conducts:true,  color:'#e2e8f0', desc:'Aluminium foil — thin but conducts electricity well!' },
+    { name:'Pencil',  conducts:false, color:'#f97316', desc:'Wood is an insulator. The graphite inside conducts a tiny bit, but wood doesn\'t!' },
+    { name:'Rubber',  conducts:false, color:'#6b7280', desc:'Rubber is a perfect insulator — that\'s why wires are coated in it.' },
+    { name:'Plastic', conducts:false, color:'#3b82f6', desc:'Plastic is an insulator. Used in switches and plug casings for safety.' },
+  ];
+  var raf;
+
+  function draw() {
+    var cv = document.getElementById('circuitCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+
+    var mat = selected ? materials.find(function(m) { return m.name === selected; }) : null;
+    var conducts = mat ? mat.conducts : false;
+    var glowIntensity = conducts ? (0.7 + Math.sin(Date.now() * 0.006) * 0.3) : 0;
+
+    /* === Battery (left) === */
+    var bx = 28, by = H / 2;
+    /* Battery body */
+    ctx.fillStyle = '#374151'; ctx.fillRect(bx - 14, by - 28, 28, 56); ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 1.5; ctx.strokeRect(bx - 14, by - 28, 28, 56);
+    /* Battery label */
+    ctx.fillStyle = '#10b981'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('+', bx, by - 32);
+    ctx.fillStyle = '#ef4444'; ctx.fillText('−', bx, by + 40);
+    /* Battery fill */
+    ctx.fillStyle = '#22c55e'; ctx.fillRect(bx - 11, by + 5, 22, 18);
+    ctx.fillStyle = '#16a34a'; ctx.fillRect(bx - 11, by + 5, 22, 6);
+    ctx.fillStyle = '#ffffff'; ctx.font = '8px Nunito,sans-serif';
+    ctx.fillText('1.5V', bx, by + 18);
+
+    /* === Wires === */
+    ctx.lineWidth = 3; ctx.lineCap = 'round';
+    /* Top wire: battery+ → gap left */
+    ctx.strokeStyle = conducts ? '#a78bfa' : '#4b5563';
+    if (conducts) { ctx.shadowColor = '#a78bfa'; ctx.shadowBlur = glowIntensity * 8; }
+    ctx.beginPath(); ctx.moveTo(bx, by - 28); ctx.lineTo(bx, 28); ctx.lineTo(W * 0.42, 28); ctx.stroke();
+    ctx.shadowBlur = 0;
+    /* Bottom wire: battery− → bulb bottom */
+    ctx.strokeStyle = conducts ? '#a78bfa' : '#4b5563';
+    if (conducts) { ctx.shadowColor = '#a78bfa'; ctx.shadowBlur = glowIntensity * 8; }
+    ctx.beginPath(); ctx.moveTo(bx, by + 28); ctx.lineTo(bx, H - 28); ctx.lineTo(W - 40, H - 28); ctx.lineTo(W - 40, H * 0.72); ctx.stroke();
+    ctx.shadowBlur = 0;
+    /* Right wire: gap right → bulb */
+    ctx.strokeStyle = conducts ? '#a78bfa' : '#4b5563';
+    if (conducts) { ctx.shadowColor = '#a78bfa'; ctx.shadowBlur = glowIntensity * 8; }
+    ctx.beginPath(); ctx.moveTo(W * 0.58, 28); ctx.lineTo(W - 40, 28); ctx.lineTo(W - 40, H * 0.28); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    /* === Gap / Material === */
+    var gapL = W * 0.42, gapR = W * 0.58, gapY = 28;
+    if (!mat) {
+      /* Open gap - broken line */
+      ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(gapL, gapY); ctx.lineTo(gapR, gapY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ef4444'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('OPEN', W / 2, gapY - 8);
+    } else {
+      /* Draw material visually */
+      var midX = (gapL + gapR) / 2;
+      ctx.save();
+      if (mat.name === 'Wire') {
+        ctx.strokeStyle = mat.color; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(gapL, gapY); ctx.lineTo(gapR, gapY); ctx.stroke();
+      } else if (mat.name === 'Coin') {
+        ctx.fillStyle = mat.color; ctx.beginPath(); ctx.arc(midX, gapY, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = '#92400e'; ctx.font = 'bold 7px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('₹', midX, gapY + 3);
+      } else if (mat.name === 'Nail') {
+        ctx.fillStyle = mat.color;
+        ctx.fillRect(gapL, gapY - 3, gapR - gapL, 6);
+        ctx.fillStyle = '#475569';
+        ctx.beginPath(); ctx.moveTo(gapL, gapY - 6); ctx.lineTo(gapL + 8, gapY - 3); ctx.lineTo(gapL + 8, gapY + 3); ctx.lineTo(gapL, gapY + 6); ctx.closePath(); ctx.fill();
+      } else if (mat.name === 'Foil') {
+        ctx.fillStyle = mat.color; ctx.fillRect(gapL, gapY - 2, gapR - gapL, 4);
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 0.5; ctx.stroke();
+      } else if (mat.name === 'Pencil') {
+        ctx.fillStyle = '#fef3c7'; ctx.fillRect(gapL, gapY - 4, gapR - gapL - 4, 8);
+        ctx.fillStyle = mat.color; ctx.fillRect(gapR - 16, gapY - 4, 12, 8);
+        ctx.fillStyle = '#1c1917'; ctx.fillRect(gapR - 5, gapY - 2, 3, 4);
+      } else if (mat.name === 'Rubber') {
+        ctx.fillStyle = mat.color; ctx.beginPath(); ctx.roundRect(gapL, gapY - 7, gapR - gapL, 14, 4); ctx.fill();
+        ctx.fillStyle = '#9ca3af'; ctx.font = '8px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('ERASER', midX, gapY + 3);
+      } else {
+        ctx.fillStyle = mat.color; ctx.fillRect(gapL, gapY - 5, gapR - gapL, 10);
+        ctx.fillStyle = '#1e40af'; ctx.font = '8px Nunito,sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('PLASTIC', midX, gapY + 3);
+      }
+      ctx.restore();
+    }
+
+    /* === Bulb (right) === */
+    var bulbX = W - 40, bulbY = H * 0.5;
+    /* Glow behind bulb */
+    if (conducts && glowIntensity > 0) {
+      var grd = ctx.createRadialGradient(bulbX, bulbY, 0, bulbX, bulbY, 50);
+      grd.addColorStop(0, 'rgba(253,224,71,' + glowIntensity * 0.6 + ')');
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd; ctx.fillRect(bulbX - 50, bulbY - 50, 100, 100);
+    }
+    /* Bulb glass */
+    ctx.beginPath(); ctx.arc(bulbX, bulbY - 10, 22, 0, Math.PI * 2);
+    ctx.fillStyle = conducts ? 'rgba(253,224,71,' + (0.6 + glowIntensity * 0.4) + ')' : 'rgba(255,255,255,0.08)';
+    ctx.shadowColor = conducts ? '#fde047' : 'transparent';
+    ctx.shadowBlur = conducts ? glowIntensity * 20 : 0;
+    ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = conducts ? '#ca8a04' : '#4b5563'; ctx.lineWidth = 2; ctx.stroke();
+    /* Filament */
+    ctx.strokeStyle = conducts ? '#fbbf24' : '#374151'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(bulbX - 6, bulbY - 2); ctx.lineTo(bulbX - 4, bulbY - 10);
+    ctx.lineTo(bulbX, bulbY - 14); ctx.lineTo(bulbX + 4, bulbY - 10);
+    ctx.lineTo(bulbX + 6, bulbY - 2);
+    ctx.stroke();
+    /* Base */
+    ctx.fillStyle = '#6b7280'; ctx.fillRect(bulbX - 10, bulbY + 10, 20, 24);
+    ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 1;
+    for (var ring = 0; ring < 3; ring++) {
+      ctx.beginPath(); ctx.moveTo(bulbX - 10, bulbY + 15 + ring * 6); ctx.lineTo(bulbX + 10, bulbY + 15 + ring * 6); ctx.stroke();
+    }
+    /* Bulb label */
+    ctx.fillStyle = conducts ? '#fde047' : '#6b7280'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(conducts ? '✨ ON!' : 'OFF', bulbX, bulbY + 46);
+
+    /* Electron flow dots */
+    if (conducts) {
+      var t = Date.now() * 0.002;
+      for (var e = 0; e < 5; e++) {
+        var ep = (t + e * 0.2) % 1;
+        /* Along top wire */
+        var ex, ey;
+        if (ep < 0.35) { ex = bx + ep / 0.35 * (gapL - bx); ey = 28; }
+        else if (ep < 0.65) { ex = gapR + (ep - 0.35) / 0.3 * (W - 40 - gapR); ey = 28; }
+        else { ex = W - 40; ey = 28 + (ep - 0.65) / 0.35 * (bulbY - 28); }
+        ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(196,181,253,0.9)'; ctx.shadowColor = '#a78bfa'; ctx.shadowBlur = 4;
+        ctx.fill(); ctx.shadowBlur = 0;
+      }
+    }
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Simple Electric Circuit</div>' +
+      '<canvas id="circuitCanvas" width="300" height="220" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">' +
+      materials.map(function(mat) {
+        var isSelected = selected === mat.name;
+        var borderColor = mat.conducts ? 'var(--evs)' : 'var(--sci)';
+        return '<button onclick="circSel(\'' + mat.name + '\')" style="padding:5px 10px;border-radius:9px;font-size:12px;font-weight:700;border:2px solid ' +
+          (isSelected ? borderColor : 'var(--border)') + ';background:' +
+          (isSelected ? (mat.conducts ? 'var(--evs-dim)' : 'var(--sci-dim)') : 'var(--surface2)') +
+          ';color:' + (isSelected ? (mat.conducts ? 'var(--evs)' : 'var(--sci)') : 'var(--muted)') + ';cursor:pointer;font-family:Nunito,sans-serif">' +
+          mat.name + '</button>';
+      }).join('') +
+      '</div>' +
+      '<div id="circFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7">' +
+      'Tap a material to place it in the circuit gap. Does the bulb light up?' +
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+
+  window.circSel = function(name) {
+    selected = selected === name ? null : name;
+    var mat = materials.find(function(m) { return m.name === name; });
+    if (mat) {
+      document.getElementById('circFact').innerHTML =
+        '<b style="color:' + (mat.conducts ? 'var(--evs)' : 'var(--sci)') + '">' + mat.name + '</b> — ' + mat.desc;
+    }
+    cancelAnimationFrame(raf); render();
+  };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+SIM_REGISTRY['colour-mixing'] = function(c) {
+  var selected = [];
+  var primaries = [
+    {name:'Red',    hex:'#ef4444', r:239,g:68,b:68},
+    {name:'Blue',   hex:'#3b82f6', r:59,g:130,b:246},
+    {name:'Yellow', hex:'#eab308', r:234,g:179,b:8},
+  ];
+  var facts = {
+    'Red+Blue':         {result:'Purple', hex:'#9333ea', fact:'Red + Blue = Purple. Mixing two cool-ish primaries!'},
+    'Blue+Red':         {result:'Purple', hex:'#9333ea', fact:'Red + Blue = Purple!'},
+    'Red+Yellow':       {result:'Orange', hex:'#f97316', fact:'Red + Yellow = Orange. The colour of fire and sunsets!'},
+    'Yellow+Red':       {result:'Orange', hex:'#f97316', fact:'Red + Yellow = Orange!'},
+    'Blue+Yellow':      {result:'Green',  hex:'#22c55e', fact:'Blue + Yellow = Green. Colour of all plant life!'},
+    'Yellow+Blue':      {result:'Green',  hex:'#22c55e', fact:'Blue + Yellow = Green!'},
+    'Blue+Red+Yellow':  {result:'Brown',  hex:'#7c2d12', fact:'All three primaries mixed = brown. Called a tertiary colour!'},
+    'Red+Blue+Yellow':  {result:'Brown',  hex:'#7c2d12', fact:'All three primaries mixed = brown!'},
+    'Red+Yellow+Blue':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
+    'Yellow+Red+Blue':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
+    'Blue+Yellow+Red':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
+    'Yellow+Blue+Red':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
+  };
+
+  function getMix() {
+    if (!selected.length) return null;
+    return facts[selected.slice().sort().join('+')] || null;
+  }
+
+  function render() {
+    var mix = getMix();
+    var avg = {r:200,g:200,b:200};
+    if (selected.length) {
+      var tr=0,tg=0,tb=0;
+      selected.forEach(function(n){var p=primaries.find(function(p){return p.name===n;}); tr+=p.r;tg+=p.g;tb+=p.b;});
+      avg={r:Math.round(tr/selected.length),g:Math.round(tg/selected.length),b:Math.round(tb/selected.length)};
+    }
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">Colour Mixing Lab</div>'+
+      '<div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin-bottom:16px">'+
+      primaries.map(function(p){
+        var isSel=selected.includes(p.name);
+        return '<div onclick="cmToggle(\''+p.name+'\')" style="cursor:pointer;text-align:center">'+
+          '<div style="width:60px;height:60px;border-radius:50%;background:'+p.hex+
+          ';border:3px solid '+(isSel?'white':'transparent')+
+          ';transform:scale('+(isSel?'1.15':'1')+');transition:all .25s;'+
+          'box-shadow:'+(isSel?'0 0 20px '+p.hex+'99':'none')+'"></div>'+
+          '<div style="font-size:12px;font-weight:800;color:'+(isSel?p.hex:'var(--muted)')+';margin-top:6px">'+p.name+'</div>'+
+          (isSel?'<div style="color:'+p.hex+';font-size:14px;margin-top:-2px">✓</div>':'<div style="height:18px"></div>')+
+          '</div>';
+      }).join('<div style="font-size:20px;color:var(--muted);padding-bottom:30px">+</div>')+
+      '</div>'+
+      '<div style="display:flex;justify-content:center;margin-bottom:10px">'+
+      '<div style="width:100px;height:100px;border-radius:50%;background:'+(selected.length?'rgb('+avg.r+','+avg.g+','+avg.b+')':'var(--surface2)')+
+      ';border:3px solid '+(mix?mix.hex:'var(--border)')+
+      ';display:flex;align-items:center;justify-content:center;transition:all .5s;'+
+      'font-size:13px;font-weight:900;color:white;text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center;padding:8px">'+
+      (mix?mix.result:selected.length?'Mixing!':'?')+
+      '</div></div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7;text-align:center;min-height:40px">'+
+      (mix?'🎨 '+mix.fact:selected.length===0?'Tap the paint pots to mix colours!':selected.length===1?'Add another colour to mix!':'Try Red+Blue, Red+Yellow, or Blue+Yellow')+
+      '</div>'+
+      '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" onclick="cmClear()">↺ Clear</button></div>';
+  }
+
+  window.cmToggle=function(n){
+    var i=selected.indexOf(n);
+    if(i>=0)selected.splice(i,1); else if(selected.length<3)selected.push(n);
+    render();
+  };
+  window.cmClear=function(){selected=[];render();};
+  render();
+};
+
+/* States of Matter (placeholder - full version registered later) */
+/* Magnet Sim - canvas version */
 SIM_REGISTRY['magnet-sim'] = function(c) {
   var items = [
-    {n:'📎 Clip', m:true},{n:'🪙 Coin', m:true},{n:'🔑 Key', m:true},
-    {n:'📏 Ruler', m:false},{n:'✏️ Pencil', m:false},{n:'🧴 Bottle', m:false},
+    {n:'Paper Clip', magnetic:true,  color:'#94a3b8', shape:'clip',   fact:'Steel clip — iron content makes it magnetic!'},
+    {n:'Coin',       magnetic:false, color:'#fcd34d', shape:'circle', fact:'Modern Indian coins are stainless steel — not magnetic!'},
+    {n:'Iron Nail',  magnetic:true,  color:'#6b7280', shape:'nail',   fact:'Iron is one of the most magnetic metals!'},
+    {n:'Pencil',     magnetic:false, color:'#f97316', shape:'rect',   fact:'Wood and graphite — neither is magnetic.'},
+    {n:'Scissors',   magnetic:true,  color:'#e2e8f0', shape:'rect',   fact:'Steel blade — iron makes it magnetic!'},
+    {n:'Rubber',     magnetic:false, color:'#9ca3af', shape:'circle', fact:'Rubber is a non-magnetic insulator.'},
   ];
-  c.innerHTML = label('Test each item with the magnet') +
-    row(items.map(function(it){
-      return '<button class="cbtn" onclick="magTest(\'' + it.n + '\',' + it.m + ')">' + it.n + '</button>';
-    }).join('')) +
-    '<div id="magRes" style="font-size:13px;min-height:40px;margin-top:8px;text-align:center;color:var(--muted)">Pick an object</div>';
-  window.magTest = function(n, m) {
-    document.getElementById('magRes').innerHTML =
-      '<span style="font-size:24px">' + (m ? '🧲✅' : '🧲❌') + '</span><br>' +
-      n + (m ? ' is <b>magnetic</b> — contains iron or steel!' : ' is <b>not magnetic</b>.');
+  var sel = null;
+  var raf;
+  var attraction = 0;
+
+  function draw() {
+    var cv = document.getElementById('magnetCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Magnet */
+    var magX = 60, magY = H/2;
+    /* N pole */
+    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.roundRect(magX-8, magY-30, 30, 28, 4); ctx.fill();
+    ctx.fillStyle='white'; ctx.font='bold 14px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('N', magX+7, magY-12);
+    /* S pole */
+    ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.roundRect(magX-8, magY+2, 30, 28, 4); ctx.fill();
+    ctx.fillStyle='white'; ctx.fillText('S', magX+7, magY+20);
+
+    /* Field lines */
+    if (sel && sel.magnetic && attraction > 0.1) {
+      ctx.setLineDash([4,5]);
+      for (var fl = -2; fl <= 2; fl++) {
+        ctx.strokeStyle = 'rgba(99,102,241,' + Math.min(0.5, attraction * 0.5) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(magX+22, magY + fl*12);
+        ctx.bezierCurveTo(magX+80, magY+fl*20, 180, magY+fl*15, 220-attraction*30, magY+fl*8);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    /* Object */
+    var objX = 220, objY = H/2;
+    if (sel) {
+      var target = sel.magnetic ? 180 : 220;
+      objX += (target - objX) * 0.05;
+      attraction = sel.magnetic ? Math.min(1, attraction + 0.03) : Math.max(0, attraction - 0.05);
+
+      ctx.fillStyle = sel.color;
+      ctx.shadowColor = sel.magnetic && attraction > 0.3 ? '#818cf8' : 'transparent';
+      ctx.shadowBlur = attraction * 15;
+      if (sel.shape === 'circle') {
+        ctx.beginPath(); ctx.arc(objX, objY, 14, 0, Math.PI*2); ctx.fill();
+      } else if (sel.shape === 'nail') {
+        ctx.fillRect(objX-3, objY-20, 6, 36);
+        ctx.beginPath(); ctx.arc(objX, objY-20, 7, 0, Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillRect(objX-14, objY-8, 28, 16);
+      }
+      ctx.shadowBlur = 0;
+      ctx.fillStyle='rgba(255,255,255,.7)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(sel.n, objX, objY+28);
+
+      /* Result badge */
+      if (attraction > 0.5) {
+        ctx.fillStyle='#22c55e'; ctx.font='bold 11px Nunito,sans-serif';
+        ctx.fillText('Attracted! ✅', objX, objY-30);
+      } else if (sel && !sel.magnetic && attraction < 0.1) {
+        ctx.fillStyle='#ef4444'; ctx.font='bold 11px Nunito,sans-serif';
+        ctx.fillText('No effect ❌', objX, objY-30);
+      }
+    } else {
+      ctx.fillStyle='rgba(255,255,255,.15)'; ctx.font='11px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('← Select an object', 220, objY);
+    }
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Magnetic Materials</div>'+
+      '<canvas id="magnetCanvas" width="290" height="160" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">'+
+      items.map(function(item){
+        var isSel = sel && sel.n===item.n;
+        return '<button onclick="magSel(\''+item.n+'\')" style="padding:5px 10px;border-radius:9px;font-size:11px;font-weight:700;border:2px solid '+(isSel?(item.magnetic?'#22c55e':'#ef4444'):'var(--border)')+';background:'+(isSel?(item.magnetic?'rgba(34,197,94,.15)':'rgba(239,68,68,.15)'):'var(--surface2)')+';color:'+(isSel?(item.magnetic?'#22c55e':'#ef4444'):'var(--muted)')+';cursor:pointer;font-family:Nunito,sans-serif">'+item.n+'</button>';
+      }).join('')+
+      '</div>'+
+      '<div id="magFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7">'+
+      (sel?'<b style="color:'+(sel.magnetic?'#22c55e':'#ef4444')+'">'+sel.n+'</b> — '+sel.fact:'Select an object to test it with the magnet!')+
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+
+  window.magSel=function(n){
+    sel=items.find(function(i){return i.n===n;})||null;
+    attraction=0;
+    cancelAnimationFrame(raf); render();
   };
+  window.simCleanup=function(){cancelAnimationFrame(raf);};
+  render();
 };
 
-/* Germination */
+
+/* ── GERMINATION (canvas, animated day progression) ── */
 SIM_REGISTRY['germination'] = function(c) {
-  var days = 0, interval;
-  var conditions = {Normal:{sprout:4,color:'var(--evs)'}, 'No Water':{sprout:99,color:'var(--muted)'},
-                    Dark:{sprout:6,color:'var(--math)'}, Cold:{sprout:12,color:'var(--life)'}};
-  c.innerHTML = label('Click ▶ to watch seeds over 14 days') +
-    '<div id="germGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;margin:8px 0"></div>' +
-    '<div style="display:flex;gap:8px;align-items:center">' +
-    '<button class="cbtn evs" onclick="germPlay()">▶ Start</button>' +
-    '<span id="germDay" style="font-size:12px;color:var(--muted)">Day 0</span></div>';
-  function render(){
-    var html = '';
-    Object.keys(conditions).forEach(function(k){
-      var c2 = conditions[k];
-      var sprouted = days >= c2.sprout;
-      var h = sprouted ? 30 + Math.min(days - c2.sprout, 8)*4 : 0;
-      html += '<div style="background:var(--surface2);border-radius:8px;padding:8px;text-align:center">' +
-              '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">' + k + '</div>' +
-              '<div style="height:50px;display:flex;align-items:flex-end;justify-content:center">' +
-              (sprouted ? '<div style="width:8px;height:' + h + 'px;background:' + c2.color + ';border-radius:4px 4px 0 0;transition:height .3s"></div>' : '<div style="font-size:20px">🌰</div>') +
-              '</div></div>';
+  var day = 0, interval, maxDays = 14, speed = 400;
+  var conditions = [
+    { name:'🌿 Normal',   sproutDay:4,  color:'#22c55e', height:function(d,s){return d>=s?Math.min(70,(d-s)*10+15):0;}, soil:'#7c2d12', label:'Sprouts day 4!' },
+    { name:'💧 No Water', sproutDay:99, color:'#94a3b8', height:function(d,s){return 0;}, soil:'#a16207', label:'Needs water!' },
+    { name:'🌑 Dark',     sproutDay:6,  color:'#d4d4d4', height:function(d,s){return d>=s?Math.min(50,(d-s)*7+10):0;}, soil:'#1c1917', label:'Grows pale' },
+    { name:'❄️ Cold',     sproutDay:11, color:'#7dd3fc', height:function(d,s){return d>=s?Math.min(40,(d-s)*5+8):0;}, soil:'#0c4a6e', label:'Slow start' },
+  ];
+
+  function draw() {
+    var cv = document.getElementById('germCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    /* Sky */
+    var sky = ctx.createLinearGradient(0,0,0,H*0.7);
+    sky.addColorStop(0, day > 0 ? '#bfdbfe' : '#0f172a');
+    sky.addColorStop(1, day > 0 ? '#dbeafe' : '#1e293b');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,W,H*0.7);
+
+    /* Sun */
+    if (day > 0) {
+      ctx.beginPath(); ctx.arc(W-30, 25, 18, 0, Math.PI*2);
+      ctx.fillStyle = '#fde047'; ctx.shadowColor = '#fcd34d'; ctx.shadowBlur = 15; ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    var colW = W / conditions.length;
+    conditions.forEach(function(cond, i) {
+      var x = i * colW;
+      var h = cond.height(day, cond.sproutDay);
+      var groundY = H * 0.7;
+      var colCX = x + colW/2;
+
+      /* Soil */
+      ctx.fillStyle = cond.soil;
+      ctx.fillRect(x+2, groundY, colW-4, H*0.3);
+
+      /* Seed/sprout */
+      if (day === 0 || h === 0) {
+        /* Seed */
+        ctx.fillStyle = '#92400e'; ctx.beginPath();
+        ctx.ellipse(colCX, groundY+8, 6, 4, 0, 0, Math.PI*2); ctx.fill();
+      } else {
+        /* Stem */
+        ctx.strokeStyle = cond.color; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(colCX, groundY);
+        /* Slight sway */
+        var sway = Math.sin(Date.now()*0.002 + i) * 3;
+        ctx.quadraticCurveTo(colCX+sway, groundY-h*0.5, colCX+sway*2, groundY-h);
+        ctx.stroke();
+
+        /* Leaves */
+        if (h > 20) {
+          ctx.fillStyle = cond.color;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.ellipse(colCX+sway*2-8, groundY-h*0.7, 9, 5, -0.5, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(colCX+sway*2+8, groundY-h*0.65, 9, 5, 0.5, 0, Math.PI*2); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        /* Flower */
+        if (h > 50) {
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath(); ctx.arc(colCX+sway*2, groundY-h-5, 5, 0, Math.PI*2); ctx.fill();
+        }
+      }
+
+      /* Column label */
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = 'bold 8px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(cond.name, colCX, H-10);
+
+      /* Divider */
+      if (i > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        ctx.setLineDash([]);
+      }
     });
-    document.getElementById('germGrid').innerHTML = html;
-    document.getElementById('germDay').textContent = 'Day ' + days;
+
+    /* Day counter */
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.font = 'bold 11px Nunito,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Day ' + day + ' / ' + maxDays, 8, 18);
   }
-  render();
-  window.germPlay = function(){
-    clearInterval(interval); days = 0;
-    interval = setInterval(function(){
-      days++; render(); if(days >= 14){ clearInterval(interval); }
-    }, 400);
-  };
-  window.simCleanup = function(){ clearInterval(interval); };
-};
 
-/* Pendulum (gravity) */
-SIM_REGISTRY['pendulum'] = function(c) {
-  var len = 100, angle = 30, running = false, theta = angle*Math.PI/180, omega = 0, raf;
-  c.innerHTML = label('Adjust length and watch period change') +
-    '<canvas id="pendCanvas" width="220" height="160" style="background:var(--surface2);border-radius:10px"></canvas>' +
-    row('<span style="font-size:12px;color:var(--muted)">Length:</span>' +
-        '<input type="range" class="slide" min="40" max="140" value="100" oninput="pendLen(this.value)" style="width:100px">') +
-    row('<button class="cbtn sci" onclick="pendToggle()">▶ / ⏸</button>') +
-    '<div id="pendInfo" style="font-size:12px;color:var(--muted);margin-top:4px">Length: 100 px</div>';
-  var cv, ctx;
-  function draw(){
-    cv = cv || document.getElementById('pendCanvas');
-    ctx = ctx || cv.getContext('2d');
-    ctx.clearRect(0,0,220,160);
-    var px = 110 + Math.sin(theta)*len, py = 20 + Math.cos(theta)*len;
-    ctx.strokeStyle = 'var(--muted)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(110,20); ctx.lineTo(px,py); ctx.stroke();
-    ctx.beginPath(); ctx.arc(px,py,12,0,Math.PI*2);
-    ctx.fillStyle = 'var(--sci)'; ctx.fill();
-  }
-  function step(){
-    if(!running){draw();return;}
-    var g = 0.003;
-    omega += -g / len * Math.sin(theta);
-    theta += omega; omega *= 0.9995;
-    draw(); raf = requestAnimationFrame(step);
-  }
-  draw();
-  window.pendToggle = function(){ running = !running; if(running){theta=angle*Math.PI/180;omega=0;step();} else cancelAnimationFrame(raf); };
-  window.pendLen    = function(v){ len = parseInt(v); document.getElementById('pendInfo').textContent = 'Length: ' + v + ' px'; theta=angle*Math.PI/180;omega=0;draw(); };
-  window.simCleanup = function(){ running=false; cancelAnimationFrame(raf); };
-};
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Seed Germination Lab</div>' +
+      '<canvas id="germCanvas" width="300" height="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      /* Day progress bar */
+      '<div style="height:6px;background:var(--surface2);border-radius:3px;margin:8px 0"><div id="germBar" style="height:6px;background:var(--evs);border-radius:3px;width:0%;transition:width .3s"></div></div>' +
+      '<div class="ctrl-row" style="margin-top:4px">' +
+      '<button class="cbtn" onclick="germPlay()" id="germBtn" style="background:var(--evs);color:white;border-color:var(--evs)">▶ Start</button>' +
+      '<button class="cbtn" onclick="germReset()">↺ Reset</button>' +
+      '<span style="font-size:11px;color:var(--muted)">Speed: </span>' +
+      '<input type="range" class="slide" min="100" max="800" value="400" oninput="germSpeed(this.value)" style="width:80px">' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-top:8px">' +
+      conditions.map(function(cond) {
+        return '<div style="background:var(--surface2);border-radius:8px;padding:5px 8px;font-size:10px;color:var(--muted);border:1px solid var(--border)">' +
+          cond.name + ': <b style="color:' + cond.color + '">' + cond.label + '</b></div>';
+      }).join('') + '</div>';
 
-/* Food web */
-SIM_REGISTRY['food-web'] = function(c) {
-  var chain = ['🌿 Grass','🦗 Grasshopper','🐸 Frog','🐍 Snake','🦅 Eagle'];
-  var removed = {};
-  c.innerHTML = label('Click any organism to remove it — see the effect') +
-    '<div id="fwChain" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin:8px 0"></div>' +
-    '<div id="fwMsg" style="font-size:12px;color:var(--muted);text-align:center;min-height:36px;line-height:1.6"></div>' +
-    row('<button class="cbtn evs" onclick="fwReset()">Reset</button>');
-  var msgs = {
-    '🌿 Grass':'No grass → nothing to eat → grasshoppers die → frogs → snakes → eagles. Total collapse!',
-    '🦗 Grasshopper':'Frogs starve → snakes starve → eagle population crashes.',
-    '🐸 Frog':'Snake population drops. Grasshoppers boom and over-graze the grass.',
-    '🐍 Snake':'Eagle struggles for food. Frogs multiply rapidly.',
-    '🦅 Eagle':'Snakes multiply unchecked → frogs decline → grasshoppers explode.',
-  };
-  function render(){
-    var html = '';
-    chain.forEach(function(org){
-      html += '<div onclick="fwRemove(\'' + org + '\')" style="cursor:pointer;padding:6px 10px;border-radius:8px;font-size:13px;' +
-              (removed[org] ? 'opacity:.3;text-decoration:line-through;background:var(--surface2)' : 'background:var(--evs-dim);border:1px solid var(--evs)') +
-              '">' + org + '</div>';
-      if(chain.indexOf(org) < chain.length-1) html += '<div style="color:var(--muted)">→</div>';
-    });
-    document.getElementById('fwChain').innerHTML = html;
-  }
-  render();
-  window.fwRemove = function(org){ removed[org]=true; render(); document.getElementById('fwMsg').textContent = msgs[org]||''; };
-  window.fwReset  = function(){ removed={}; render(); document.getElementById('fwMsg').textContent=''; };
-};
-
-/* Circuit */
-SIM_REGISTRY['circuit-sim'] = function(c) {
-  var closed = true, material = 'wire';
-  var conductors = {wire:true, coin:true, nail:true, foil:true, pencil:false, rubber:false, plastic:false};
-  c.innerHTML = label('Complete the circuit → bulb lights') +
-    '<div id="circDiag" style="text-align:center;font-size:32px;padding:16px;background:var(--surface2);border-radius:10px;margin:6px 0">🔋 — <span id="gapItem">✂️ gap</span> — <span id="bulb">💡</span></div>' +
-    row(Object.keys(conductors).map(function(m){
-      return '<button class="cbtn" onclick="circTest(\'' + m + '\')">' + m + '</button>';
-    }).join('')) +
-    '<div id="circMsg" style="font-size:12px;color:var(--muted);margin-top:6px;text-align:center">Place an object in the gap</div>';
-  window.circTest = function(m){
-    var conducts = conductors[m];
-    document.getElementById('gapItem').textContent = m;
-    document.getElementById('bulb').textContent = conducts ? '💡✨' : '💡';
-    document.getElementById('circMsg').textContent = conducts
-      ? m + ' conducts! Bulb lights up — electrons can flow through.'
-      : m + ' is an insulator. Bulb stays off — electrons blocked.';
-  };
-};
-
-/* Photosynthesis bubbles */
-SIM_REGISTRY['photo-bubbles'] = function(c) {
-  var light = 50, raf, bubbles = [];
-  c.innerHTML = label('Adjust light → more light = more oxygen bubbles') +
-    '<canvas id="pbCanvas" width="220" height="130" style="background:rgba(77,150,255,.08);border-radius:10px;border:1px solid var(--border)"></canvas>' +
-    row('<span style="font-size:12px;color:var(--muted)">☀️ Light:</span>' +
-        '<input type="range" class="slide" min="0" max="100" value="50" oninput="pbLight(this.value)" style="width:120px">') +
-    '<div id="pbRate" style="font-size:12px;color:var(--evs);margin-top:4px">Bubbles/min: ~30</div>';
-  var cv, ctx;
-  function frame(){
-    cv = cv || document.getElementById('pbCanvas');
-    if(!cv){cancelAnimationFrame(raf);return;}
-    ctx = ctx || cv.getContext('2d');
-    ctx.clearRect(0,0,220,130);
-    ctx.fillStyle='var(--evs)'; ctx.font='24px serif';
-    ctx.fillText('🌿',85,110);
-    if(Math.random() < light/800) bubbles.push({x:100+Math.random()*20,y:100,r:2+Math.random()*3});
-    bubbles = bubbles.filter(function(b){return b.y>0;});
-    bubbles.forEach(function(b){
-      b.y -= 1.2; b.x += (Math.random()-.5)*.5;
-      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
-      ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.stroke();
-    });
-    raf = requestAnimationFrame(frame);
-  }
-  frame();
-  window.pbLight = function(v){
-    light=parseInt(v);
-    document.getElementById('pbRate').textContent = 'Bubbles/min: ~' + Math.round(v*.6);
-  };
-  window.simCleanup = function(){ cancelAnimationFrame(raf); };
-};
-
-/* Newton's laws */
-SIM_REGISTRY['newtons-laws'] = function(c) {
-  c.innerHTML = label('Test each law') +
-    row('<button class="cbtn" onclick="nlShow(1)">Law 1: Inertia</button>' +
-        '<button class="cbtn" onclick="nlShow(2)">Law 2: F=ma</button>' +
-        '<button class="cbtn" onclick="nlShow(3)">Law 3: Action-Reaction</button>') +
-    '<div id="nlDisplay" style="background:var(--surface2);border-radius:10px;padding:16px;margin-top:8px;min-height:80px;text-align:center;font-size:13px;line-height:1.7;color:var(--text)">Tap a law to see the demo.</div>';
-  var demos = {
-    1:'🏀 A rolling ball on a frictionless surface never stops.<br>Friction (a force) is what slows it in real life.<br><b>Objects resist changes to their motion.</b>',
-    2:'🚗 Same force on a light car vs. a heavy truck →<br>Car accelerates much more (a = F ÷ m).<br><b>More mass → less acceleration for same force.</b>',
-    3:'🎈 Air rushes out of a balloon backward →<br>Balloon flies forward.<br><b>Every action has an equal and opposite reaction.</b>',
-  };
-  window.nlShow = function(n){ document.getElementById('nlDisplay').innerHTML = demos[n]; };
-};
-
-/* Ohm's Law */
-SIM_REGISTRY['ohms-law'] = function(c) {
-  var R = 100;
-  c.innerHTML = label('Adjust voltage — watch current follow V = IR') +
-    row('<span style="font-size:12px;color:var(--muted)">Voltage (V):</span>' +
-        '<input type="range" class="slide" min="1" max="12" value="3" oninput="ohmUpdate(this.value)" style="width:120px">') +
-    '<div id="ohmDisplay" style="background:var(--surface2);border-radius:10px;padding:12px;margin-top:8px;text-align:center;font-size:14px;line-height:2"></div>' +
-    '<canvas id="ohmGraph" width="200" height="80" style="margin-top:8px;border-radius:8px;background:var(--surface2)"></canvas>';
-  var points = [];
-  window.ohmUpdate = function(v){
-    v = parseFloat(v);
-    var I = (v/R*1000).toFixed(1);
-    document.getElementById('ohmDisplay').innerHTML =
-      'V = <b style="color:var(--math)">' + v + ' V</b>&nbsp;&nbsp;' +
-      'R = <b style="color:var(--muted)">' + R + ' Ω</b>&nbsp;&nbsp;' +
-      'I = <b style="color:var(--sci)">' + I + ' mA</b>';
-    points.push({v,i:parseFloat(I)});
-    if(points.length>12) points.shift();
-    var cv=document.getElementById('ohmGraph'), ctx=cv.getContext('2d');
-    ctx.clearRect(0,0,200,80);
-    if(points.length<2)return;
-    ctx.strokeStyle='var(--acc)'; ctx.lineWidth=2; ctx.beginPath();
-    points.forEach(function(p,i){
-      var x=15+(i/(points.length-1||1))*170, y=70-p.i/70*60;
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    });
-    ctx.stroke();
-  };
-  window.ohmUpdate(3);
-};
-
-/* Velocity-time */
-SIM_REGISTRY['velocity-time'] = function(c) {
-  var raf, t=0, v=0, running=false, accel=2, points=[];
-  c.innerHTML = label('Simulate a car accelerating then braking') +
-    '<canvas id="vtCanvas" width="240" height="100" style="background:var(--surface2);border-radius:10px;margin:6px 0"></canvas>' +
-    row('<button class="cbtn" onclick="vtStart()">▶ Accelerate</button>' +
-        '<button class="cbtn" onclick="vtBrake()">⏸ Brake</button>' +
-        '<button class="cbtn" onclick="vtReset()">↺ Reset</button>') +
-    '<div id="vtInfo" style="font-size:12px;color:var(--muted);margin-top:4px">Press Accelerate to start</div>';
-  function draw(){
-    var cv=document.getElementById('vtCanvas');if(!cv)return;
-    var ctx=cv.getContext('2d');
-    ctx.clearRect(0,0,240,100);
-    ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1;
-    [25,50,75].forEach(function(y){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(240,y);ctx.stroke();});
-    if(points.length<2)return;
-    ctx.strokeStyle='var(--sci)'; ctx.lineWidth=2; ctx.beginPath();
-    points.forEach(function(p,i){
-      var x=p.t/60*230+5, y=90-p.v/30*80;
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    });ctx.stroke();
-  }
-  function frame(){
-    if(!running)return;
-    t++;v=Math.max(0,Math.min(30,v+accel));
-    points.push({t,v});if(points.length>60)points.shift();
+    clearInterval(interval);
     draw();
-    document.getElementById('vtInfo').textContent='t='+t+'s  v='+v.toFixed(1)+'m/s  a='+accel+'m/s²';
-    if(t<60)raf=requestAnimationFrame(frame); else running=false;
   }
-  window.vtStart=function(){running=true;accel=0.8;frame();};
-  window.vtBrake=function(){accel=-1.5;if(!running){running=true;frame();}};
-  window.vtReset=function(){running=false;cancelAnimationFrame(raf);t=0;v=0;points=[];draw();
-    document.getElementById('vtInfo').textContent='Press Accelerate to start';};
+
+  window.germPlay = function() {
+    clearInterval(interval);
+    var btn = document.getElementById('germBtn');
+    btn.textContent = '⏸ Pause';
+    interval = setInterval(function() {
+      day++;
+      var bar = document.getElementById('germBar');
+      if (bar) bar.style.width = (day/maxDays*100) + '%';
+      draw();
+      if (day >= maxDays) { clearInterval(interval); btn.textContent = '✅ Done'; }
+    }, speed);
+  };
+  window.germReset = function() {
+    clearInterval(interval); day = 0;
+    var bar = document.getElementById('germBar');
+    if (bar) bar.style.width = '0%';
+    var btn = document.getElementById('germBtn');
+    if (btn) btn.textContent = '▶ Start';
+    draw();
+  };
+  window.germSpeed = function(v) { speed = parseInt(v); };
+  window.simCleanup = function() { clearInterval(interval); };
+  render();
+};
+
+/* ── PENDULUM (canvas, realistic physics) ── */
+SIM_REGISTRY['pendulum'] = function(c) {
+  var len=140, theta=0.5, omega=0, running=false, raf, trail=[];
+
+  function draw() {
+    var cv = document.getElementById('pendCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W=cv.width, H=cv.height, pivotX=W/2, pivotY=22;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Ceiling mount */
+    ctx.fillStyle='rgba(255,255,255,.15)';
+    ctx.fillRect(0,0,W,14);
+    for(var i=0;i<W/10;i++){
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(i*10,0); ctx.lineTo(i*10-8,14); ctx.stroke();
+    }
+
+    /* Ball position */
+    var bx = pivotX + Math.sin(theta)*len;
+    var by = pivotY + Math.cos(theta)*len;
+
+    /* Trail */
+    trail.push({x:bx, y:by});
+    if (trail.length > 40) trail.shift();
+    trail.forEach(function(p, i) {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(99,102,241,' + (i/trail.length*0.4) + ')'; ctx.fill();
+    });
+
+    /* String */
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pivotX, pivotY); ctx.lineTo(bx, by); ctx.stroke();
+
+    /* Pivot pin */
+    ctx.beginPath(); ctx.arc(pivotX, pivotY, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#94a3b8'; ctx.fill();
+
+    /* Ball */
+    var ballGrad = ctx.createRadialGradient(bx-4, by-4, 0, bx, by, 16);
+    ballGrad.addColorStop(0, '#a78bfa');
+    ballGrad.addColorStop(1, '#6d28d9');
+    ctx.beginPath(); ctx.arc(bx, by, 16, 0, Math.PI*2);
+    ctx.fillStyle = ballGrad; ctx.shadowColor='#7c3aed'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+
+    /* Period label */
+    var period = (2*Math.PI*Math.sqrt(len/1000*9.8)).toFixed(2);
+    ctx.fillStyle='rgba(255,255,255,.5)'; ctx.font='10px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Period ≈ '+period+'s  (length='+len+'cm)', W/2, H-10);
+
+    /* Angle indicator */
+    ctx.strokeStyle='rgba(253,224,71,.3)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(pivotX,pivotY); ctx.lineTo(pivotX,pivotY+len); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#fde047'; ctx.font='10px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText((theta*180/Math.PI).toFixed(0)+'°', pivotX+6, pivotY+30);
+
+    /* Physics step */
+    if (running) {
+      var g=9.8, dt=0.016;
+      omega += -g/(len*0.01) * Math.sin(theta) * dt;
+      theta += omega * dt;
+      omega *= 0.9998;
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Pendulum Physics</div>'+
+      '<canvas id="pendCanvas" width="300" height="220" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
+      '<button class="cbtn" onclick="pendToggle()" id="pendBtn" style="background:var(--acc);color:white;border-color:var(--acc)">▶ Swing</button>'+
+      '<span style="font-size:11px;color:var(--muted)">Length: <b id="pendLenLabel">140cm</b></span>'+
+      '<input type="range" class="slide" min="40" max="180" value="140" oninput="pendLen(this.value)" style="width:120px">'+
+      '</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      '📐 T = 2π√(L/g) — Longer string = slower swing. Galileo discovered this by watching a chandelier!'+
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+
+  window.pendToggle=function(){
+    running=!running;
+    document.getElementById('pendBtn').textContent=running?'⏸ Pause':'▶ Swing';
+  };
+  window.pendLen=function(v){
+    len=parseInt(v); theta=0.5; omega=0; trail=[];
+    document.getElementById('pendLenLabel').textContent=v+'cm';
+  };
   window.simCleanup=function(){running=false;cancelAnimationFrame(raf);};
-  draw();
+  render();
+};
+
+/* ── FOOD WEB (canvas, ecosystem visualization) ── */
+SIM_REGISTRY['food-web'] = function(c) {
+  var organisms = [
+    {id:'sun',   label:'☀️ Sun',        x:150,y:20,  color:'#fde047',r:22, links:['plant'],  removable:false},
+    {id:'plant', label:'🌿 Plants',      x:150,y:90,  color:'#22c55e',r:18, links:['rabbit','grasshopper'], removable:true},
+    {id:'rabbit',label:'🐇 Rabbit',      x:70, y:160, color:'#f97316',r:16, links:['fox'],    removable:true},
+    {id:'grasshopper',label:'🦗 Grasshopper',x:230,y:160,color:'#84cc16',r:14,links:['frog'],removable:true},
+    {id:'fox',   label:'🦊 Fox',         x:70, y:230, color:'#ea580c',r:16, links:['eagle'],  removable:true},
+    {id:'frog',  label:'🐸 Frog',        x:230,y:230, color:'#16a34a',r:14, links:['snake'],  removable:true},
+    {id:'eagle', label:'🦅 Eagle',       x:110,y:300, color:'#6b7280',r:18, links:[],         removable:true},
+    {id:'snake', label:'🐍 Snake',       x:200,y:300, color:'#78716c',r:14, links:['eagle'],  removable:true},
+  ];
+  var removed = new Set();
+  var selected = null;
+
+  var effects = {
+    plant:'No plants → all herbivores starve → predators collapse. Total ecosystem failure!',
+    rabbit:'Foxes lose food → decline. Hawk/eagle affected too.',
+    grasshopper:'Frogs starve → snakes decline. Plants may overgrow.',
+    fox:'Rabbit population explodes → plants get overgrazed.',
+    frog:'Snake population drops. Grasshoppers multiply unchecked.',
+    eagle:'Top predator gone → all prey populations spike.',
+    snake:'Eagle struggles for food. Frogs multiply rapidly.',
+  };
+
+  function render() {
+    var cv = document.getElementById('fwCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    /* Draw links */
+    organisms.forEach(function(org) {
+      if (removed.has(org.id)) return;
+      org.links.forEach(function(targetId) {
+        if (removed.has(targetId)) return;
+        var target = organisms.find(function(o){return o.id===targetId;});
+        if (!target) return;
+        var broken = removed.has(org.id) || removed.has(targetId);
+        ctx.strokeStyle = broken ? 'rgba(239,68,68,.2)' : 'rgba(255,255,255,.15)';
+        ctx.lineWidth = 2; ctx.setLineDash(broken?[4,4]:[]);
+        ctx.beginPath(); ctx.moveTo(org.x, org.y); ctx.lineTo(target.x, target.y); ctx.stroke();
+        ctx.setLineDash([]);
+        /* Arrow */
+        var angle = Math.atan2(target.y-org.y, target.x-org.x);
+        var ax = target.x - Math.cos(angle)*target.r;
+        var ay = target.y - Math.sin(angle)*target.r;
+        ctx.fillStyle = 'rgba(255,255,255,.2)';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax-8*Math.cos(angle-0.4), ay-8*Math.sin(angle-0.4));
+        ctx.lineTo(ax-8*Math.cos(angle+0.4), ay-8*Math.sin(angle+0.4));
+        ctx.closePath(); ctx.fill();
+      });
+    });
+
+    /* Draw organisms */
+    organisms.forEach(function(org) {
+      var isRemoved = removed.has(org.id);
+      var isSel = selected === org.id;
+
+      ctx.globalAlpha = isRemoved ? 0.2 : 1;
+      ctx.beginPath(); ctx.arc(org.x, org.y, org.r + (isSel?3:0), 0, Math.PI*2);
+      ctx.fillStyle = org.color + (isRemoved?'44':'cc');
+      ctx.shadowColor = isSel ? org.color : 'transparent';
+      ctx.shadowBlur = isSel ? 15 : 0;
+      ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle = isSel ? 'white' : org.color+'66';
+      ctx.lineWidth = 2; ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = isRemoved ? 'rgba(255,255,255,.2)' : 'white';
+      ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(isRemoved ? '💀' : org.label.split(' ')[0], org.x, org.y+3);
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font='7px Nunito,sans-serif';
+      ctx.fillText(org.label.split(' ').slice(1).join(' '), org.x, org.y+org.r+10);
+    });
+  }
+
+  function setupCanvas() {
+    var cv = document.getElementById('fwCanvas');
+    if (!cv) return;
+    cv.onclick = function(e) {
+      var rect = cv.getBoundingClientRect();
+      var scaleX = cv.width / rect.width;
+      var mx = (e.clientX-rect.left)*scaleX;
+      var my = (e.clientY-rect.top)*scaleX;
+      organisms.forEach(function(org) {
+        var d = Math.sqrt((mx-org.x)*(mx-org.x)+(my-org.y)*(my-org.y));
+        if (d < org.r+8 && org.removable) {
+          if (removed.has(org.id)) { removed.delete(org.id); selected=null; }
+          else { removed.add(org.id); selected=org.id; }
+          var fact = document.getElementById('fwFact');
+          if (fact) fact.innerHTML = removed.has(org.id)
+            ? '<b style="color:var(--sci)">Removed ' + org.label + ':</b> ' + (effects[org.id]||'')
+            : '<b style="color:var(--evs)">Restored ' + org.label + '</b> — ecosystem recovering!';
+          render();
+        }
+      });
+    };
+  }
+
+  function renderUI() {
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Food Web</div>'+
+      '<canvas id="fwCanvas" width="300" height="340" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>'+
+      '<div id="fwFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7">Tap any organism to remove it — watch how the ecosystem reacts!</div>'+
+      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="fwRestore()">🔄 Restore All</button></div>';
+    setupCanvas(); render();
+  }
+
+  window.fwRestore=function(){removed.clear();selected=null;document.getElementById('fwFact').innerHTML='Ecosystem restored! All species back in balance.';render();};
+  renderUI();
+};
+
+/* ── OHMS LAW (canvas, animated circuit) ── */
+SIM_REGISTRY['ohms-law'] = function(c) {
+  var voltage=6, resistance=100, raf, t=0;
+  var history=[];
+
+  function draw() {
+    var cv = document.getElementById('ohmCanvas');
+    if (!cv) return;
+    var ctx = cv.getContext('2d');
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0a1a'; ctx.fillRect(0,0,W,H);
+
+    var current = voltage/resistance*1000; /* mA */
+    var glowIntensity = Math.min(1, voltage/12);
+
+    /* === Circuit layout === */
+    var left=30, right=W-30, top=30, bottom=H-60;
+
+    /* Wires */
+    ctx.strokeStyle='rgba(99,102,241,' + (0.3+glowIntensity*0.5) + ')';
+    ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.shadowColor='#818cf8'; ctx.shadowBlur=glowIntensity*8;
+    ctx.beginPath();
+    ctx.moveTo(left, top); ctx.lineTo(right, top);
+    ctx.lineTo(right, bottom);
+    ctx.moveTo(left, bottom); ctx.lineTo(right, bottom);
+    ctx.moveTo(left, top); ctx.lineTo(left, bottom);
+    ctx.stroke(); ctx.shadowBlur=0;
+
+    /* Battery */
+    ctx.fillStyle='#374151'; ctx.fillRect(left-15,top+40,30,60);
+    ctx.strokeStyle='#6b7280'; ctx.lineWidth=1.5; ctx.strokeRect(left-15,top+40,30,60);
+    ctx.fillStyle='#22c55e'; ctx.fillRect(left-11,top+44,22,24);
+    ctx.fillStyle='#ef4444'; ctx.fillRect(left-11,top+70,22,24);
+    ctx.fillStyle='white'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('+',left,top+60); ctx.fillText('−',left,top+86);
+    ctx.fillStyle='#fbbf24'; ctx.font='bold 9px Nunito,sans-serif';
+    ctx.fillText(voltage+'V',left,top+34);
+
+    /* Resistor (zigzag) */
+    ctx.strokeStyle='#f97316'; ctx.lineWidth=2.5;
+    ctx.shadowColor='#f97316'; ctx.shadowBlur=glowIntensity*6;
+    var rx=right-15, ry=top, rh=80;
+    ctx.beginPath(); ctx.moveTo(rx,ry);
+    for(var zz=0;zz<8;zz++){
+      ctx.lineTo(rx + (zz%2===0?10:-10), ry+10+zz*8);
+    }
+    ctx.lineTo(rx,ry+rh+10); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.fillStyle='#f97316'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText(resistance+'Ω',right-10,top+50);
+
+    /* Bulb at bottom */
+    var bulbX=W/2, bulbY=bottom;
+    if(glowIntensity>0){
+      var grd=ctx.createRadialGradient(bulbX,bulbY,0,bulbX,bulbY,40);
+      grd.addColorStop(0,'rgba(253,224,71,'+glowIntensity*0.5+')');
+      grd.addColorStop(1,'transparent');
+      ctx.fillStyle=grd; ctx.fillRect(bulbX-40,bulbY-40,80,80);
+    }
+    ctx.beginPath(); ctx.arc(bulbX,bulbY,18,0,Math.PI*2);
+    ctx.fillStyle='rgba(253,224,71,'+glowIntensity+')';
+    ctx.shadowColor='#fde047'; ctx.shadowBlur=glowIntensity*20; ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle='#ca8a04'; ctx.lineWidth=2; ctx.stroke();
+
+    /* Ammeter readout */
+    ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('I = '+current.toFixed(1)+' mA',W/2,H-10);
+
+    /* Electron dots */
+    for(var e=0;e<6;e++){
+      var ep=((t*0.015+e/6)%1);
+      var ex,ey;
+      if(ep<0.25){ex=left+(ep/0.25)*(right-left);ey=top;}
+      else if(ep<0.5){ex=right;ey=top+(ep-0.25)/0.25*(bottom-top);}
+      else if(ep<0.75){ex=right-(ep-0.5)/0.25*(right-left);ey=bottom;}
+      else{ex=left;ey=bottom-(ep-0.75)/0.25*(bottom-top);}
+      ctx.beginPath(); ctx.arc(ex,ey,3,0,Math.PI*2);
+      ctx.fillStyle='rgba(196,181,253,'+glowIntensity+')';
+      ctx.shadowColor='#a78bfa'; ctx.shadowBlur=4; ctx.fill(); ctx.shadowBlur=0;
+    }
+
+    /* V-I graph */
+    history.push({v:voltage,i:current});
+    if(history.length>20)history.shift();
+    if(history.length>1){
+      var gx=8,gy=H-52,gw=W-16,gh=38;
+      ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fillRect(gx,gy,gw,gh);
+      ctx.strokeStyle='var(--acc)'; ctx.lineWidth=1.5; ctx.beginPath();
+      history.forEach(function(pt,i){
+        var px=gx+pt.v/12*gw, py=gy+gh-pt.i/120*gh;
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }); ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.3)'; ctx.font='8px Nunito,sans-serif'; ctx.textAlign='left';
+      ctx.fillText('V-I graph',gx+2,gy-2);
+    }
+
+    t++;
+    raf=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Ohm\'s Law — V = IR</div>'+
+      '<canvas id="ohmCanvas" width="280" height="230" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">'+
+      '<span style="font-size:11px;color:#fbbf24">Voltage V: <b>'+voltage+'V</b></span>'+
+      '<input type="range" class="slide" min="1" max="12" value="'+voltage+'" oninput="ohmV(this.value)" style="width:100px">'+
+      '<span style="font-size:11px;color:#f97316">Resistance R: <b>'+resistance+'Ω</b></span>'+
+      '<input type="range" class="slide" min="50" max="500" step="50" value="'+resistance+'" oninput="ohmR(this.value)" style="width:100px">'+
+      '</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      'I = V/R = '+voltage+'/'+resistance+' = <b style="color:var(--sci)">'+(voltage/resistance*1000).toFixed(1)+'mA</b> · Higher voltage = brighter bulb. Higher resistance = dimmer.'+
+      '</div>';
+    cancelAnimationFrame(raf); history=[]; draw();
+  }
+
+  window.ohmV=function(v){voltage=parseInt(v);};
+  window.ohmR=function(v){resistance=parseInt(v);};
+  window.simCleanup=function(){cancelAnimationFrame(raf);};
+  render();
+};
+
+/* ── VELOCITY-TIME (canvas, animated car + graph) ── */
+SIM_REGISTRY['velocity-time'] = function(c) {
+  var raf, t=0, v=0, accel=0, running=false, carX=30;
+  var history=[], phase='stopped';
+  var maxT=80;
+
+  function draw(){
+    var cv=document.getElementById('vtCanvas');
+    if(!cv) return;
+    var ctx=cv.getContext('2d');
+    var W=cv.width, H=cv.height;
+    ctx.clearRect(0,0,W,H);
+
+    /* Road */
+    var roadY=H*0.42;
+    ctx.fillStyle='#1e293b'; ctx.fillRect(0,roadY,W,H*0.2);
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2; ctx.setLineDash([20,15]);
+    ctx.beginPath(); ctx.moveTo(0,roadY+H*0.1); ctx.lineTo(W,roadY+H*0.1); ctx.stroke();
+    ctx.setLineDash([]);
+    /* Road markings moving with car */
+    ctx.fillStyle='rgba(255,255,255,.15)';
+    for(var m=0;m<6;m++){
+      var mx=((-carX*0.5+m*80)%W+W)%W;
+      ctx.fillRect(mx,roadY+H*0.08,30,4);
+    }
+
+    /* Car body */
+    if(running||t>0){
+      carX = Math.min(W-60, 30+t*v*0.8);
+    }
+    /* Chassis */
+    ctx.fillStyle='#3b82f6'; ctx.beginPath(); ctx.roundRect(carX,roadY-22,50,18,4); ctx.fill();
+    /* Cabin */
+    ctx.fillStyle='#60a5fa'; ctx.beginPath(); ctx.roundRect(carX+8,roadY-36,30,16,3); ctx.fill();
+    /* Windows */
+    ctx.fillStyle='rgba(200,230,255,.6)'; ctx.fillRect(carX+11,roadY-33,10,10); ctx.fillRect(carX+23,roadY-33,10,10);
+    /* Wheels */
+    [carX+10, carX+38].forEach(function(wx){
+      ctx.beginPath(); ctx.arc(wx,roadY-2,8,0,Math.PI*2);
+      ctx.fillStyle='#1e293b'; ctx.fill();
+      ctx.beginPath(); ctx.arc(wx,roadY-2,4,0,Math.PI*2);
+      ctx.fillStyle='#6b7280'; ctx.fill();
+    });
+    /* Speed indicator */
+    ctx.fillStyle='#fde047'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(v.toFixed(1)+' m/s', carX+25, roadY-44);
+    /* Acceleration arrow */
+    if(Math.abs(accel)>0.1){
+      ctx.strokeStyle=accel>0?'#22c55e':'#ef4444'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.moveTo(carX+50,roadY-12); ctx.lineTo(carX+50+accel*8,roadY-12); ctx.stroke();
+      ctx.fillStyle=accel>0?'#22c55e':'#ef4444'; ctx.font='9px Nunito,sans-serif';
+      ctx.fillText(accel>0?'ACC':'BRAKE',carX+50+accel*8,roadY-20);
+    }
+
+    /* V-T Graph */
+    var gx=10, gy=H*0.65, gw=W-20, gh=H*0.28;
+    ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fillRect(gx,gy,gw,gh);
+    ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx,gy+gh); ctx.lineTo(gx+gw,gy+gh); ctx.stroke();
+    /* Axis labels */
+    ctx.fillStyle='rgba(255,255,255,.4)'; ctx.font='8px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('v(m/s)',gx+2,gy+10); ctx.textAlign='right'; ctx.fillText('t(s)',gx+gw,gy+gh-2);
+    /* Plot */
+    if(history.length>1){
+      ctx.strokeStyle='#60a5fa'; ctx.lineWidth=2; ctx.beginPath();
+      history.forEach(function(pt,i){
+        var px=gx+pt.t/maxT*gw, py=gy+gh-pt.v/25*gh;
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }); ctx.stroke();
+    }
+
+    /* Physics */
+    if(running){
+      t+=0.5;
+      v=Math.max(0,Math.min(25,v+accel*0.016));
+      history.push({t:t,v:v});
+      if(history.length>maxT) history.shift();
+      if(t>maxT){running=false; document.getElementById('vtBtn').textContent='↺ Reset'; accel=0;}
+    }
+
+    raf=requestAnimationFrame(draw);
+  }
+
+  function render(){
+    c.innerHTML=
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Velocity-Time Graph</div>'+
+      '<canvas id="vtCanvas" width="300" height="240" style="border-radius:12px;display:block;width:100%"></canvas>'+
+      '<div class="ctrl-row" style="margin-top:8px">'+
+      '<button class="cbtn" id="vtBtn" onclick="vtAccel()" style="background:var(--evs);color:white;border-color:var(--evs)">▶ Accelerate</button>'+
+      '<button class="cbtn" onclick="vtBrake()" style="background:var(--sci);color:white;border-color:var(--sci)">🛑 Brake</button>'+
+      '<button class="cbtn" onclick="vtReset()">↺ Reset</button>'+
+      '</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+
+      '📈 Slope of v-t graph = acceleration · Flat line = constant speed · Area under graph = distance travelled'+
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+
+  window.vtAccel=function(){running=true;accel=2; document.getElementById('vtBtn').textContent='⏸ Coasting';};
+  window.vtBrake=function(){accel=-3;};
+  window.vtReset=function(){
+    cancelAnimationFrame(raf);running=false;t=0;v=0;accel=0;carX=30;history=[];
+    document.getElementById('vtBtn').textContent='▶ Accelerate';
+    draw();
+  };
+  window.simCleanup=function(){cancelAnimationFrame(raf);};
+  render();
 };
 
 /* Periodic table explorer */
@@ -440,43 +1267,6 @@ SIM_REGISTRY['pythagoras'] = function(c) {
 };
 
 /* Punnett square */
-SIM_REGISTRY['punnett'] = function(c) {
-  c.innerHTML = label('Cross two parents — see offspring probabilities') +
-    '<div style="display:flex;gap:12px;margin:8px 0;align-items:center">' +
-    '<div><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Parent 1</div>' +
-    '<select id="p1" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);font-size:13px"><option>Tt</option><option>TT</option><option>tt</option></select></div>' +
-    '<div>×</div>' +
-    '<div><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Parent 2</div>' +
-    '<select id="p2" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);font-size:13px"><option>Tt</option><option>TT</option><option>tt</option></select></div>' +
-    '<button class="cbtn sci" onclick="punnettCalc()">Cross!</button></div>' +
-    '<div id="punnettGrid" style="display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;font-size:13px;max-width:200px"></div>' +
-    '<div id="punnettResult" style="font-size:12px;margin-top:8px;color:var(--muted)"></div>';
-  window.punnettCalc = function(){
-    var p1=document.getElementById('p1').value, p2=document.getElementById('p2').value;
-    var a1=p1[0],a2=p1[1],b1=p2[0],b2=p2[1];
-    var off=[[a1+b1,a1+b2],[a2+b1,a2+b2]];
-    var tall=0,short=0;
-    off.forEach(function(row){row.forEach(function(g){
-      if(g.indexOf('T')>=0)tall++;else short++;
-    });});
-    var html='<div></div><div style="text-align:center;color:var(--muted)">'+b1+'</div><div style="text-align:center;color:var(--muted)">'+b2+'</div>';
-    [0,1].forEach(function(r){
-      html+='<div style="color:var(--muted)">'+[a1,a2][r]+'</div>';
-      [0,1].forEach(function(col){
-        var g=off[r][col];
-        var isTall=g.indexOf('T')>=0;
-        html+='<div style="background:'+(isTall?'var(--evs-dim)':'var(--sci-dim)')+';border-radius:6px;padding:5px;text-align:center;font-weight:800;color:'+(isTall?'var(--evs)':'var(--sci)')+'">'+g+'</div>';
-      });
-    });
-    document.getElementById('punnettGrid').innerHTML=html;
-    document.getElementById('punnettResult').innerHTML=
-      '<b style="color:var(--evs)">Tall: '+tall+'/4</b> &nbsp; <b style="color:var(--sci)">Short: '+short+'/4</b><br>'+
-      (tall===4?'All tall (TT dominant)':short===4?'All short':tall===3?'3 tall : 1 short (classic Mendel ratio!)':'1 tall : 1 short (test cross)');
-  };
-  window.punnettCalc();
-};
-
-/* Probability */
 SIM_REGISTRY['probability-exp'] = function(c) {
   var heads=0,total=0,raf;
   c.innerHTML = label('Flip coins and watch probability converge on 0.5') +
@@ -1458,178 +2248,6 @@ SIM_REGISTRY['punnett'] = function(c) {
    ══════════════════════════════════════════════════ */
 
 /* ── WATER CYCLE (terrarium-cycle) ── */
-SIM_REGISTRY['terrarium-cycle'] = function(c) {
-  var raf, t = 0;
-  var stage = 'day'; // day | rain | night
-  var drops = [], clouds = [], vapour = [];
-
-  c.innerHTML =
-    '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">🌊 The Water Cycle</div>' +
-    '<canvas id="wcCanvas" width="320" height="200" style="border-radius:12px;display:block;margin:0 auto;width:100%"></canvas>' +
-    '<div id="wcStage" style="font-size:12px;color:var(--evs);font-weight:700;text-align:center;margin:8px 0;min-height:20px"></div>' +
-    '<div class="ctrl-row">' +
-    '<button class="cbtn evs" onclick="wcSet(\'day\')">☀️ Heat</button>' +
-    '<button class="cbtn" onclick="wcSet(\'rain\')">🌧️ Rain</button>' +
-    '<button class="cbtn" onclick="wcSet(\'night\')">🌙 Cool</button>' +
-    '</div>';
-
-  var stages = {
-    day:   { label:'☀️ Evaporation — Sun heats water → rises as vapour', sky1:'#1a3a6b', sky2:'#2d5a8e' },
-    rain:  { label:'🌧️ Precipitation — Clouds cool → water falls as rain', sky1:'#1a1a2e', sky2:'#2a2a4e' },
-    night: { label:'🌙 Condensation — Cool air → water vapour forms clouds', sky1:'#0a0a1a', sky2:'#0f0f2a' },
-  };
-
-  var cv, ctx;
-  function frame() {
-    cv = cv || document.getElementById('wcCanvas');
-    if (!cv) { cancelAnimationFrame(raf); return; }
-    ctx = ctx || cv.getContext('2d');
-    var W = cv.width, H = cv.height;
-    t += 0.02;
-
-    /* Sky gradient */
-    var sg = ctx.createLinearGradient(0,0,0,H*.6);
-    sg.addColorStop(0, stages[stage].sky1);
-    sg.addColorStop(1, stages[stage].sky2);
-    ctx.fillStyle = sg; ctx.fillRect(0,0,W,H*.65);
-
-    /* Ground */
-    var gg = ctx.createLinearGradient(0,H*.62,0,H);
-    gg.addColorStop(0,'#2d5a1b'); gg.addColorStop(1,'#1a3a0a');
-    ctx.fillStyle = gg; ctx.fillRect(0,H*.62,W,H*.38);
-
-    /* Water body */
-    ctx.fillStyle='rgba(77,150,255,0.6)';
-    ctx.beginPath(); ctx.ellipse(W*.75,H*.7,W*.2,H*.08,0,0,Math.PI*2); ctx.fill();
-    /* Water ripple */
-    ctx.strokeStyle='rgba(77,150,255,0.3)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.ellipse(W*.75,H*.7,W*.22+Math.sin(t)*3,H*.09,0,0,Math.PI*2); ctx.stroke();
-
-    /* Sun or moon */
-    if (stage==='day') {
-      var glow = ctx.createRadialGradient(W*.2,H*.15,5,W*.2,H*.15,30);
-      glow.addColorStop(0,'rgba(255,220,50,0.4)'); glow.addColorStop(1,'transparent');
-      ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(W*.2,H*.15,30,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#FFD93D'; ctx.beginPath(); ctx.arc(W*.2,H*.15,18,0,Math.PI*2); ctx.fill();
-      /* Sun rays */
-      for(var r=0;r<8;r++) {
-        var ra=r/8*Math.PI*2+t*.5;
-        ctx.strokeStyle='rgba(255,217,61,0.4)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(W*.2+Math.cos(ra)*20,H*.15+Math.sin(ra)*20);
-        ctx.lineTo(W*.2+Math.cos(ra)*28,H*.15+Math.sin(ra)*28); ctx.stroke();
-      }
-    } else {
-      ctx.fillStyle='rgba(220,220,255,0.9)'; ctx.beginPath(); ctx.arc(W*.2,H*.15,12,0,Math.PI*2); ctx.fill();
-    }
-
-    /* Vapour arrows (evaporation) */
-    if (stage==='day') {
-      if (Math.random()<.08) vapour.push({x:W*.65+Math.random()*W*.2,y:H*.68,op:0.8,dy:-0.8});
-      vapour.forEach(function(v) { v.y+=v.dy; v.op-=0.01; v.x+=Math.sin(t+v.y)*0.3; });
-      vapour = vapour.filter(function(v){return v.op>0;});
-      vapour.forEach(function(v) {
-        ctx.fillStyle='rgba(180,220,255,'+v.op+')';
-        ctx.beginPath(); ctx.arc(v.x,v.y,3,0,Math.PI*2); ctx.fill();
-      });
-      /* Arrow up */
-      ctx.fillStyle='rgba(107,203,119,0.7)'; ctx.font='bold 16px sans-serif';
-      ctx.fillText('↑↑↑',W*.68,H*.55+Math.sin(t)*3);
-      document.getElementById('wcStage').textContent = stages[stage].label;
-    }
-
-    /* Clouds */
-    if (!clouds.length) clouds = [{x:W*.5,y:H*.2,w:60},{x:W*.3,y:H*.25,w:45}];
-    if (stage==='rain') clouds.forEach(function(cl){cl.x -= 0.2; if(cl.x<-60)cl.x=W+60;});
-    clouds.forEach(function(cl) {
-      ctx.fillStyle='rgba(180,180,200,0.85)';
-      [[0,0,cl.w*.5],[cl.w*.25,-12,cl.w*.4],[cl.w*.55,-8,cl.w*.38],[cl.w,0,cl.w*.45]].forEach(function(p) {
-        ctx.beginPath(); ctx.arc(cl.x+p[0],cl.y+p[1],p[2],0,Math.PI*2); ctx.fill();
-      });
-    });
-
-    /* Rain drops */
-    if (stage==='rain') {
-      if (Math.random()<.15) drops.push({x:Math.random()*W,y:0,speed:4+Math.random()*3});
-      drops.forEach(function(d) { d.y+=d.speed; });
-      drops = drops.filter(function(d){return d.y<H;});
-      drops.forEach(function(d) {
-        ctx.strokeStyle='rgba(77,150,255,0.6)'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x-1,d.y+8); ctx.stroke();
-      });
-      document.getElementById('wcStage').textContent = stages[stage].label;
-    }
-
-    /* Labels */
-    ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='9px Nunito,sans-serif';
-    ctx.fillText('🌊 Ocean',W*.65,H*.85);
-    ctx.fillText('🌿 Land',W*.15,H*.85);
-
-    raf = requestAnimationFrame(frame);
-  }
-
-  window.wcSet = function(s) { stage=s; drops=[]; vapour=[]; };
-  window.simCleanup = function() { cancelAnimationFrame(raf); };
-  frame();
-};
-
-/* ── HUMAN DIGESTIVE SYSTEM (digestion-sim) ── */
-SIM_REGISTRY['digestion-sim'] = function(c) {
-  var step = -1; // -1 = overview
-  var organs = [
-    { name:'👄 Mouth',          color:'#FF6B6B', x:.45, y:.08, r:18, desc:'Teeth chew food into smaller pieces. Saliva contains enzymes that start breaking down starch. Food becomes a soft ball called a bolus.' },
-    { name:'🫁 Oesophagus',     color:'#FFD93D', x:.45, y:.22, r:10, desc:'A muscular tube 25cm long. Wave-like contractions called peristalsis push food down to the stomach in about 8 seconds.' },
-    { name:'💛 Stomach',        color:'#FF8C00', x:.4,  y:.38, r:22, desc:'Churns food for 2–4 hours. Produces hydrochloric acid (pH 1.5–3) to kill bacteria and break down proteins. Food becomes liquid chyme.' },
-    { name:'🟢 Small Intestine',color:'#6BCB77', x:.5,  y:.56, r:16, desc:'6–7 metres long, coiled up! Absorbs 90% of nutrients into the blood. Finger-like villi increase surface area to the size of a tennis court.' },
-    { name:'🔵 Large Intestine',color:'#4D96FF', x:.38, y:.72, r:14, desc:'1.5 metres long. Absorbs water from waste. Converts remaining material into faeces over 12–48 hours.' },
-  ];
-
-  function render() {
-    c.innerHTML =
-      '<div style="display:flex;gap:8px;width:100%">' +
-      /* Body diagram */
-      '<div style="flex:0 0 140px;position:relative;height:260px">' +
-      /* Body outline SVG */
-      '<svg viewBox="0 0 100 260" width="140" height="260" style="position:absolute;left:0;top:0">' +
-      /* Body silhouette */
-      '<ellipse cx="50" cy="20" rx="22" ry="18" fill="#2a2a4a" stroke="rgba(255,255,255,.1)" stroke-width="1"/>' +
-      '<rect x="28" y="38" width="44" height="80" rx="8" fill="#2a2a4a" stroke="rgba(255,255,255,.1)" stroke-width="1"/>' +
-      '<rect x="22" y="118" width="56" height="80" rx="6" fill="#2a2a4a" stroke="rgba(255,255,255,.1)" stroke-width="1"/>' +
-      /* Organ circles */
-      organs.map(function(o, i) {
-        var sel = step === i;
-        return '<circle cx="'+(o.x*100)+'" cy="'+(o.y*260)+'" r="'+(sel?o.r+3:o.r)+'" ' +
-          'fill="'+o.color+'" opacity="'+(step===-1?0.85:sel?1:0.3)+'" ' +
-          'style="cursor:pointer;transition:all .3s" onclick="digestClick('+i+')"/>';
-      }).join('') +
-      /* Food particle animation */
-      (step>=0?'<circle r="5" fill="rgba(255,220,100,0.9)">' +
-        '<animateMotion dur="3s" repeatCount="indefinite" path="M45,20 L45,58 Q40,80 38,100 Q50,130 50,148 Q42,180 38,190"/>' +
-        '</circle>':'') +
-      '</svg></div>' +
-      /* Info panel */
-      '<div style="flex:1;display:flex;flex-direction:column;gap:8px">' +
-      (step===-1 ?
-        '<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:4px">Digestive System</div>' +
-        '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:8px">Food takes 24–72 hours to travel through the full digestive system. Tap each organ to explore!</div>' +
-        organs.map(function(o,i) {
-          return '<button onclick="digestClick('+i+')" style="text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;cursor:pointer;width:100%;font-family:Nunito,sans-serif;font-size:12px;color:var(--text)">' + o.name + '</button>';
-        }).join('') :
-        '<div style="font-size:15px;font-weight:900;color:'+organs[step].color+';margin-bottom:6px">'+organs[step].name+'</div>' +
-        '<div style="font-size:12px;color:var(--text);line-height:1.75;flex:1">'+organs[step].desc+'</div>' +
-        '<div style="display:flex;gap:6px;margin-top:8px">' +
-        (step>0?'<button class="cbtn" onclick="digestClick('+(step-1)+')">← Prev</button>':'') +
-        '<button class="cbtn" onclick="digestClick(-1)" style="font-size:11px">Overview</button>' +
-        (step<organs.length-1?'<button class="cbtn evs" onclick="digestClick('+(step+1)+')">Next →</button>':'') +
-        '</div>'
-      ) +
-      '</div></div>';
-  }
-
-  window.digestClick = function(i) { step = i; render(); };
-  render();
-};
-
-/* ── ELECTRICITY CIRCUIT BUILDER (conductor-test) ── */
 SIM_REGISTRY['conductor-test'] = function(c) {
   var bulbOn = false;
   var selected = null;
@@ -1704,92 +2322,6 @@ SIM_REGISTRY['conductor-test'] = function(c) {
 };
 
 /* ── FRACTION VISUALISER (fraction-fold) ── */
-SIM_REGISTRY['fraction-fold'] = function(c) {
-  var num = 1, den = 2;
-
-  function render() {
-    var frac = num/den;
-    var cells = [];
-    for(var i=0;i<den;i++) cells.push(i<num);
-
-    /* Pie chart SVG */
-    function pie(n, d, size) {
-      if(d===0) return '';
-      var cx=size/2, cy=size/2, r=size/2-4;
-      var slices = '';
-      var angle = -Math.PI/2;
-      var step = (Math.PI*2)/d;
-      for(var i=0;i<d;i++) {
-        var a1=angle, a2=angle+step;
-        var x1=cx+Math.cos(a1)*r, y1=cy+Math.sin(a1)*r;
-        var x2=cx+Math.cos(a2)*r, y2=cy+Math.sin(a2)*r;
-        var large=step>Math.PI?1:0;
-        var filled=i<n;
-        slices+='<path d="M'+cx+','+cy+' L'+x1+','+y1+' A'+r+','+r+' 0 '+large+',1 '+x2+','+y2+' Z" ' +
-          'fill="'+(filled?'var(--sci)':'var(--surface2)')+'" stroke="var(--border)" stroke-width="1.5"/>';
-        angle+=step;
-      }
-      return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">'+
-        '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--surface2)" stroke="var(--border)" stroke-width="1.5"/>'+
-        slices+'</svg>';
-    }
-
-    /* Number line */
-    var nlW=240, marks='';
-    for(var i=0;i<=den;i++) {
-      var x=10+(i/den)*(nlW-20);
-      marks+='<line x1="'+x+'" y1="18" x2="'+x+'" y2="30" stroke="var(--muted)" stroke-width="1.5"/>';
-      marks+='<text x="'+x+'" y="14" text-anchor="middle" font-size="9" fill="var(--muted)">'+i+'/'+den+'</text>';
-    }
-    var markerX=10+(frac)*(nlW-20);
-    marks+='<rect x="10" y="20" width="'+(markerX-10)+'" height="10" rx="3" fill="var(--sci)" opacity="0.7"/>';
-    marks+='<circle cx="'+markerX+'" cy="25" r="5" fill="var(--sci)"/>';
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">🍕 Fraction Explorer</div>' +
-      /* Big fraction display */
-      '<div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:12px">' +
-      pie(num,den,110) +
-      '<div style="text-align:center">' +
-      '<div style="font-size:48px;font-weight:900;color:var(--sci);line-height:1;border-bottom:4px solid var(--sci);padding-bottom:4px">'+num+'</div>' +
-      '<div style="font-size:48px;font-weight:900;color:var(--text);line-height:1">'+den+'</div>' +
-      '<div style="font-size:13px;color:var(--muted);margin-top:6px">'+(frac*100).toFixed(1)+'%</div>' +
-      '<div style="font-size:12px;color:var(--muted)">'+(frac).toFixed(3)+'</div>' +
-      '</div></div>' +
-      /* Number line */
-      '<svg width="'+nlW+'" height="36" viewBox="0 0 '+nlW+' 36" style="display:block;margin:0 auto 12px">' +
-      '<line x1="10" y1="25" x2="'+(nlW-10)+'" y2="25" stroke="var(--border)" stroke-width="2"/>' +
-      marks + '</svg>' +
-      /* Controls */
-      '<div style="display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap">' +
-      '<div style="text-align:center">' +
-      '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Numerator</div>' +
-      '<div style="display:flex;gap:6px;align-items:center">' +
-      '<button class="cbtn" onclick="fracNum(-1)" style="width:30px;padding:4px">−</button>' +
-      '<span style="font-size:20px;font-weight:900;color:var(--sci);min-width:24px;text-align:center">'+num+'</span>' +
-      '<button class="cbtn" onclick="fracNum(1)" style="width:30px;padding:4px">+</button>' +
-      '</div></div>' +
-      '<div style="text-align:center">' +
-      '<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Denominator</div>' +
-      '<div style="display:flex;gap:6px;align-items:center">' +
-      '<button class="cbtn" onclick="fracDen(-1)" style="width:30px;padding:4px">−</button>' +
-      '<span style="font-size:20px;font-weight:900;color:var(--text);min-width:24px;text-align:center">'+den+'</span>' +
-      '<button class="cbtn" onclick="fracDen(1)" style="width:30px;padding:4px">+</button>' +
-      '</div></div></div>' +
-      /* Quick fractions */
-      '<div class="ctrl-row" style="margin-top:10px">' +
-      [[1,2],[1,3],[2,3],[1,4],[3,4],[1,8]].map(function(f) {
-        return '<button class="cbtn" onclick="fracSet('+f[0]+','+f[1]+')" style="font-size:11px">'+f[0]+'/'+f[1]+'</button>';
-      }).join('') + '</div>';
-
-    window.fracNum = function(d) { num=Math.max(0,Math.min(den,num+d)); render(); };
-    window.fracDen = function(d) { den=Math.max(1,Math.min(12,den+d)); num=Math.min(num,den); render(); };
-    window.fracSet = function(n,d) { num=n; den=d; render(); };
-  }
-  render();
-};
-
-/* ── SIMPLE MACHINES (simple-machines) ── */
 SIM_REGISTRY['simple-machines'] = function(c) {
   var machine = 'lever';
   var effort = 50;
@@ -1888,91 +2420,6 @@ SIM_REGISTRY['simple-machines'] = function(c) {
 };
 
 /* ── ACID BASE PH INDICATOR (ph-indicator) ── */
-SIM_REGISTRY['ph-indicator'] = function(c) {
-  var ph = 7;
-  var substances = [
-    { name:'Lemon juice',    ph:2.0, emoji:'🍋' },
-    { name:'Vinegar',        ph:2.9, emoji:'🫙' },
-    { name:'Coffee',         ph:5.0, emoji:'☕' },
-    { name:'Rain water',     ph:5.6, emoji:'🌧️' },
-    { name:'Pure water',     ph:7.0, emoji:'💧' },
-    { name:'Blood',          ph:7.4, emoji:'🩸' },
-    { name:'Baking soda',    ph:8.3, emoji:'🥄' },
-    { name:'Soap',           ph:9.5, emoji:'🧼' },
-    { name:'Bleach',         ph:12.5,emoji:'🫧' },
-  ];
-
-  function phColor(p) {
-    if(p<=3)  return '#FF3333';
-    if(p<=5)  return '#FF8833';
-    if(p<=6)  return '#FFCC33';
-    if(p<=7)  return '#88CC44';
-    if(p<=8)  return '#44CC88';
-    if(p<=10) return '#4488FF';
-    return '#8844FF';
-  }
-
-  function phLabel(p) {
-    if(p<=3)  return 'Strong Acid 🔴';
-    if(p<=6)  return 'Weak Acid 🟠';
-    if(p<=7.5)return 'Neutral 🟢';
-    if(p<=10) return 'Weak Base 🔵';
-    return 'Strong Base 🟣';
-  }
-
-  function render() {
-    var col = phColor(ph);
-    /* pH bar gradient */
-    var barGrad = 'linear-gradient(to right,#FF3333 0%,#FF8833 25%,#FFCC33 40%,#88CC44 50%,#44CC88 60%,#4488FF 75%,#8844FF 100%)';
-    var markerPct = ((ph-1)/13*100).toFixed(1);
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🧪 pH Indicator Lab</div>' +
-      /* Big beaker with colour */
-      '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">' +
-      '<svg viewBox="0 0 80 100" width="80" height="100">' +
-      '<polygon points="10,10 70,10 80,100 0,100" fill="'+col+'33" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>' +
-      '<rect x="1" y="'+(100-(ph/14*90))+'" width="78" height="'+(ph/14*90)+'" fill="'+col+'" opacity="0.35"/>' +
-      '<polygon points="10,10 70,10 80,100 0,100" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2"/>' +
-      /* Cabbage indicator drop */
-      '<circle cx="40" cy="50" r="12" fill="'+col+'" opacity="0.8"/>' +
-      '<text x="40" y="54" text-anchor="middle" font-size="10" fill="white">'+ph.toFixed(1)+'</text>' +
-      '</svg>' +
-      '<div>' +
-      '<div style="font-size:36px;font-weight:900;color:'+col+'">'+ph.toFixed(1)+'</div>' +
-      '<div style="font-size:13px;font-weight:700;color:'+col+'">'+phLabel(ph)+'</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+(ph<7?'H⁺ ions > OH⁻':ph===7?'H⁺ = OH⁻':'OH⁻ ions > H⁺')+'</div>' +
-      '</div></div>' +
-      /* pH bar */
-      '<div style="position:relative;height:20px;border-radius:10px;background:'+barGrad+';margin-bottom:16px;border:1px solid rgba(255,255,255,.1)">' +
-      '<div style="position:absolute;top:-6px;left:calc('+markerPct+'% - 8px);width:16px;height:32px;' +
-        'background:white;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>' +
-      '<div style="position:absolute;top:22px;left:0;font-size:8px;color:var(--muted)">1</div>' +
-      '<div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--muted)">7</div>' +
-      '<div style="position:absolute;top:22px;right:0;font-size:8px;color:var(--muted)">14</div>' +
-      '</div>' +
-      /* Slider */
-      '<div class="ctrl-row" style="margin:4px 0 12px">' +
-      '<span style="font-size:11px;color:var(--muted)">pH:</span>' +
-      '<input type="range" class="slide" min="1" max="14" step="0.1" value="'+ph+'" oninput="phSet(this.value)" style="width:160px">' +
-      '</div>' +
-      /* Substances */
-      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center">' +
-      substances.map(function(s) {
-        var active = Math.abs(s.ph-ph)<0.3;
-        return '<button onclick="phSet('+s.ph+')" style="' +
-          'background:'+(active?phColor(s.ph)+'33':'var(--surface2)')+';' +
-          'border:1.5px solid '+(active?phColor(s.ph):'var(--border)')+';' +
-          'border-radius:8px;padding:5px 8px;cursor:pointer;font-family:Nunito,sans-serif;' +
-          'font-size:11px;color:var(--text)">'+s.emoji+' '+s.name+'</button>';
-      }).join('') + '</div>';
-
-    window.phSet = function(v) { ph=parseFloat(v); render(); };
-  }
-  render();
-};
-
-/* ── LIGHT REFLECTION (reflection-sim) ── */
 SIM_REGISTRY['reflection-sim'] = function(c) {
   var angle = 45;
   var mirror = 'flat';
@@ -7849,111 +8296,6 @@ SIM_REGISTRY['data-averages'] = function(c) {
 };
 
 /* ── 12. GOAL SETTING (goal-setting) ── */
-SIM_REGISTRY['goal-setting'] = function(c) {
-  var goals=[
-    {text:'Read 10 pages daily',category:'Study',done:false,streak:3,emoji:'📚'},
-    {text:'Practise maths 30 min',category:'Study',done:false,streak:7,emoji:'📐'},
-    {text:'Drink 8 glasses of water',category:'Health',done:false,streak:1,emoji:'💧'},
-    {text:'Help at home',category:'Life Skills',done:false,streak:5,emoji:'🏠'},
-  ];
-  var newGoal='';
-
-  function render(){
-    var done=goals.filter(function(g){return g.done;}).length;
-    var pct=Math.round(done/goals.length*100);
-
-    c.innerHTML=
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🎯 Daily Goal Tracker</div>'+
-      /* Progress ring */
-      '<div style="text-align:center;margin-bottom:10px">'+
-      '<svg width="80" height="80" style="display:inline-block"><circle cx="40" cy="40" r="32" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--evs)" stroke-width="8" stroke-dasharray="'+(pct/100*201.06)+' 201.06" stroke-linecap="round" transform="rotate(-90 40 40)" style="transition:stroke-dasharray .5s"/><text x="40" y="45" fill="var(--text)" font-size="16" font-weight="900" text-anchor="middle" font-family="Nunito">'+pct+'%</text></svg>'+
-      '<div style="font-size:11px;color:var(--muted)">'+done+'/'+goals.length+' goals done today</div>'+
-      '</div>'+
-      /* Goals list */
-      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">'+
-      goals.map(function(g,i){
-        return '<div onclick="goalToggle('+i+')" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1.5px solid '+(g.done?'var(--evs)':'var(--border)')+';border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .2s">'+
-          '<div style="width:22px;height:22px;border-radius:50%;border:2px solid '+(g.done?'var(--evs)':'var(--border)')+';background:'+(g.done?'var(--evs)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s">'+
-          (g.done?'<span style="color:white;font-size:12px">✓</span>':'')+'</div>'+
-          '<span style="font-size:13px">'+g.emoji+'</span>'+
-          '<div style="flex:1">'+
-          '<div style="font-size:13px;font-weight:700;color:'+(g.done?'var(--evs)':'var(--text)')+';text-decoration:'+(g.done?'line-through':'none')+'">'+g.text+'</div>'+
-          '<div style="font-size:10px;color:var(--muted)">'+g.category+' · 🔥 '+g.streak+' day streak</div>'+
-          '</div></div>';
-      }).join('')+
-      '</div>'+
-      /* SMART framework */
-      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;font-size:11px;color:var(--text);line-height:1.8">'+
-      '🎯 <b>SMART Goals:</b> <span style="color:var(--acc)">S</span>pecific · <span style="color:var(--math)">M</span>easurable · <span style="color:var(--evs)">A</span>chievable · <span style="color:var(--sci)">R</span>elevant · <span style="color:var(--life)">T</span>ime-bound'+
-      '</div>';
-  }
-
-  window.goalToggle=function(i){goals[i].done=!goals[i].done;if(goals[i].done)goals[i].streak++;render();};
-  render();
-};
-
-/* ── 13. FEELINGS WHEEL (feelings-wheel) ── */
-SIM_REGISTRY['feelings-wheel'] = function(c) {
-  var selectedFeeling=null;
-  var feelings=[
-    {name:'Happy',    emoji:'😊', color:'#FFD93D', tips:['Share your joy with someone','Do something creative','Help a friend']},
-    {name:'Sad',      emoji:'😢', color:'#4D96FF', tips:['Talk to someone you trust','Write in a journal','Take a walk outside']},
-    {name:'Angry',    emoji:'😠', color:'#FF6B6B', tips:['Take 10 deep breaths','Count to 20 slowly','Go for a run or exercise']},
-    {name:'Anxious',  emoji:'😰', color:'#C77DFF', tips:['Try box breathing: 4s in, hold 4s, out 4s','Name 5 things you can see','Talk to a trusted adult']},
-    {name:'Excited',  emoji:'🤩', color:'#FF8C42', tips:['Channel energy into a project','Share excitement with friends','Make a plan to enjoy it']},
-    {name:'Bored',    emoji:'😑', color:'#6BCB77', tips:['Try something new or creative','Read a book or explore nature','Help someone who needs it']},
-    {name:'Proud',    emoji:'😎', color:'#4D96FF', tips:['Celebrate your achievement','Write it down to remember','Set your next goal']},
-    {name:'Grateful', emoji:'🙏', color:'#6BCB77', tips:['Write 3 things you\'re thankful for','Tell someone you appreciate them','Do something kind for another']},
-  ];
-
-  function render(){
-    var W=220,CX=110,CY=110,r=85,ir=38;
-    var slices=feelings.map(function(f,i){
-      var a1=i/feelings.length*Math.PI*2-Math.PI/2;
-      var a2=(i+1)/feelings.length*Math.PI*2-Math.PI/2;
-      var mid=(a1+a2)/2;
-      var x1=CX+Math.cos(a1)*ir,y1=CY+Math.sin(a1)*ir;
-      var x2=CX+Math.cos(a1)*r,y2=CY+Math.sin(a1)*r;
-      var x3=CX+Math.cos(a2)*r,y3=CY+Math.sin(a2)*r;
-      var x4=CX+Math.cos(a2)*ir,y4=CY+Math.sin(a2)*ir;
-      var isSel=selectedFeeling===i;
-      var ex=CX+Math.cos(mid)*(isSel?r*0.65:r*0.62);
-      var ey=CY+Math.sin(mid)*(isSel?r*0.65:r*0.62);
-      return '<path d="M '+x1+' '+y1+' L '+x2+' '+y2+' A '+r+' '+r+' 0 0 1 '+x3+' '+y3+' L '+x4+' '+y4+' A '+ir+' '+ir+' 0 0 0 '+x1+' '+y1+' Z" '+
-        'fill="'+f.color+(isSel?'':'88')+'" stroke="#0a0a1a" stroke-width="2" style="cursor:pointer" onclick="feelSel('+i+')"/>'+
-        '<text x="'+ex+'" y="'+(ey+5)+'" font-size="'+(isSel?'18':'16')+'" text-anchor="middle">'+f.emoji+'</text>';
-    }).join('');
-
-    var info=selectedFeeling!==null
-      ? '<div style="background:'+feelings[selectedFeeling].color+'22;border:1.5px solid '+feelings[selectedFeeling].color+'55;border-radius:12px;padding:12px 14px">'+
-        '<div style="font-size:16px;font-weight:900;color:'+feelings[selectedFeeling].color+'">'+feelings[selectedFeeling].emoji+' '+feelings[selectedFeeling].name+'</div>'+
-        '<div style="font-size:11px;font-weight:800;color:var(--muted);margin:6px 0 4px">What helps:</div>'+
-        '<ul style="margin:0;padding-left:16px">'+feelings[selectedFeeling].tips.map(function(t){return '<li style="font-size:12px;color:var(--text);line-height:1.8">'+t+'</li>';}).join('')+'</ul>'+
-        '</div>'
-      : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">☝️ Tap how you\'re feeling right now</div>';
-
-    c.innerHTML=
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Feelings Wheel</div>'+
-      '<div style="display:flex;gap:10px;align-items:flex-start">'+
-      '<svg width="'+W+'" height="'+W+'" style="flex-shrink:0">'+
-      '<circle cx="'+CX+'" cy="'+CY+'" r="'+r+'" fill="#0a0a1a"/>'+
-      slices+
-      '<circle cx="'+CX+'" cy="'+CY+'" r="'+ir+'" fill="#0a0a1a" stroke="rgba(255,255,255,.1)" stroke-width="1"/>'+
-      '<text x="'+CX+'" y="'+(CY+5)+'" fill="rgba(255,255,255,.4)" font-size="9" text-anchor="middle" font-family="Nunito">How do</text>'+
-      '<text x="'+CX+'" y="'+(CY+16)+'" fill="rgba(255,255,255,.4)" font-size="9" text-anchor="middle" font-family="Nunito">I feel?</text>'+
-      '</svg>'+
-      '<div style="flex:1">'+info+'</div>'+
-      '</div>'+
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">'+
-      'All feelings are valid! Identifying emotions is the first step to managing them well.'+
-      '</div>';
-  }
-
-  window.feelSel=function(i){selectedFeeling=selectedFeeling===i?null:i;render();};
-  render();
-};
-
-/* ── 14. LINEAR EQUATIONS (linear-equations) ── */
 SIM_REGISTRY['linear-equations'] = function(c) {
   var a=2, b=3, rhs=9, step=0;
 
@@ -8064,193 +8406,6 @@ SIM_REGISTRY['reactivity-series'] = function(c) {
 };
 
 /* ── 2. RATIO AND COOKING (ratio-cooking) ── */
-SIM_REGISTRY['ratio-cooking'] = function(c) {
-  var recipe = 0, servings = 4;
-  var recipes = [
-    { name:'🍚 Rice', base:2, unit:'cups rice', ratio:[{name:'Rice',base:2,unit:'cups',color:'#FFD93D'},{name:'Water',base:3,unit:'cups',color:'#4D96FF'},{name:'Salt',base:0.5,unit:'tsp',color:'#888'}], note:'Rice:Water ratio is always 1:1.5' },
-    { name:'🥞 Pancakes', base:4, ratio:[{name:'Flour',base:1,unit:'cup',color:'#C8945A'},{name:'Milk',base:0.75,unit:'cup',color:'white'},{name:'Egg',base:1,unit:'egg',color:'#FFD93D'},{name:'Butter',base:2,unit:'tbsp',color:'#FF8C42'}], note:'Dry:Wet ratio is 1:0.75' },
-    { name:'🍋 Lemonade', base:4, ratio:[{name:'Lemon juice',base:0.5,unit:'cup',color:'#FFD93D'},{name:'Sugar',base:0.25,unit:'cup',color:'white'},{name:'Water',base:2,unit:'cups',color:'#4D96FF'}], note:'Sweet:Sour ratio adjustable to taste' },
-  ];
-
-  function render() {
-    var r = recipes[recipe];
-    var scale = servings / r.base;
-    var ingredients = r.ratio.map(function(ing) {
-      var amount = ing.base * scale;
-      var display = amount === Math.floor(amount) ? amount : amount.toFixed(2);
-      return '<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:10px;padding:9px 12px;border:1px solid var(--border)">' +
-        '<div style="width:12px;height:12px;border-radius:3px;background:'+ing.color+';flex-shrink:0"></div>' +
-        '<div style="flex:1;font-size:13px;font-weight:700;color:var(--text)">'+ing.name+'</div>' +
-        '<div style="font-size:16px;font-weight:900;color:var(--acc)">'+display+'</div>' +
-        '<div style="font-size:11px;color:var(--muted)">'+ing.unit+'</div>' +
-        '</div>';
-    }).join('');
-
-    /* Ratio bars */
-    var total = r.ratio.reduce(function(s,ing){return s+ing.base;},0);
-    var ratioBar = r.ratio.map(function(ing) {
-      return '<div style="flex:'+ing.base+';background:'+ing.color+';height:100%;opacity:0.8" title="'+ing.name+'"></div>';
-    }).join('');
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Ratio in Cooking</div>' +
-      '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px">' +
-      recipes.map(function(rec,i) {
-        return '<button onclick="ratioRecipe('+i+')" style="padding:6px 12px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===recipe?'var(--acc)':'var(--border)')+';background:'+(i===recipe?'var(--acc-dim)':'var(--surface2)')+';color:'+(i===recipe?'var(--acc)':'var(--muted)')+';cursor:pointer;font-weight:800">'+rec.name+'</button>';
-      }).join('') + '</div>' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
-      '<span style="font-size:11px;color:var(--muted)">Servings:</span>' +
-      '<input type="range" class="slide" min="1" max="20" value="'+servings+'" oninput="ratioServings(this.value)" style="flex:1">' +
-      '<span style="font-size:20px;font-weight:900;color:var(--acc)">'+servings+'</span>' +
-      '</div>' +
-      '<div style="display:flex;height:24px;border-radius:8px;overflow:hidden;margin-bottom:6px;border:1px solid var(--border)">' + ratioBar + '</div>' +
-      '<div style="font-size:10px;color:var(--muted);margin-bottom:10px;text-align:center">'+r.note+'</div>' +
-      '<div style="display:flex;flex-direction:column;gap:5px">' + ingredients + '</div>' +
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">Ratio stays the same no matter how many servings! Scale up by multiplying all ingredients by the same factor.</div>';
-  }
-
-  window.ratioRecipe = function(i) { recipe=i; render(); };
-  window.ratioServings = function(v) { servings=parseInt(v); render(); };
-  render();
-};
-
-/* ── 3. SAVINGS TRACKER (savings-tracker) ── */
-SIM_REGISTRY['savings-tracker'] = function(c) {
-  var goal = 500, saved = 120, weekly = 50, interest = 4;
-
-  function render() {
-    var remaining = Math.max(0, goal - saved);
-    var weeksToGoal = weekly > 0 ? Math.ceil(remaining / weekly) : '∞';
-    var pct = Math.min(100, Math.round(saved/goal*100));
-    /* Simple interest projection */
-    var months = 12;
-    var projection = [];
-    var curr = saved;
-    for (var m = 1; m <= months; m++) {
-      curr += weekly * 4.3;
-      curr += curr * (interest/100/12);
-      projection.push(Math.round(curr));
-    }
-    var projected12 = projection[11];
-
-    /* Mini sparkline */
-    var maxP = Math.max(goal, projected12);
-    var points = projection.map(function(v,i) {
-      return ((i+1)/months*220) + ',' + (90-(v/maxP)*80);
-    }).join(' ');
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">💰 Savings Goal Tracker</div>' +
-      /* Goal progress */
-      '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">' +
-      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">' +
-      '<span style="font-size:11px;color:var(--muted)">Saved: <b style="color:var(--evs)">₹'+saved+'</b></span>' +
-      '<span style="font-size:11px;color:var(--muted)">Goal: <b style="color:var(--math)">₹'+goal+'</b></span>' +
-      '</div>' +
-      '<div style="height:20px;background:var(--surface);border-radius:10px;overflow:hidden;position:relative">' +
-      '<div style="height:100%;width:'+pct+'%;background:linear-gradient(to right,var(--evs),var(--math));border-radius:10px;transition:width .5s"></div>' +
-      '<div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:800;color:var(--text)">'+pct+'%</div>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;margin-top:8px">' +
-      '<span style="font-size:11px;color:var(--muted)">Remaining: <b>₹'+remaining+'</b></span>' +
-      '<span style="font-size:11px;color:var(--life)">⏱ ~'+weeksToGoal+' weeks</span>' +
-      '</div></div>' +
-      /* Projection chart */
-      '<svg width="240" height="100" style="display:block;margin:0 auto 8px;overflow:visible">' +
-      '<polyline points="'+points+'" fill="none" stroke="var(--acc)" stroke-width="2"/>' +
-      '<line x1="0" y1="'+(90-(goal/maxP)*80)+'" x2="220" y2="'+(90-(goal/maxP)*80)+'" stroke="rgba(255,217,61,.4)" stroke-width="1" stroke-dasharray="4,4"/>' +
-      '<text x="224" y="'+(92-(goal/maxP)*80)+'" fill="rgba(255,217,61,.6)" font-size="8" font-family="Nunito">Goal</text>' +
-      '<text x="0" y="98" fill="rgba(255,255,255,.3)" font-size="8" font-family="Nunito">Now</text>' +
-      '<text x="200" y="98" fill="rgba(255,255,255,.3)" font-size="8" font-family="Nunito">12m</text>' +
-      '<text x="110" y="14" fill="var(--acc)" font-size="9" font-weight="bold" text-anchor="middle" font-family="Nunito">Projected: ₹'+projected12+' after 12 months</text>' +
-      '</svg>' +
-      /* Controls */
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">' +
-      [
-        {label:'🎯 Goal (₹)',    val:goal,    key:'goal',    min:100, max:5000, step:100},
-        {label:'💰 Saved (₹)',   val:saved,   key:'saved',   min:0,   max:goal, step:50},
-        {label:'📅 Weekly (₹)', val:weekly,  key:'weekly',  min:0,   max:500,  step:10},
-        {label:'📈 Interest %', val:interest,key:'interest',min:0,   max:15,   step:0.5},
-      ].map(function(s) {
-        return '<div style="background:var(--surface2);border-radius:9px;padding:8px;border:1px solid var(--border)">' +
-          '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+s.label+': <b style="color:var(--text)">'+s.val+'</b></div>' +
-          '<input type="range" class="slide" min="'+s.min+'" max="'+s.max+'" step="'+s.step+'" value="'+s.val+'" oninput="savSet(\''+s.key+'\',this.value)" style="width:100%">' +
-          '</div>';
-      }).join('') + '</div>';
-  }
-
-  window.savSet = function(k,v) {
-    if(k==='goal')goal=parseInt(v);
-    else if(k==='saved')saved=parseInt(v);
-    else if(k==='weekly')weekly=parseInt(v);
-    else interest=parseFloat(v);
-    render();
-  };
-  render();
-};
-
-/* ── 4. PROFIT AND LOSS (profit-loss) ── */
-SIM_REGISTRY['profit-loss'] = function(c) {
-  var cost = 80, selling = 100;
-
-  function render() {
-    var diff = selling - cost;
-    var isProfit = diff >= 0;
-    var pct = Math.abs(diff/cost*100).toFixed(1);
-    var scenarios = [
-      {label:'🏪 Shopkeeper',cost:80,sell:100},{label:'🌽 Farmer',cost:40,sell:55},
-      {label:'📱 Reseller',cost:500,sell:450},{label:'🎨 Artist',cost:200,sell:350},
-    ];
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Profit & Loss</div>' +
-      /* Visual balance */
-      '<div style="display:flex;align-items:flex-end;gap:16px;justify-content:center;margin-bottom:12px">' +
-      /* Cost box */
-      '<div style="text-align:center">' +
-      '<div style="background:var(--sci-dim);border:2px solid var(--sci);border-radius:10px;padding:10px 16px;margin-bottom:4px">' +
-      '<div style="font-size:11px;color:var(--muted)">Cost Price</div>' +
-      '<div style="font-size:26px;font-weight:900;color:var(--sci)">₹'+cost+'</div>' +
-      '</div></div>' +
-      /* Arrow and result */
-      '<div style="text-align:center;padding-bottom:8px">' +
-      '<div style="font-size:32px">'+(isProfit?'📈':'📉')+'</div>' +
-      '<div style="font-size:24px;font-weight:900;color:'+(isProfit?'var(--evs)':'var(--sci)')+'">'+(isProfit?'+':'')+'₹'+diff+'</div>' +
-      '<div style="font-size:11px;font-weight:800;color:'+(isProfit?'var(--evs)':'var(--sci)')+'">'+pct+'% '+(isProfit?'Profit':'Loss')+'</div>' +
-      '</div>' +
-      /* Selling box */
-      '<div style="text-align:center">' +
-      '<div style="background:var(--math-dim);border:2px solid var(--math);border-radius:10px;padding:10px 16px;margin-bottom:4px">' +
-      '<div style="font-size:11px;color:var(--muted)">Selling Price</div>' +
-      '<div style="font-size:26px;font-weight:900;color:var(--math)">₹'+selling+'</div>' +
-      '</div></div></div>' +
-      /* Formula */
-      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--border);font-size:12px;text-align:center;line-height:1.8">' +
-      (isProfit
-        ? 'Profit = SP − CP = ₹'+selling+' − ₹'+cost+' = <b style="color:var(--evs)">₹'+diff+'</b><br>Profit% = ('+diff+'/'+cost+') × 100 = <b style="color:var(--evs)">'+pct+'%</b>'
-        : 'Loss = CP − SP = ₹'+cost+' − ₹'+selling+' = <b style="color:var(--sci)">₹'+Math.abs(diff)+'</b><br>Loss% = ('+Math.abs(diff)+'/'+cost+') × 100 = <b style="color:var(--sci)">'+pct+'%</b>') +
-      '</div>' +
-      /* Sliders */
-      '<div class="ctrl-row" style="flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
-      '<span style="font-size:11px;color:var(--sci)">Cost: <b>₹'+cost+'</b></span>' +
-      '<input type="range" class="slide" min="10" max="1000" step="10" value="'+cost+'" oninput="plCost(this.value)" style="width:100px">' +
-      '<span style="font-size:11px;color:var(--math)">Selling: <b>₹'+selling+'</b></span>' +
-      '<input type="range" class="slide" min="10" max="1500" step="10" value="'+selling+'" oninput="plSell(this.value)" style="width:100px">' +
-      '</div>' +
-      /* Quick scenarios */
-      '<div style="display:flex;gap:5px;flex-wrap:wrap">' +
-      scenarios.map(function(s) {
-        return '<button onclick="plScenario('+s.cost+','+s.sell+')" style="padding:4px 8px;border-radius:8px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer">'+s.label+'</button>';
-      }).join('') + '</div>';
-  }
-
-  window.plCost = function(v) { cost=parseInt(v); render(); };
-  window.plSell = function(v) { selling=parseInt(v); render(); };
-  window.plScenario = function(cp,sp) { cost=cp; selling=sp; render(); };
-  render();
-};
-
-/* ── 5. TRANSFORMATIONS (transformations) ── */
 SIM_REGISTRY['transformations'] = function(c) {
   var type='translation', tx=3, ty=2, angle=90, sx=1.5;
 
@@ -8865,72 +9020,6 @@ SIM_REGISTRY['water-quality'] = function(c) {
 };
 
 /* ── 14. TIME MATRIX (time-matrix) ── */
-SIM_REGISTRY['time-matrix'] = function(c) {
-  var tasks=[
-    {name:'Study for exam',urgent:true, important:true, done:false},
-    {name:'Check social media',urgent:true, important:false, done:false},
-    {name:'Learn a new skill',urgent:false,important:true, done:false},
-    {name:'Watch random videos',urgent:false,important:false,done:false},
-    {name:'Exercise daily',urgent:false,important:true, done:false},
-    {name:'Answer unimportant calls',urgent:true,important:false,done:false},
-  ];
-  var newTask='', newU=true, newI=true;
-
-  function render(){
-    var quadrants=[
-      {label:'DO FIRST',desc:'Urgent + Important',color:'var(--sci)',u:true,i:true},
-      {label:'SCHEDULE',desc:'Not Urgent + Important',color:'var(--evs)',u:false,i:true},
-      {label:'DELEGATE',desc:'Urgent + Not Important',color:'var(--math)',u:true,i:false},
-      {label:'ELIMINATE',desc:'Not Urgent + Not Important',color:'var(--muted)',u:false,i:false},
-    ];
-
-    var grid=quadrants.map(function(q){
-      var qTasks=tasks.filter(function(t){return t.urgent===q.u&&t.important===q.i;});
-      return '<div style="background:'+q.color+'15;border:1.5px solid '+q.color+'44;border-radius:10px;padding:8px;min-height:80px">'+
-        '<div style="font-size:10px;font-weight:800;color:'+q.color+';margin-bottom:2px">'+q.label+'</div>'+
-        '<div style="font-size:9px;color:var(--muted);margin-bottom:6px">'+q.desc+'</div>'+
-        qTasks.map(function(t,i){
-          var idx=tasks.indexOf(t);
-          return '<div onclick="tmToggle('+idx+')" style="font-size:11px;color:'+(t.done?'var(--muted)':'var(--text)')+';text-decoration:'+(t.done?'line-through':'none')+';cursor:pointer;margin-bottom:3px;display:flex;align-items:center;gap:4px">'+
-            '<span style="color:'+q.color+'">'+( t.done?'✓':'○')+'</span>'+t.name+'</div>';
-        }).join('')+
-        '</div>';
-    }).join('');
-
-    c.innerHTML=
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">⏰ Eisenhower Time Matrix</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">'+grid+'</div>'+
-      '<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:6px">'+
-      '<span style="font-size:10px;color:var(--muted)">Urgent:</span>'+
-      ['Yes','No'].map(function(v,i){return '<button onclick="tmU('+(i===0)+')" style="padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid '+(newU===(i===0)?'var(--acc)':'var(--border)')+';background:'+(newU===(i===0)?'var(--acc-dim)':'var(--surface2)')+';color:'+(newU===(i===0)?'var(--acc)':'var(--muted)')+';cursor:pointer">'+v+'</button>';}).join('')+
-      '<span style="font-size:10px;color:var(--muted)">Important:</span>'+
-      ['Yes','No'].map(function(v,i){return '<button onclick="tmI('+(i===0)+')" style="padding:3px 8px;border-radius:6px;font-size:10px;border:1px solid '+(newI===(i===0)?'var(--acc)':'var(--border)')+';background:'+(newI===(i===0)?'var(--acc-dim)':'var(--surface2)')+';color:'+(newI===(i===0)?'var(--acc)':'var(--muted)')+';cursor:pointer">'+v+'</button>';}).join('')+
-      '</div>'+
-      '<div class="ctrl-row">'+
-      '<input id="tmInput" placeholder="Add a task..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px;color:var(--text);font-size:12px">'+
-      '<button class="cbtn" onclick="tmAdd()" style="background:var(--acc);color:white;border-color:var(--acc)">+ Add</button>'+
-      '</div>'+
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">'+
-      'Developed by US President Eisenhower. Helps you focus on what truly matters, not just what feels urgent!'+
-      '</div>';
-  }
-
-  window.tmToggle=function(i){tasks[i].done=!tasks[i].done;render();};
-  window.tmU=function(v){newU=v;render();};
-  window.tmI=function(v){newI=v;render();};
-  window.tmAdd=function(){
-    var el=document.getElementById('tmInput');
-    if(el&&el.value.trim()){tasks.push({name:el.value.trim(),urgent:newU,important:newI,done:false});el.value='';render();}
-  };
-  render();
-};
-
-
-/* ══════════════════════════════════════
-   BATCH 9 — 14 simulations
-   ══════════════════════════════════════ */
-
-/* ── 1. INDIA MAP (india-map) ── */
 SIM_REGISTRY['india-map'] = function(c) {
   var highlighted = null;
   var regions = [
@@ -9711,92 +9800,6 @@ SIM_REGISTRY['rain-harvest'] = function(c) {
 };
 
 /* ── 12. STRESS TOOLS (stress-tools) ── */
-SIM_REGISTRY['stress-tools'] = function(c) {
-  var tool = 'breathing';
-  var raf2, t2 = 0, running = false;
-
-  var tools = {
-    breathing: {
-      name: '🫁 Box Breathing',
-      color: '#4D96FF',
-      desc: 'Used by Navy SEALs to stay calm under pressure. 4 seconds each phase.',
-      phases: ['Breathe IN', 'HOLD', 'Breathe OUT', 'HOLD'],
-      duration: 4,
-    },
-    grounding: {
-      name: '🌿 5-4-3-2-1 Grounding',
-      color: '#6BCB77',
-      desc: 'Brings you back to the present moment. Stops anxious thoughts.',
-      steps: ['Name 5 things you can SEE 👁️', 'Name 4 things you can TOUCH ✋', 'Name 3 things you can HEAR 👂', 'Name 2 things you can SMELL 👃', 'Name 1 thing you can TASTE 👅'],
-    },
-    affirmation: {
-      name: '💪 Positive Affirmations',
-      color: '#FFD93D',
-      desc: 'Repeat these when feeling anxious or low. Rewires your thinking!',
-      affirmations: ['I am capable of handling challenges', 'I have done hard things before', 'This feeling is temporary — it will pass', 'I am learning and growing every day', 'It\'s okay to not be perfect', 'I deserve kindness — from myself too'],
-    },
-  };
-
-  function render() {
-    var to = tools[tool];
-    var body = '';
-
-    if (tool === 'breathing') {
-      var phase = Math.floor(t2 / to.duration) % 4;
-      var progress = (t2 % to.duration) / to.duration;
-      var r = 40 + (tool === 'breathing' ? (phase === 0 || phase === 3 ? progress : phase === 1 ? 1 : 1 - progress) * 30 : 0);
-      body =
-        '<div style="text-align:center;margin-bottom:10px">' +
-        '<svg width="160" height="160" style="display:inline-block">' +
-        '<circle cx="80" cy="80" r="70" fill="rgba(77,150,255,.08)" stroke="rgba(77,150,255,.2)" stroke-width="2"/>' +
-        '<circle cx="80" cy="80" r="' + r + '" fill="rgba(77,150,255,' + (0.1 + progress * 0.2) + ')" stroke="#4D96FF" stroke-width="3" style="transition:r .5s"/>' +
-        '<text x="80" y="76" fill="white" font-size="13" font-weight="bold" text-anchor="middle" font-family="Nunito">' + (running ? to.phases[phase] : 'Tap Start') + '</text>' +
-        '<text x="80" y="94" fill="rgba(255,255,255,.5)" font-size="11" text-anchor="middle" font-family="Nunito">' + (running ? Math.ceil(to.duration - t2 % to.duration) + 's' : '') + '</text>' +
-        '</svg></div>' +
-        '<div class="ctrl-row">' +
-        '<button class="cbtn" onclick="stressRun()" id="stressBtn" style="background:' + to.color + ';color:white;border-color:' + to.color + '">' + (running ? '⏸ Pause' : '▶ Start') + '</button>' +
-        '</div>';
-    } else if (tool === 'grounding') {
-      body = '<div style="display:flex;flex-direction:column;gap:6px">' +
-        to.steps.map(function(s, i) {
-          return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px">' +
-            '<div style="width:24px;height:24px;border-radius:50%;background:' + to.color + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">' + (5 - i) + '</div>' +
-            '<div style="font-size:12px;color:var(--text);line-height:1.5">' + s + '</div>' +
-            '</div>';
-        }).join('') + '</div>';
-    } else {
-      var idx = Math.floor(t2 / 4) % to.affirmations.length;
-      body =
-        '<div style="background:' + to.color + '22;border:2px solid ' + to.color + '44;border-radius:14px;padding:20px;text-align:center;min-height:80px;margin-bottom:10px">' +
-        '<div style="font-size:14px;font-weight:700;color:' + to.color + ';line-height:1.7">"' + to.affirmations[running ? idx : 0] + '"</div>' +
-        '</div>' +
-        '<div class="ctrl-row">' +
-        '<button class="cbtn" onclick="stressRun()" id="stressBtn" style="background:' + to.color + ';color:white;border-color:' + to.color + '">' + (running ? '⏸ Pause' : '▶ Next Affirmation') + '</button>' +
-        '</div>';
-    }
-
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Stress Management Tools</div>' +
-      '<div class="ctrl-row" style="margin-bottom:8px;flex-wrap:wrap;gap:5px">' +
-      Object.keys(tools).map(function(k) {
-        return '<button onclick="stressTool(\'' + k + '\')" style="padding:5px 10px;border-radius:9px;font-size:11px;border:1.5px solid ' + (k === tool ? tools[k].color : 'var(--border)') + ';background:' + (k === tool ? tools[k].color + '22' : 'var(--surface2)') + ';color:' + (k === tool ? tools[k].color : 'var(--muted)') + ';cursor:pointer;font-weight:800">' + tools[k].name + '</button>';
-      }).join('') + '</div>' +
-      body +
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">' + to.desc + '</div>';
-  }
-
-  var interval;
-  window.stressTool = function(k) { tool = k; running = false; t2 = 0; clearInterval(interval); render(); };
-  window.stressRun = function() {
-    running = !running;
-    if (running) { interval = setInterval(function() { t2 += 0.1; render(); }, 100); }
-    else { clearInterval(interval); render(); }
-  };
-  window.simCleanup = function() { clearInterval(interval); };
-  render();
-};
-
-/* ── 13. FAMILY TREE (family-tree) ── */
 SIM_REGISTRY['family-tree'] = function(c) {
   var members = [
     { id: 'gg', name: 'Great-grandpa', gen: 0, x: 0.5, emoji: '👴', color: '#888' },
@@ -10360,43 +10363,6 @@ SIM_REGISTRY['grouped-mean'] = function(c) {
 };
 
 /* ── 8. MINDSET FLIP (mindset-flip) ── */
-SIM_REGISTRY['mindset-flip'] = function(c) {
-  var currentIdx = 0;
-  var thoughts = [
-    { fixed: 'I\'m just bad at maths.',         growth: 'I haven\'t mastered this yet. With practice, I can improve!', tip: 'The word "yet" is powerful. It changes a fixed limit into a temporary state.' },
-    { fixed: 'I failed the test. I\'m stupid.',  growth: 'This result shows me exactly what to study next time.', tip: 'A test result is data, not a verdict. Mistakes are information.' },
-    { fixed: 'She\'s naturally smart. I\'m not.', growth: 'She worked harder on this. I can build those skills too.', tip: 'Research shows that effort and strategy matter more than "natural talent".' },
-    { fixed: 'I can\'t do this. It\'s too hard.', growth: 'This is challenging — that means my brain is growing!', tip: 'Neuroscience: struggling actually creates new neural connections. Hard = growth.' },
-    { fixed: 'I give up. What\'s the point?',    growth: 'Let me try a different approach or ask for help.', tip: '"Not giving up" doesn\'t mean trying the same thing. It means trying differently.' },
-    { fixed: 'Criticism makes me feel terrible.', growth: 'Feedback is free coaching. What can I learn from this?', tip: 'The best learners actively seek feedback — it\'s their fastest path to improvement.' },
-  ];
-  var showing = 'fixed';
-
-  function render() {
-    var t = thoughts[currentIdx];
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Growth Mindset Flipper</div>' +
-      /* Cards */
-      '<div style="position:relative;min-height:130px;margin-bottom:8px">' +
-      '<div style="background:' + (showing==='fixed'?'var(--sci-dim)':'var(--evs-dim)') + ';border:2px solid ' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';border-radius:14px;padding:16px;transition:all .3s">' +
-      '<div style="font-size:11px;font-weight:800;color:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';margin-bottom:8px">' + (showing==='fixed'?'❌ Fixed Mindset':'✅ Growth Mindset') + '</div>' +
-      '<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.7;font-style:italic">"' + (showing==='fixed'?t.fixed:t.growth) + '"</div>' +
-      '</div></div>' +
-      '<div style="background:var(--acc-dim);border:1px solid rgba(199,125,255,.2);border-radius:10px;padding:10px;margin-bottom:10px;font-size:11px;color:var(--text);line-height:1.7">💡 ' + t.tip + '</div>' +
-      '<div class="ctrl-row">' +
-      '<button class="cbtn" onclick="mfPrev()" style="font-size:11px">← Prev</button>' +
-      '<button class="cbtn" onclick="mfFlip()" style="background:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';color:white;border-color:' + (showing==='fixed'?'var(--sci)':'var(--evs)') + ';font-size:13px">🔄 Flip!</button>' +
-      '<button class="cbtn" onclick="mfNext()" style="font-size:11px">Next →</button>' +
-      '</div>' +
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7">Carol Dweck\'s research: Students with a <b style="color:var(--evs)">growth mindset</b> outperform those with fixed mindset — even if their initial ability is the same!</div>';
-  }
-  window.mfFlip = function() { showing = showing === 'fixed' ? 'growth' : 'fixed'; render(); };
-  window.mfNext = function() { currentIdx = (currentIdx+1) % thoughts.length; showing='fixed'; render(); };
-  window.mfPrev = function() { currentIdx = (currentIdx-1+thoughts.length) % thoughts.length; showing='fixed'; render(); };
-  render();
-};
-
-/* ── 9. DAILY ROUTINE (daily-routine) ── */
 SIM_REGISTRY['daily-routine'] = function(c) {
   var tasks = [
     { time:'6:00', icon:'⏰', task:'Wake up & stretch', done:false, category:'health' },
@@ -10604,98 +10570,6 @@ SIM_REGISTRY['urban-rural'] = function(c) {
 };
 
 /* ── 14. TEAMWORK TOWER (teamwork-tower) ── */
-SIM_REGISTRY['teamwork-tower'] = function(c) {
-  var raf2, t2 = 0, blocks = [], nextBlock = null, score = 0, gameOver = false, started = false;
-  var towerX = 120, blockW = 60, blockH = 20, speed = 2;
-  var direction = 1;
-
-  function init() {
-    blocks = [{ x: towerX - blockW/2, y: 260, w: blockW, color: '#4D96FF', placed: true }];
-    nextBlock = { x: 20, y: 40, w: blockW, color: getColor() };
-    score = 0; gameOver = false; started = true; direction = 1; speed = 2;
-  }
-
-  function getColor() {
-    var colors = ['#FF6B6B','#FFD93D','#6BCB77','#C77DFF','#FF8C42','#4D96FF'];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  function drop() {
-    if (!started || gameOver || !nextBlock) return;
-    var topBlock = blocks[blocks.length - 1];
-    var overlap = Math.min(nextBlock.x + nextBlock.w, topBlock.x + topBlock.w) - Math.max(nextBlock.x, topBlock.x);
-    if (overlap <= 0) { gameOver = true; return; }
-    var newX = Math.max(nextBlock.x, topBlock.x);
-    blocks.push({ x: newX, y: topBlock.y - blockH, w: overlap, color: nextBlock.color, placed: true });
-    score++;
-    speed = Math.min(5, 2 + score * 0.2);
-    nextBlock = { x: direction > 0 ? -blockW : 280, y: 40, w: overlap, color: getColor() };
-    direction *= Math.random() > 0.5 ? 1 : -1;
-  }
-
-  function draw() {
-    var cv = document.getElementById('towerCanvas');
-    if (!cv) return;
-    var ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, W, H);
-
-    /* Ground */
-    ctx.fillStyle = '#1a2a1a'; ctx.fillRect(0, H - 30, W, 30);
-
-    /* Placed blocks */
-    blocks.forEach(function(b) {
-      ctx.fillStyle = b.color + 'cc';
-      ctx.fillRect(b.x, b.y, b.w, blockH);
-      ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1;
-      ctx.strokeRect(b.x, b.y, b.w, blockH);
-    });
-
-    /* Moving block */
-    if (nextBlock && started && !gameOver) {
-      nextBlock.x += speed * direction;
-      if (nextBlock.x + nextBlock.w > 280) direction = -1;
-      if (nextBlock.x < 0) direction = 1;
-      ctx.fillStyle = nextBlock.color + 'cc';
-      ctx.fillRect(nextBlock.x, nextBlock.y, nextBlock.w, blockH);
-      ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(nextBlock.x, nextBlock.y, nextBlock.w, blockH);
-    }
-
-    /* Score */
-    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = 'bold 14px Nunito,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(gameOver ? '😔 Game Over! Score: ' + score : started ? 'Score: ' + score : 'Press Drop to start!', W/2, 22);
-
-    if (!gameOver) raf2 = requestAnimationFrame(draw);
-    t2 += 0.04;
-  }
-
-  function render() {
-    c.innerHTML =
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">🏗️ Teamwork Tower — Precision & Timing</div>' +
-      '<canvas id="towerCanvas" width="280" height="280" style="border-radius:12px;display:block;width:100%;cursor:pointer"></canvas>' +
-      '<div class="ctrl-row" style="margin-top:8px">' +
-      '<button class="cbtn" onclick="towerDrop()" style="background:var(--acc);color:white;border-color:var(--acc);font-size:14px;flex:1">⬇️ Drop Block!</button>' +
-      '<button class="cbtn" onclick="towerReset()" style="font-size:12px">↺ New Game</button>' +
-      '</div>' +
-      '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7">Time your drop perfectly! Blocks get narrower with each miss — just like teamwork: small errors compound over time. Can you reach 10?</div>';
-    cancelAnimationFrame(raf2);
-    draw();
-    document.getElementById('towerCanvas').addEventListener('click', function() { if (!started || gameOver) init(); else drop(); draw(); });
-  }
-
-  window.towerDrop = function() { if (!started || gameOver) { init(); } else { drop(); } };
-  window.towerReset = function() { cancelAnimationFrame(raf2); gameOver = false; started = false; blocks = []; render(); };
-  window.simCleanup = function() { cancelAnimationFrame(raf2); };
-  render();
-};
-
-
-/* ══════════════════════════════════════
-   BATCH 11 — Final 42 simulations
-   ══════════════════════════════════════ */
-
-/* ── 1. MOTOR MODEL (motor-model) ── */
 SIM_REGISTRY['motor-model'] = function(c) {
   var raf2, t2=0, running=false, speed=1;
 
