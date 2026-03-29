@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
@@ -18,6 +19,7 @@
 <link rel="apple-touch-icon" href="icon.svg">
 
 <!-- Structured Data -->
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -39,7 +41,9 @@
 <!-- ══ GOOGLE ANALYTICS 4 ══
      Replace G-Z7T5E7CP00 with your real Measurement ID from analytics.google.com
      ══════════════════════ -->
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z7T5E7CP00"></script>
+
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -50,6 +54,7 @@
 <!-- ══ MICROSOFT CLARITY ══
      Replace XXXXXXXXXX with your real Clarity Project ID from clarity.microsoft.com
      ════════════════════ -->
+
 <script>
   (function(c,l,a,r,i,t,y){
     c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -67,6 +72,7 @@
 <body>
 
 <!-- ══ HEADER ══ -->
+
 <header>
   <div class="logo-wrap">
     <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none">
@@ -97,7 +103,9 @@
 </header>
 
 <!-- ══ CLASS TABS ══ -->
+
 <!-- ══ MY LAB DRAWER ══ -->
+
 <div class="mylab-drawer" id="myLabDrawer">
   <div class="mylab-drawer-inner">
     <div class="mylab-drawer-hdr">
@@ -130,6 +138,7 @@
 </div>
 
 <!-- ══ SUBJECT FILTER ══ -->
+
 <div class="sub-nav">
   <div class="stab active" data-s="All"        onclick="setSub('All',this)">✦ All Subjects</div>
   <div class="stab" data-s="Science"           onclick="setSub('Science',this)">🔬 Science</div>
@@ -139,9 +148,11 @@
 </div>
 
 <!-- ══ EXPERIMENT GRID ══ -->
+
 <div class="grid" id="grid"></div>
 
 <!-- ══ MODAL ══ -->
+
 <div class="overlay" id="overlay" onclick="closeCheck(event)">
   <div class="modal" id="modal">
     <div class="modal-hdr">
@@ -161,6 +172,7 @@
 </div>
 
 <!-- ══ FOOTER ══ -->
+
 <footer class="site-footer">
   <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="28" height="28">
@@ -193,20 +205,33 @@
 </footer>
 
 <!-- ══ DATA ══ -->
+
 <script src="js/data-1-5.js"></script>
+
 <script src="js/data-6-10-science.js"></script>
+
 <script src="js/data-6-10-maths.js"></script>
+
 <script src="js/data-6-10-evs-life.js"></script>
+
 <script src="js/data.js"></script>
 
 <!-- ══ APP LOGIC ══ -->
+
 <script src="js/sims.js"></script>
+
+<script src="js/sims-3d.js"></script>
+
 <script src="js/modal.js"></script>
+
 <script src="js/app.js"></script>
+
 <script src="js/favourites.js"></script>
+
 <script src="js/fullscreen.js"></script>
 
 <!-- ══ THEME TOGGLE ══ -->
+
 <script>
 (function() {
   var saved = localStorage.getItem('bodhanika-theme') || 'dark';
@@ -224,6 +249,7 @@ window.toggleTheme = function() {
 </script>
 
 <!-- ══ UPDATE TOAST ══ -->
+
 <div id="updateToast" style="
   display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
   background:var(--acc); color:white; border-radius:14px;
@@ -244,6 +270,7 @@ window.toggleTheme = function() {
 </div>
 
 <!-- ══ PWA SERVICE WORKER ══ -->
+
 <script>
 (function() {
   if (!('serviceWorker' in navigator)) return;
