@@ -207,12 +207,55 @@ window.EXPERIMENTS_6_10_MATH = [
    simId:'bayes-prob',buddy:'Medical tests are rarely as reliable as they seem. A 99% accurate test for a rare disease still gives a 50% false-positive rate. Understanding Bayes\' theorem literally helps you make life-saving decisions.'},
 
   /* ── 3D SIM ── */
-  ,{id:'c9-m6',title:'3D Shapes Explorer',subject:'Maths',classes:['8','9','10'],icon:'🔷',bgGrad:'linear-gradient(135deg,rgba(255,217,61,.25),rgba(251,146,60,.2))',
+  ,{id:'c9-m6',title:'3D Shapes Explorer',subject:'Maths',classes:['9'],icon:'🔷',bgGrad:'linear-gradient(135deg,rgba(255,217,61,.25),rgba(251,146,60,.2))',
    desc:'Rotate and explore 3D geometric solids — cube, cuboid, sphere, cone, cylinder, tetrahedron. Watch surface area and volume update live as you resize.',
    ncert:'NCERT Maths Class 9 – Surface Areas and Volumes',
    why:'3D solids have surface area (sum of all face areas) and volume (space enclosed). Key formulas: Cube SA=6a², V=a³. Cylinder SA=2πr(r+h), V=πr²h. Cone SA=πr(r+l), V=⅓πr²h. Sphere SA=4πr², V=⁴⁄₃πr³. Visualising these in 3D makes the formulas intuitive.',
    materials:['Cardboard','Scissors','Ruler','Tape'],
    steps:['Cut out nets (flat patterns) of a cube and cuboid from cardboard.','Fold and tape to make the 3D shape.','Count the faces, edges, and vertices. Verify Euler\'s formula: F+V−E=2.','Measure edges and calculate surface area. Compare with the formula.','Fill with water or sand to measure volume experimentally.'],
    simId:'shapes-3d',buddy:'Archimedes discovered the volume of a sphere by thinking about it as slices. He was so excited he ran through the streets. His insight: a sphere\'s volume is exactly ⅔ of the cylinder that contains it.'}
+
+
+  /* ── NEW 3D MATHS SIMS ── */
+
+  /* Class 8 — Visualising Solid Shapes 3D */
+  ,{id:'c8-m6-3d',title:'Visualising Solid Shapes 3D',subject:'Maths',classes:['8'],icon:'🔷',
+   bgGrad:'linear-gradient(135deg,rgba(255,217,61,.25),rgba(251,146,60,.2))',
+   desc:'See 3D solid shapes unfolded into their nets, then fold back up. Visualise faces, edges, and vertices of cubes, pyramids, prisms, and cones.',
+   ncert:'NCERT Maths Class 8 – Visualising Solid Shapes',
+   why:'Every 3D solid has a flat net — a 2D pattern that folds into the shape. Euler\'s formula F+V-E=2 holds for all convex polyhedra. Views from front, side, and top are called orthographic projections — used by engineers and architects.',
+   materials:['Graph paper','Scissors','Ruler','Tape'],
+   steps:['Draw a net for a cube on graph paper (cross of 6 squares).','Cut out and fold — does it make a perfect cube?','Try a net for a triangular pyramid (equilateral triangle + 3 side triangles).','For each shape count faces (F), vertices (V), edges (E).','Check: F + V - E = 2 every time?'],
+   simId:'solid-shapes-3d',buddy:'Engineers use 3D nets every day — car body panels, aircraft fuselage sections, and packaging boxes are all designed as flat nets first, then folded into shape. Origami is the art form of the same principle.'}
+
+  /* Class 9 — 3D Coordinate Geometry */
+  ,{id:'c9-m6-3d',title:'3D Coordinate Geometry',subject:'Maths',classes:['9'],icon:'📍',
+   bgGrad:'linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.2))',
+   desc:'Plot points in XYZ 3D space, calculate distances between points, and explore the three coordinate planes. Extend what you know from 2D to 3D.',
+   ncert:'NCERT Maths Class 9 – Coordinate Geometry',
+   why:'In 3D, every point needs three coordinates (x,y,z). Distance = sqrt((x2-x1)^2+(y2-y1)^2+(z2-z1)^2). The three planes (xy, yz, xz) divide space into 8 octants. This extends your Class 9 coordinate geometry into full three-dimensional space.',
+   materials:['Cardboard box corner','Ruler','Marker','String'],
+   steps:['Use a box corner as origin — three edges are x, y, z axes.','Mark units along each edge with a marker.','Place a small ball at point (3,4,0) — distance from origin = 5 (Pythagoras).','Now lift it to (3,4,5) — distance = sqrt(50) = 7.07.','Plot 4 points and connect — what 3D shape do you get?'],
+   simId:'coord-3d',buddy:'GPS satellites calculate your exact position using 3D coordinates. Four satellites measure distances to your phone; the intersection of four spheres in 3D space gives your precise location on Earth.'}
+
+  /* Class 10 — Trigonometry Heights and Distances 3D */
+  ,{id:'c10-m6-3d',title:'Heights and Distances 3D',subject:'Maths',classes:['10'],icon:'🏔️',
+   bgGrad:'linear-gradient(135deg,rgba(34,211,238,.22),rgba(6,182,212,.18))',
+   desc:'Solve heights and distances problems in a 3D scene — measure a tower, a cliff, a flying kite using angles of elevation and depression.',
+   ncert:'NCERT Maths Class 10 – Some Applications of Trigonometry',
+   why:'tan(angle) = opposite/adjacent lets you find unknown heights from measured horizontal distance and angle of elevation. Angle of depression works the same way from above. Surveyors, pilots, and architects use this every day. Two observations from different distances let you find height without going near the object.',
+   materials:['Protractor','Straw','String with weight (plumb line)','Ruler'],
+   steps:['Make a clinometer: tape a straw to a protractor, hang a plumb line from centre.','Stand 10 m from a tree/building.','Look through the straw at the top — read the angle.','Height = distance x tan(angle) + your eye height.','Move 5 m closer and measure again — do both give the same height?'],
+   simId:'heights-3d',buddy:'The height of Mount Everest was first calculated by the Great Trigonometrical Survey of India in 1852 — from 160 km away using exactly this method. Radhanath Sikdar, a Bengali mathematician, did the calculation that proved it was the world\'s highest peak.'}
+
+  /* Class 10 — Circles and Tangents 3D */
+  ,{id:'c10-m7-3d',title:'Circles and Tangents 3D',subject:'Maths',classes:['10'],icon:'⭕',
+   bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(245,158,11,.18))',
+   desc:'Explore circle theorems in 3D — tangents from external point, angle in semicircle, alternate segment theorem. Rotate the 3D model to see proofs from any angle.',
+   ncert:'NCERT Maths Class 10 – Circles',
+   why:'Key theorems: tangent is perpendicular to radius at point of contact; tangents from external point are equal; angle in semicircle is 90 degrees; angles in same segment are equal. These properties are used in gear design, optical lenses, and road curve engineering.',
+   materials:['Compass','Ruler','Pencil','Protractor'],
+   steps:['Draw a circle with centre O.','Mark external point P and draw two tangents PA and PB.','Measure PA and PB — are they equal?','Draw diameter AB. Mark point C on circle. Measure angle ACB.','Is it always 90 degrees? Try 5 different positions for C.'],
+   simId:'circles-tangents-3d',buddy:'Every roundabout on Indian highways is designed using circle geometry — the entry and exit roads are tangents to the circular path. The radius determines the safe speed of the vehicle going around it.'}
 
 ];

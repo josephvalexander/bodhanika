@@ -208,7 +208,7 @@ window.EXPERIMENTS_6_10_SCI = [
 
 
   /* ── 3D SIMS ── */
-  ,{id:'c10-s6',title:'DNA Double Helix 3D',subject:'Science',classes:['8','9','10'],icon:'🧬',bgGrad:'linear-gradient(135deg,rgba(52,211,153,.25),rgba(96,165,250,.2))',
+  ,{id:'c10-s6',title:'DNA Double Helix 3D',subject:'Science',classes:['10'],icon:'🧬',bgGrad:'linear-gradient(135deg,rgba(52,211,153,.25),rgba(96,165,250,.2))',
    desc:'Explore the 3D structure of DNA — rotate the double helix, identify base pairs, and see how the molecule encodes genetic information.',
    ncert:'NCERT Science Class 10 – Heredity and Evolution',
    why:'DNA is a double helix — two antiparallel strands wound around each other. Complementary base pairs (A-T, G-C) held by hydrogen bonds carry the genetic code. The 3D structure, discovered by Watson & Crick in 1953 using Rosalind Franklin\'s X-ray data, explains how DNA replicates and transmits hereditary information.',
@@ -216,11 +216,74 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Take two long wires — these are the sugar-phosphate backbones.','Twist them around each other in a right-hand spiral.','Connect them with coloured beads: red-blue pairs (A-T) and green-yellow pairs (G-C).','Notice the pairs always match — A never bonds with G or C.','Measure: one full twist every 10 base pairs (3.4 nm in real DNA).'],
    simId:'dna-helix-3d',buddy:'If you uncoiled the DNA from just one of your cells, it would be 2 metres long. Packed into a nucleus 6 micrometres wide — that\'s like fitting a 40 km thread into a marble.'}
 
-  ,{id:'c9-s6',title:'Atomic Structure 3D',subject:'Science',classes:['8','9','10'],icon:'⚛️',bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(249,115,22,.18))',
+  ,{id:'c9-s6',title:'Atomic Structure 3D',subject:'Science',classes:['9'],icon:'⚛️',bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(249,115,22,.18))',
    desc:'Build and explore 3D atomic models — select any element, watch electron shells fill and orbit the nucleus. See Bohr model come alive.',
    ncert:'NCERT Science Class 9 – Structure of the Atom',
    why:'Atoms have a dense nucleus (protons + neutrons) surrounded by electron shells at fixed energy levels. Shells fill in order: K(2), L(8), M(18). The outermost electrons (valence electrons) determine an element\'s chemical behaviour and position in the periodic table.',
    materials:['Thermocol ball (nucleus)','Smaller balls in different colours (protons, neutrons, electrons)','Wire or cardboard rings for shells'],
    steps:['Make the nucleus: combine protons (red) and neutrons (blue) together.','First shell (K): add up to 2 electrons on the inner ring.','Second shell (L): add up to 8 electrons on the next ring.','Third shell (M): add up to 18 electrons on the outer ring.','Count protons = atomic number. Compare your model to the periodic table.'],
    simId:'atom-3d',buddy:'The nucleus is tiny compared to the atom — if an atom were the size of a football stadium, the nucleus would be a grain of sand at the centre. Atoms are mostly empty space, including every atom in your body.'}
+
+  /* ── NEW 3D SCIENCE SIMS ── */
+
+  /* Class 8 — Animal Cell 3D */
+  ,{id:'c8-s6-3d',title:'Animal Cell 3D',subject:'Science',classes:['8'],icon:'🔬',
+   bgGrad:'linear-gradient(135deg,rgba(167,139,250,.25),rgba(236,72,153,.18))',
+   desc:'Explore a 3D animal cell — rotate it, click each organelle to learn its function.',
+   ncert:'NCERT Science Class 8 – Cell: Structure and Function',
+   why:'Animal cells have a plasma membrane, nucleus (control centre), mitochondria (energy), ribosomes (protein synthesis), endoplasmic reticulum, Golgi apparatus (packaging), and lysosomes. No cell wall or chloroplasts — unlike plant cells.',
+   materials:['Clay or play-dough in 6 colours','Toothpicks for labels'],
+   steps:['Use a large ball of clay as the cell membrane.','Press a firm ball inside for the nucleus.','Add bean-shaped pieces for mitochondria.','Roll thin sheets for endoplasmic reticulum.','Add small dots for ribosomes.','Label each organelle with a toothpick flag.'],
+   simId:'cell-3d',buddy:'Your mitochondria have their own DNA — separate from your nuclear DNA. Scientists believe mitochondria were once free-living bacteria absorbed by larger cells 1.5 billion years ago.'}
+
+  /* Class 8 — Electromagnetic Induction 3D */
+  ,{id:'c8-s7-3d',title:'Electromagnetic Induction 3D',subject:'Science',classes:['8'],icon:'⚡',
+   bgGrad:'linear-gradient(135deg,rgba(251,191,36,.25),rgba(245,158,11,.18))',
+   desc:'See a 3D bar magnet moving through a coil — watch current direction flip with magnet orientation. Faraday\'s law made visible.',
+   ncert:'NCERT Science Class 8 – Chemical Effects of Electric Current',
+   why:'When a magnet moves through a coil, the changing magnetic flux induces an EMF — Faraday\'s Law. The current direction depends on the pole orientation and motion direction — Lenz\'s Law. This is how every generator and alternator works.',
+   materials:['Strong bar magnet','Copper wire coil (50 turns)','Galvanometer or LED','Cardboard tube'],
+   steps:['Wind 50 turns of copper wire around a cardboard tube.','Connect ends to a galvanometer.','Push the north pole into the coil — note needle deflection.','Pull it out — needle deflects opposite.','Push south pole in — what happens?'],
+   simId:'em-induction-3d',buddy:'Every time you charge your phone wirelessly, Faraday\'s law is at work. The charging pad creates a changing magnetic field; your phone\'s coil converts it to current. Faraday discovered this in 1831.'}
+
+  /* Class 9 — Gravity and Orbits 3D */
+  ,{id:'c9-s7-3d',title:'Gravity and Orbits 3D',subject:'Science',classes:['9'],icon:'🪐',
+   bgGrad:'linear-gradient(135deg,rgba(16,185,129,.22),rgba(6,182,212,.18))',
+   desc:'Visualise Newton\'s law of gravitation in 3D — change mass and distance, watch orbital speed and gravitational force update live.',
+   ncert:'NCERT Science Class 9 – Gravitation',
+   why:'F = Gm\u2081m\u2082/r\u00b2. Gravitational force is proportional to the product of masses and inversely proportional to the square of distance. Double the distance and force drops to one quarter. This inverse-square law governs planetary orbits, tides, and satellite motion.',
+   materials:['Rubber sheet','Heavy ball (sun)','Small ball (planet)','Ruler'],
+   steps:['Stretch a rubber sheet tightly over a frame.','Place a heavy ball in the centre — it warps the sheet.','Roll a smaller ball near it — it curves toward the large ball.','Roll it faster — it orbits instead of falling in.','This is how planets orbit: constant falling balanced by sideways speed.'],
+   simId:'gravity-3d',buddy:'The ISS orbits at 7.7 km/s — so fast it falls around the Earth rather than into it. Astronauts aren\'t weightless because there\'s no gravity — they\'re in free fall the whole time.'}
+
+  /* Class 9 — Mitosis 3D */
+  ,{id:'c9-s8-3d',title:'Mitosis 3D — Cell Division',subject:'Science',classes:['9'],icon:'🔬',
+   bgGrad:'linear-gradient(135deg,rgba(52,211,153,.22),rgba(16,185,129,.15))',
+   desc:'Watch mitosis unfold in 3D — chromosomes condense, line up, split, and form two identical daughter cells. Step through each phase.',
+   ncert:'NCERT Science Class 9 – The Fundamental Unit of Life',
+   why:'Mitosis produces two genetically identical daughter cells. Phases: Prophase (chromosomes condense), Metaphase (line up at centre), Anaphase (chromatids pulled apart), Telophase (two nuclei form), Cytokinesis (cell splits). Your body makes 3.8 million new cells every second this way.',
+   materials:['String (chromosomes)','Circle on paper (cell)','Scissors'],
+   steps:['Draw a circle (cell). Place 4 strings inside (chromosomes).','Prophase: coil the strings tightly.','Metaphase: line all strings across the centre.','Anaphase: pull each pair to opposite ends.','Telophase: draw a new circle around each group.'],
+   simId:'mitosis-3d',buddy:'Cancer is uncontrolled mitosis — cells that forgot when to stop dividing. Chemotherapy drugs disrupt specific phases of mitosis, particularly the spindle fibres that pull chromosomes apart in anaphase.'}
+
+  /* Class 10 — Human Eye 3D */
+  ,{id:'c10-s7-3d',title:'Human Eye 3D',subject:'Science',classes:['10'],icon:'👁️',
+   bgGrad:'linear-gradient(135deg,rgba(56,189,248,.25),rgba(99,102,241,.2))',
+   desc:'Explore a 3D cross-section of the human eye — see how the lens focuses light on the retina. Switch between normal vision, myopia, and hypermetropia.',
+   ncert:'NCERT Science Class 10 – The Human Eye and the Colourful World',
+   why:'The eye\'s lens refracts light to focus on the retina. In myopia, the image forms in front of the retina — corrected by concave lens. In hypermetropia, image forms behind retina — corrected by convex lens. The lens changes shape (accommodation) to focus near and far objects.',
+   materials:['Convex lens','Screen','Candle','Ruler'],
+   steps:['Set a convex lens 30 cm from a screen.','Place a candle 60 cm from the lens.','Adjust until a sharp image forms on screen.','Move candle closer — image blurs (like myopia).','Add a second convex lens — image sharpens (like spectacles).'],
+   simId:'eye-3d',buddy:'Eagles have two foveas in each eye versus our one. They can spot a rabbit from 3 km away. Your eye has 120 million rod cells for night vision and 6 million cone cells for colour — all connected to one optic nerve.'}
+
+  /* Class 10 — Magnetic Field Lines 3D */
+  ,{id:'c10-s8-3d',title:'Magnetic Field Lines 3D',subject:'Science',classes:['10'],icon:'🧲',
+   bgGrad:'linear-gradient(135deg,rgba(244,63,94,.22),rgba(251,113,133,.15))',
+   desc:'Visualise 3D magnetic field lines around a bar magnet — rotate freely, flip poles, see how field lines never cross and always form closed loops.',
+   ncert:'NCERT Science Class 10 – Magnetic Effects of Electric Current',
+   why:'Magnetic field lines emerge from the north pole and re-enter at the south pole. They never cross — field has one direction at each point. Closer lines mean stronger field. The Earth itself is a giant magnet whose field deflects solar wind, protecting all life.',
+   materials:['Bar magnet','Iron filings','White paper','Compass'],
+   steps:['Place a bar magnet flat under white paper.','Sprinkle iron filings evenly over the paper.','Gently tap the paper — filings align with field lines.','Sketch the pattern.','Place a compass at 10 different points — which way does it point each time?'],
+   simId:'magfield-3d',buddy:'The Earth\'s magnetic field has flipped hundreds of times in geological history — north becomes south. We\'re overdue for another flip. Compasses would point south during the transition.'}
+
 ];

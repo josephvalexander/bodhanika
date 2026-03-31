@@ -545,7 +545,7 @@ SIM_REGISTRY['shapes-3d'] = function(container) {
         '<b style="color:var(--text);font-size:13px">' + SHAPES[idx].icon + ' ' + SHAPES[idx].name + '</b><br>' +
         (f.F ? '📐 Faces: <b>' + f.F + '</b> &nbsp;|&nbsp; Vertices: <b>' + f.V + '</b> &nbsp;|&nbsp; Edges: <b>' + f.E + '</b><br>' : '') +
         '📏 <b>' + f.formula + '</b><br>' +
-        (f.F && f.F > 0 ? '✅ Euler: F + V − E = ' + f.F + ' + ' + f.V + ' − ' + f.E + ' = <b style="color:var(--evs)">' + (f.F + f.V - f.E) + '</b>' : '');
+        (f.F && f.F > 0 ? '✅ Euler: F + V - E = ' + f.F + ' + ' + f.V + ' - ' + f.E + ' = <b style="color:var(--evs)">' + (f.F + f.V - f.E) + '</b>' : '');
 
       /* Highlight active button */
       document.querySelectorAll('.sh3d-btn').forEach(function(btn, bi) {
@@ -589,5 +589,920 @@ SIM_REGISTRY['shapes-3d'] = function(container) {
       delete window.sh3dWire;
       delete window.sh3dSpin;
     };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   4. ANIMAL CELL 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['cell-3d'] = function(container) {
+  var ORGANELLES = [
+    { name:'Cell Membrane', color:0x818cf8, size:3.8, shape:'sphere',  pos:[0,0,0],      info:'Thin flexible boundary — controls what enters and exits the cell.' },
+    { name:'Nucleus',       color:0xf87171, size:0.9, shape:'sphere',  pos:[0,0,0],      info:'Control centre — contains DNA with all genetic instructions.' },
+    { name:'Mitochondria',  color:0xfbbf24, size:0.4, shape:'ellipse', pos:[1.5,0.8,0.5],info:'Powerhouse — produces ATP energy through cellular respiration.' },
+    { name:'Mitochondria',  color:0xfbbf24, size:0.4, shape:'ellipse', pos:[-1.2,-0.9,0.8],info:'Powerhouse — produces ATP energy.' },
+    { name:'Golgi Body',    color:0x34d399, size:0.5, shape:'flat',    pos:[-1.0,0.8,-0.5],info:'Packaging unit — modifies and ships proteins to destinations.' },
+    { name:'Ribosome',      color:0xe879f9, size:0.18,shape:'sphere',  pos:[0.8,-0.5,1.2],info:'Protein factory — reads mRNA to build proteins.' },
+    { name:'Ribosome',      color:0xe879f9, size:0.18,shape:'sphere',  pos:[-0.5,1.2,0.8],info:'Protein factory.' },
+    { name:'Lysosome',      color:0xfb923c, size:0.25,shape:'sphere',  pos:[1.2,-1.0,-0.6],info:'Recycler — breaks down waste and worn-out cell parts.' },
+  ];
+
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Animal Cell 3D — drag to rotate · click to identify</div>' +
+    '<div id="cell3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#150a2a,#05020f)"></div>' +
+    '<div id="cell3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;border:1px solid var(--border);min-height:44px">Click an organelle to learn its function.</div>';
+
+  withThree(function() {
+    var mount = document.getElementById('cell3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x05020f);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 0, 10);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(5,8,5); scene.add(dl);
+    var pl = new THREE.PointLight(0x818cf8, 0.5, 20); pl.position.set(-3,3,3); scene.add(pl);
+
+    var group = new THREE.Group();
+    scene.add(group);
+    var meshes = [];
+
+    /* Cell membrane — transparent sphere */
+    var memGeo = new THREE.SphereGeometry(3.8, 32, 32);
+    var memMat = new THREE.MeshPhongMaterial({ color:0x818cf8, transparent:true, opacity:0.12, wireframe:false, side:THREE.DoubleSide });
+    group.add(new THREE.Mesh(memGeo, memMat));
+    var memWire = new THREE.Mesh(new THREE.SphereGeometry(3.82,24,24), new THREE.MeshBasicMaterial({color:0x818cf8,wireframe:true,transparent:true,opacity:0.08}));
+    group.add(memWire);
+
+    /* Nucleus */
+    var nucGeo = new THREE.SphereGeometry(0.9, 20, 20);
+    var nucMesh = new THREE.Mesh(nucGeo, new THREE.MeshPhongMaterial({color:0xf87171, shininess:80, transparent:true, opacity:0.9}));
+    group.add(nucMesh);
+    meshes.push({ mesh:nucMesh, info:ORGANELLES[1] });
+
+    /* Other organelles */
+    ORGANELLES.slice(2).forEach(function(org) {
+      var geo, mat = new THREE.MeshPhongMaterial({color:org.color, shininess:70});
+      if (org.shape === 'ellipse') {
+        geo = new THREE.SphereGeometry(org.size, 12, 12);
+      } else if (org.shape === 'flat') {
+        geo = new THREE.TorusGeometry(org.size, org.size*0.3, 6, 16);
+      } else {
+        geo = new THREE.SphereGeometry(org.size, 10, 10);
+      }
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(org.pos[0], org.pos[1], org.pos[2]);
+      if (org.shape === 'ellipse') mesh.scale.set(1.6, 0.8, 0.9);
+      group.add(mesh);
+      meshes.push({ mesh:mesh, info:org });
+    });
+
+    /* Click to identify */
+    var raycaster = new THREE.Raycaster();
+    var mouse = new THREE.Vector2();
+    renderer.domElement.addEventListener('click', function(e) {
+      var rect = renderer.domElement.getBoundingClientRect();
+      mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      var hits = raycaster.intersectObjects(meshes.map(function(m){return m.mesh;}));
+      if (hits.length) {
+        var found = meshes.find(function(m){ return m.mesh === hits[0].object; });
+        if (found) {
+          var el = document.getElementById('cell3dInfo');
+          if (el) el.innerHTML = '<b style="color:var(--text)">' + found.info.name + '</b> — ' + found.info.info;
+        }
+      }
+    });
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); rotY+=0.005; group.rotation.y=rotY; group.rotation.x=rotX; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup = function(){ cancelAnimationFrame(raf); renderer.dispose(); };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   5. ELECTROMAGNETIC INDUCTION 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['em-induction-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Electromagnetic Induction 3D</div>' +
+    '<div id="em3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#0d1f35,#050c14)"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap">' +
+      '<button class="cbtn" onclick="emPush()">➡ Push In (N)</button>' +
+      '<button class="cbtn" onclick="emPull()">⬅ Pull Out (N)</button>' +
+      '<button class="cbtn" onclick="emFlip()">🔄 Flip Poles</button>' +
+    '</div>' +
+    '<div id="em3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.7;border:1px solid var(--border);text-align:center">Press Push In to start the demonstration.</div>';
+
+  withThree(function() {
+    var mount = document.getElementById('em3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x050c14);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(3, 3, 10);
+    camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(5,8,5); scene.add(dl);
+
+    /* Coil — series of torus rings */
+    var coilGroup = new THREE.Group();
+    var coilMat = new THREE.MeshPhongMaterial({ color:0xd97706, shininess:60 });
+    for (var i=0; i<12; i++) {
+      var t = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.08, 8, 24), coilMat);
+      t.position.x = (i-5.5) * 0.38;
+      t.rotation.y = Math.PI/2;
+      coilGroup.add(t);
+    }
+    scene.add(coilGroup);
+
+    /* Magnet */
+    var magnetGroup = new THREE.Group();
+    var northMat = new THREE.MeshPhongMaterial({color:0xef4444, shininess:80});
+    var southMat = new THREE.MeshPhongMaterial({color:0x3b82f6, shininess:80});
+    var north = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,1.5,16), northMat);
+    north.rotation.z = Math.PI/2; north.position.x = 0.75;
+    var south = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,1.5,16), southMat);
+    south.rotation.z = Math.PI/2; south.position.x = -0.75;
+    magnetGroup.add(north); magnetGroup.add(south);
+    magnetGroup.position.x = 5;
+    scene.add(magnetGroup);
+
+    /* Labels */
+    var flipped = false;
+
+    /* Current indicator ring (glows when current flows) */
+    var currentRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.6, 0.12, 8, 24),
+      new THREE.MeshBasicMaterial({color:0x34d399, transparent:true, opacity:0})
+    );
+    currentRing.rotation.y = Math.PI/2;
+    currentRing.position.x = 0;
+    scene.add(currentRing);
+
+    var targetX = 5, currentOpacity = 0, direction = 0;
+    var animating = false;
+
+    function setInfo(text, color) {
+      var el = document.getElementById('em3dInfo');
+      if (el) el.innerHTML = '<b style="color:' + (color||'var(--text)') + '">' + text + '</b>';
+    }
+
+    window.emPush = function() {
+      if (animating) return;
+      animating = true; targetX = -0.5; direction = 1;
+      setInfo(flipped ? 'South pole entering — current flows CLOCKWISE' : 'North pole entering — current flows ANTI-CLOCKWISE', '#34d399');
+      setTimeout(function(){ animating=false; }, 1800);
+    };
+    window.emPull = function() {
+      if (animating) return;
+      animating = true; targetX = 5; direction = -1;
+      setInfo(flipped ? 'South pole leaving — current flows ANTI-CLOCKWISE' : 'North pole leaving — current flows CLOCKWISE', '#60a5fa');
+      setTimeout(function(){ animating=false; }, 1800);
+    };
+    window.emFlip = function() {
+      flipped = !flipped;
+      north.material = flipped ? southMat : northMat;
+      south.material = flipped ? northMat : southMat;
+      setInfo('Poles flipped! Now try pushing/pulling again — notice the current reverses.', '#fbbf24');
+    };
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+
+    var raf;
+    function animate() {
+      raf = requestAnimationFrame(animate);
+      /* Move magnet toward/away from coil */
+      magnetGroup.position.x += (targetX - magnetGroup.position.x) * 0.04;
+      /* Current glow: stronger when magnet near coil and moving */
+      var dist = Math.abs(magnetGroup.position.x);
+      var speed = Math.abs(targetX - magnetGroup.position.x);
+      currentOpacity = Math.min(0.85, speed * 0.3) * (dist < 2 ? 1 : 0);
+      currentRing.material.opacity = currentOpacity;
+      currentRing.material.color.setHex(direction > 0 ? 0x34d399 : 0x60a5fa);
+      currentRing.rotation.z += direction * 0.05 * currentOpacity;
+      /* Scene rotation from drag */
+      coilGroup.rotation.y = rotY; magnetGroup.rotation.y = rotY;
+      currentRing.rotation.y = Math.PI/2;
+      scene.rotation.x = rotX * 0.3;
+      renderer.render(scene, camera);
+    }
+    animate();
+    window.simCleanup = function() {
+      cancelAnimationFrame(raf); renderer.dispose();
+      delete window.emPush; delete window.emPull; delete window.emFlip;
+    };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   6. GRAVITY & ORBITS 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['gravity-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Gravity and Orbits 3D — F = Gm₁m₂/r²</div>' +
+    '<div id="grav3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:#000008"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap">' +
+      '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Distance <input type="range" id="gravDist" min="2" max="6" value="4" step="0.1" oninput="gravUpdate()"></label>' +
+      '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Mass ☀️ <input type="range" id="gravMass" min="1" max="4" value="2" step="0.1" oninput="gravUpdate()"></label>' +
+    '</div>' +
+    '<div id="grav3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.9;border:1px solid var(--border);font-family:monospace"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('grav3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x000008);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 200);
+    camera.position.set(0, 8, 14);
+    camera.lookAt(0, 0, 0);
+
+    /* Stars background */
+    var starsGeo = new THREE.BufferGeometry();
+    var starVerts = [];
+    for (var i=0; i<1200; i++) {
+      starVerts.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
+    }
+    starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
+    scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color:0xffffff, size:0.15})));
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    var sunLight = new THREE.PointLight(0xfdb813, 2.0, 50);
+    sunLight.position.set(0,0,0);
+    scene.add(sunLight);
+
+    /* Sun */
+    var sun = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 24, 24),
+      new THREE.MeshBasicMaterial({color:0xfdb813})
+    );
+    scene.add(sun);
+
+    /* Orbit ring */
+    var orbitRing = new THREE.Mesh(
+      new THREE.TorusGeometry(4, 0.03, 8, 80),
+      new THREE.MeshBasicMaterial({color:0x334155, transparent:true, opacity:0.5})
+    );
+    scene.add(orbitRing);
+
+    /* Planet */
+    var planet = new THREE.Mesh(
+      new THREE.SphereGeometry(0.35, 16, 16),
+      new THREE.MeshPhongMaterial({color:0x3b82f6, shininess:60})
+    );
+    scene.add(planet);
+
+    /* Trail */
+    var trailPoints = [];
+    var MAX_TRAIL = 80;
+    var trailGeo = new THREE.BufferGeometry();
+    var trailLine = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({color:0x60a5fa, transparent:true, opacity:0.4}));
+    scene.add(trailLine);
+
+    var G = 1, dist = 4, mass = 2, angle = 0;
+
+    function gravUpdate() {
+      dist  = parseFloat(document.getElementById('gravDist').value);
+      mass  = parseFloat(document.getElementById('gravMass').value);
+      var F = G * mass * 0.3 / (dist * dist);
+      var v = Math.sqrt(G * mass / dist);
+      orbitRing.geometry.dispose();
+      orbitRing.geometry = new THREE.TorusGeometry(dist, 0.03, 8, 80);
+      sun.scale.setScalar(mass * 0.5);
+      trailPoints = [];
+      var info = document.getElementById('grav3dInfo');
+      if (info) info.innerHTML =
+        'F = G×m\u2081m\u2082/r\u00b2 &nbsp;|&nbsp; <b>F = ' + F.toFixed(3) + ' N</b><br>' +
+        'Orbital speed: <b>' + v.toFixed(2) + ' km/s</b> &nbsp;|&nbsp; ' +
+        'Distance: <b>' + dist.toFixed(1) + ' AU</b>';
+    }
+    window.gravUpdate = gravUpdate;
+    gravUpdate();
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.008; rotX+=dy*0.008; });
+
+    var raf, t=0;
+    function animate() {
+      raf = requestAnimationFrame(animate);
+      t += 0.016;
+      var speed = Math.sqrt(G * mass / dist);
+      angle += speed * 0.04;
+      planet.position.set(dist * Math.cos(angle), 0, dist * Math.sin(angle));
+      trailPoints.push(planet.position.clone());
+      if (trailPoints.length > MAX_TRAIL) trailPoints.shift();
+      trailGeo.setFromPoints(trailPoints);
+      scene.rotation.y = rotY;
+      scene.rotation.x = rotX * 0.3;
+      renderer.render(scene, camera);
+    }
+    animate();
+    window.simCleanup = function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.gravUpdate; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   7. MITOSIS 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['mitosis-3d'] = function(container) {
+  var PHASES = [
+    { name:'Interphase', color:0x818cf8, desc:'Cell grows and DNA replicates. Each chromosome is copied — ready for division.' },
+    { name:'Prophase',   color:0xfbbf24, desc:'Chromosomes condense and become visible. The nuclear envelope breaks down. Spindle fibres form.' },
+    { name:'Metaphase',  color:0x34d399, desc:'Chromosomes line up at the cell\'s equator (metaphase plate). Spindle fibres attach to each chromatid.' },
+    { name:'Anaphase',   color:0xf87171, desc:'Sister chromatids are pulled to opposite poles by spindle fibres. Cell elongates.' },
+    { name:'Telophase',  color:0x60a5fa, desc:'Nuclear envelopes reform around each set of chromosomes. Chromosomes begin to uncoil.' },
+    { name:'Cytokinesis',color:0xe879f9, desc:'Cytoplasm divides — two identical daughter cells are formed. Mitosis complete!' },
+  ];
+  var phase = 0;
+
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Mitosis 3D — drag to rotate</div>' +
+    '<div id="mit3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#0f1a0f,#030803)"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center">' +
+      '<button class="cbtn" id="mitPrevBtn" onclick="mitNav(-1)" style="display:none">← Back</button>' +
+      '<button class="cbtn" onclick="mitNav(1)" id="mitNextBtn">Next Phase →</button>' +
+    '</div>' +
+    '<div id="mit3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.7;border:1px solid var(--border)"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('mit3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x030803);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 2, 10);
+    camera.lookAt(0,0,0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,5); scene.add(dl);
+
+    var cellGroup = new THREE.Group();
+    scene.add(cellGroup);
+
+    function buildPhase(p) {
+      while (cellGroup.children.length) cellGroup.remove(cellGroup.children[0]);
+      var ph = PHASES[p];
+      var col = ph.color;
+
+      if (p < 4) {
+        /* Single cell */
+        var scaleX = p === 3 ? 1.4 : 1;
+        var mem = new THREE.Mesh(new THREE.SphereGeometry(2.5,24,24), new THREE.MeshPhongMaterial({color:col,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
+        mem.scale.x = scaleX;
+        cellGroup.add(mem);
+        var memW = new THREE.Mesh(new THREE.SphereGeometry(2.52,18,18), new THREE.MeshBasicMaterial({color:col,wireframe:true,transparent:true,opacity:0.1}));
+        memW.scale.x = scaleX;
+        cellGroup.add(memW);
+
+        /* Chromosomes */
+        var chrGeo = new THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(0.12,0.6,4,8) : new THREE.CylinderGeometry(0.12,0.12,0.6,8);
+        var chrMat = new THREE.MeshPhongMaterial({color:col, shininess:80});
+        var positions = p===0 ? [[0,0,0],[0.5,0.3,0.2],[-0.4,0.2,-0.3],[0.2,-0.4,0.3]] :
+                        p===1 ? [[0.5,0.5,0],[-0.5,0.5,0],[0.5,-0.5,0],[-0.5,-0.5,0]] :
+                        p===2 ? [[0,0.5,0],[0,-0.5,0],[0,0.2,0.4],[0,-0.2,-0.4]] :
+                        p===3 ? [[-1.2,0.3,0],[-1.2,-0.3,0],[1.2,0.3,0],[1.2,-0.3,0]] :
+                               [[0,0.3,0],[0,-0.3,0]];
+        positions.forEach(function(pos) {
+          var c = new THREE.Mesh(chrGeo, chrMat);
+          c.position.set(pos[0],pos[1],pos[2]);
+          c.rotation.z = Math.random()*0.5;
+          cellGroup.add(c);
+        });
+
+        /* Spindle fibres for metaphase/anaphase */
+        if (p === 2 || p === 3) {
+          var spindleMat = new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.3});
+          [[-2.2,0,0],[2.2,0,0]].forEach(function(pole) {
+            positions.forEach(function(chr) {
+              var pts = [new THREE.Vector3(pole[0],pole[1],pole[2]), new THREE.Vector3(chr[0],chr[1],chr[2])];
+              var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), spindleMat);
+              cellGroup.add(line);
+            });
+          });
+        }
+      } else {
+        /* Two daughter cells */
+        [-1.6, 1.6].forEach(function(xOff) {
+          var mem = new THREE.Mesh(new THREE.SphereGeometry(1.8,20,20), new THREE.MeshPhongMaterial({color:col,transparent:true,opacity:0.15,side:THREE.DoubleSide}));
+          mem.position.x = xOff;
+          cellGroup.add(mem);
+          var nuc = new THREE.Mesh(new THREE.SphereGeometry(0.6,14,14), new THREE.MeshPhongMaterial({color:col,shininess:60}));
+          nuc.position.x = xOff;
+          cellGroup.add(nuc);
+        });
+      }
+
+      /* Info */
+      var info = document.getElementById('mit3dInfo');
+      if (info) info.innerHTML = '<b style="color:var(--text)">' + ph.name + ' (' + (p+1) + '/6)</b><br>' + ph.desc;
+      var prev = document.getElementById('mitPrevBtn');
+      var next = document.getElementById('mitNextBtn');
+      if (prev) prev.style.display = p===0 ? 'none' : '';
+      if (next) next.textContent = p===5 ? '↺ Restart' : 'Next Phase →';
+    }
+
+    window.mitNav = function(dir) {
+      phase = (phase + dir + PHASES.length) % PHASES.length;
+      buildPhase(phase);
+    };
+    buildPhase(0);
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); rotY+=0.005; cellGroup.rotation.y=rotY; cellGroup.rotation.x=rotX*0.4; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup = function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.mitNav; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   8. HUMAN EYE 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['eye-3d'] = function(container) {
+  var modes = ['Normal', 'Myopia', 'Hypermetropia'];
+  var currentMode = 0;
+
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Human Eye 3D — Cross Section</div>' +
+    '<div id="eye3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#1a0a0a,#080004)"></div>' +
+    '<div style="display:flex;gap:6px;margin-top:8px;justify-content:center">' +
+      modes.map(function(m,i){ return '<button class="cbtn eye3d-btn" onclick="eye3dMode('+i+')" style="'+(i===0?'background:var(--acc);color:white;':'')+'">'+m+'</button>'; }).join('') +
+    '</div>' +
+    '<div id="eye3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.7;border:1px solid var(--border)"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('eye3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x080004);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 0, 10);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    var dl = new THREE.DirectionalLight(0xffffff, 1.0); dl.position.set(5,8,5); scene.add(dl);
+
+    var eyeGroup = new THREE.Group();
+    scene.add(eyeGroup);
+
+    /* Eyeball */
+    var eyeball = new THREE.Mesh(new THREE.SphereGeometry(2.5,24,24), new THREE.MeshPhongMaterial({color:0xf5e6d0,transparent:true,opacity:0.35,side:THREE.DoubleSide}));
+    eyeGroup.add(eyeball);
+
+    /* Iris + Pupil */
+    var iris = new THREE.Mesh(new THREE.TorusGeometry(0.9,0.35,12,32), new THREE.MeshPhongMaterial({color:0x4a7c59,shininess:40}));
+    iris.position.z = 2.35; eyeGroup.add(iris);
+    var pupil = new THREE.Mesh(new THREE.CircleGeometry(0.5,16), new THREE.MeshBasicMaterial({color:0x000000}));
+    pupil.position.z = 2.4; eyeGroup.add(pupil);
+
+    /* Retina */
+    var retina = new THREE.Mesh(new THREE.SphereGeometry(2.4,12,12,Math.PI*1.2,Math.PI*0.6,0,Math.PI), new THREE.MeshPhongMaterial({color:0xf87171,side:THREE.BackSide,transparent:true,opacity:0.6}));
+    retina.rotation.y = Math.PI; eyeGroup.add(retina);
+
+    /* Lens */
+    var lens = new THREE.Mesh(new THREE.SphereGeometry(0.55,12,12), new THREE.MeshPhongMaterial({color:0xbfdbfe,transparent:true,opacity:0.7,shininess:120}));
+    lens.scale.z = 0.4; lens.position.z = 1.6;
+    eyeGroup.add(lens);
+
+    /* Light ray line */
+    var rayMat = new THREE.LineBasicMaterial({color:0xfbbf24,transparent:true,opacity:0.8});
+    var rayGroup = new THREE.Group();
+    eyeGroup.add(rayGroup);
+
+    /* Focal point indicator */
+    var focal = new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8), new THREE.MeshBasicMaterial({color:0xfbbf24}));
+    eyeGroup.add(focal);
+
+    var INFO = [
+      'Normal vision: light focuses exactly on the retina. The lens adjusts shape (accommodation) for near and far objects.',
+      'Myopia (Short sight): eyeball too long — light focuses in FRONT of retina. Corrected by concave (diverging) lens.',
+      'Hypermetropia (Long sight): eyeball too short — light focuses BEHIND retina. Corrected by convex (converging) lens.',
+    ];
+    var FOCAL_POS = [-2.0, -3.2, -0.5];
+
+    function eye3dSetMode(m) {
+      currentMode = m;
+      document.querySelectorAll('.eye3d-btn').forEach(function(btn, bi) {
+        btn.style.background = bi===m ? 'var(--acc)' : '';
+        btn.style.color = bi===m ? 'white' : '';
+      });
+      focal.position.z = FOCAL_POS[m];
+      focal.material.color.setHex(m===0 ? 0x34d399 : 0xef4444);
+      /* Update ray paths */
+      while (rayGroup.children.length) rayGroup.remove(rayGroup.children[0]);
+      var fz = FOCAL_POS[m];
+      [0.4,-0.4].forEach(function(yOff) {
+        var pts = [new THREE.Vector3(0,yOff,4), new THREE.Vector3(0,yOff*0.2,1.6), new THREE.Vector3(0,0,fz)];
+        rayGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), rayMat));
+      });
+      var info = document.getElementById('eye3dInfo');
+      if (info) info.innerHTML = '<b style="color:' + (m===0?'#34d399':'#ef4444') + '">' + modes[m] + '</b> — ' + INFO[m];
+    }
+    window.eye3dMode = eye3dSetMode;
+    eye3dSetMode(0);
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); eyeGroup.rotation.y=rotY; eyeGroup.rotation.x=rotX*0.4; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup = function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.eye3dMode; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   9. MAGNETIC FIELD LINES 3D
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['magfield-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Magnetic Field Lines 3D — drag to rotate</div>' +
+    '<div id="mag3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:#000010"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center">' +
+      '<button class="cbtn" onclick="magFlip()">🔄 Flip Poles</button>' +
+      '<button class="cbtn" onclick="magToggle()" id="magAnimBtn">⏸ Pause</button>' +
+    '</div>' +
+    '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;border:1px solid var(--border)">' +
+      'Field lines exit the <b style="color:#ef4444">N pole</b>, curve through space, and re-enter the <b style="color:#3b82f6">S pole</b>. Closer lines = stronger field near the poles.' +
+    '</div>';
+
+  withThree(function() {
+    var mount = document.getElementById('mag3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x000010);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 4, 12);
+    camera.lookAt(0,0,0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5,8,5); scene.add(dl);
+
+    var group = new THREE.Group();
+    scene.add(group);
+    var flipped = false, spinning = true;
+
+    /* Magnet body */
+    var northMat = new THREE.MeshPhongMaterial({color:0xef4444,shininess:80});
+    var southMat = new THREE.MeshPhongMaterial({color:0x3b82f6,shininess:80});
+    var north = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2,16), northMat);
+    north.position.y = 1; group.add(north);
+    var south = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2,16), southMat);
+    south.position.y = -1; group.add(south);
+
+    /* Field lines — parametric arcs from N to S */
+    var fieldLines = [];
+    var FIELD_COLOR_N = 0xef4444, FIELD_COLOR_S = 0x3b82f6;
+    var numLines = 12;
+    for (var li=0; li<numLines; li++) {
+      var phi = (li / numLines) * Math.PI * 2;
+      var arcPts = [];
+      var R = 1.5 + (li % 4) * 0.8;
+      for (var step=0; step<=40; step++) {
+        var t2 = step / 40;
+        var angle2 = t2 * Math.PI;
+        var x = R * Math.sin(angle2) * Math.cos(phi);
+        var y = 2 - R * (1 - Math.cos(angle2)) * 0.5;
+        var z = R * Math.sin(angle2) * Math.sin(phi);
+        arcPts.push(new THREE.Vector3(x, y, z));
+      }
+      var lineMat = new THREE.LineBasicMaterial({color:0xef4444,transparent:true,opacity:0.55});
+      var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPts), lineMat);
+      group.add(line);
+      fieldLines.push(line);
+    }
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+
+    window.magFlip = function() {
+      flipped = !flipped;
+      north.material = flipped ? southMat : northMat;
+      south.material = flipped ? northMat : southMat;
+      fieldLines.forEach(function(l){ l.material.color.setHex(flipped ? 0x3b82f6 : 0xef4444); });
+    };
+    window.magToggle = function() {
+      spinning = !spinning;
+      document.getElementById('magAnimBtn').textContent = spinning ? '⏸ Pause' : '▶ Spin';
+    };
+
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); if(spinning) rotY+=0.006; group.rotation.y=rotY; group.rotation.x=rotX*0.4; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup = function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.magFlip; delete window.magToggle; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   10. SOLID SHAPES 3D (Class 8 Maths)
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['solid-shapes-3d'] = function(container) {
+  var SOLIDS = [
+    { name:'Cube',            F:6,  V:8,  E:12, geo:function(){ return new THREE.BoxGeometry(2.2,2.2,2.2); },          color:0x818cf8 },
+    { name:'Triangular Prism',F:5,  V:6,  E:9,  geo:function(){ return new THREE.CylinderGeometry(0,1.5,2.5,3); },     color:0x34d399 },
+    { name:'Square Pyramid',  F:5,  V:5,  E:8,  geo:function(){ return new THREE.ConeGeometry(1.5,2.5,4); },           color:0xfbbf24 },
+    { name:'Cylinder',        F:3,  V:0,  E:2,  geo:function(){ return new THREE.CylinderGeometry(1.1,1.1,2.5,32); },  color:0x60a5fa },
+    { name:'Cone',            F:2,  V:1,  E:1,  geo:function(){ return new THREE.ConeGeometry(1.3,2.8,32); },           color:0xf87171 },
+    { name:'Tetrahedron',     F:4,  V:4,  E:6,  geo:function(){ return new THREE.TetrahedronGeometry(1.8); },           color:0xe879f9 },
+  ];
+  var cur = 0, wire = false;
+
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Visualising Solid Shapes 3D — Class 8</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">' +
+      SOLIDS.map(function(s,i){ return '<button class="cbtn ss3d-btn" onclick="ss3dSel('+i+')" style="'+(i===0?'background:var(--acc);color:white;':'')+'">'+s.name+'</button>'; }).join('') +
+    '</div>' +
+    '<div id="ss3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#1a1040,#0a0520)"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center">' +
+      '<button class="cbtn" onclick="ss3dWire()" id="ss3dWireBtn">⬡ Wireframe</button>' +
+    '</div>' +
+    '<div id="ss3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.9;border:1px solid var(--border)"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('ss3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x0a0520);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 2, 9); camera.lookAt(0,0,0);
+
+    scene.add(new THREE.AmbientLight(0xffffff,0.45));
+    var dl=new THREE.DirectionalLight(0xffffff,1.0); dl.position.set(6,10,8); scene.add(dl);
+    var grid=new THREE.GridHelper(10,10,0x334155,0x1e293b); grid.position.y=-2; scene.add(grid);
+
+    var meshGroup=new THREE.Group(); scene.add(meshGroup);
+    var wireMesh=null, rotX=0, rotY=0;
+
+    function buildSolid(i) {
+      while(meshGroup.children.length) meshGroup.remove(meshGroup.children[0]);
+      wireMesh=null;
+      var s=SOLIDS[i];
+      var geo=s.geo();
+      meshGroup.add(new THREE.Mesh(geo, new THREE.MeshPhongMaterial({color:s.color,shininess:80,transparent:true,opacity:0.88})));
+      wireMesh=new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:0.18}));
+      wireMesh.visible=wire; meshGroup.add(wireMesh);
+      document.querySelectorAll('.ss3d-btn').forEach(function(btn,bi){ btn.style.background=bi===i?'var(--acc)':''; btn.style.color=bi===i?'white':''; });
+      var info=document.getElementById('ss3dInfo');
+      if(info) info.innerHTML='<b style="color:var(--text);font-size:13px">'+s.name+'</b><br>'+
+        'Faces: <b>'+s.F+'</b> &nbsp;|&nbsp; Vertices: <b>'+s.V+'</b> &nbsp;|&nbsp; Edges: <b>'+s.E+'</b><br>'+
+        'Euler check: F+V\u2212E = '+s.F+'+'+s.V+'\u2212'+s.E+' = <b style="color:var(--evs)">'+(s.F+s.V-s.E)+'</b>';
+    }
+    window.ss3dSel=function(i){ cur=i; buildSolid(i); };
+    window.ss3dWire=function(){ wire=!wire; if(wireMesh) wireMesh.visible=wire; document.getElementById('ss3dWireBtn').textContent=wire?'⬡ Solid':'⬡ Wireframe'; };
+    buildSolid(0);
+    addDrag(renderer.domElement,function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); rotY+=0.007; meshGroup.rotation.y=rotY; meshGroup.rotation.x=rotX; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup=function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.ss3dSel; delete window.ss3dWire; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   11. 3D COORDINATE GEOMETRY (Class 9 Maths)
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['coord-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">3D Coordinate Geometry — XYZ Space</div>' +
+    '<div id="coord3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:#00000f"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap">' +
+      '<button class="cbtn" onclick="coord3dAdd()">➕ Add Point</button>' +
+      '<button class="cbtn" onclick="coord3dClear()">↺ Clear</button>' +
+    '</div>' +
+    '<div id="coord3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.9;border:1px solid var(--border);font-family:monospace"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('coord3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x00000f);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(7, 6, 10); camera.lookAt(0,0,0);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+    /* Axes */
+    var axLen = 5;
+    [[axLen,0,0,0xef4444,'X'],[0,axLen,0,0x34d399,'Y'],[0,0,axLen,0x60a5fa,'Z']].forEach(function(ax) {
+      var pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(ax[0],ax[1],ax[2])];
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:ax[3]})));
+    });
+    /* Grid */
+    scene.add(new THREE.GridHelper(10,10,0x223344,0x112233));
+
+    var points = [];
+    var pointGroup = new THREE.Group(); scene.add(pointGroup);
+    var COLOURS_PT = [0xf87171,0x34d399,0xfbbf24,0x60a5fa,0xe879f9,0xfb923c];
+
+    var SAMPLE_POINTS = [[2,3,1],[4,1,3],[1,4,2],[3,2,4],[0,3,3]];
+    var ptIdx = 0;
+
+    function addPoint() {
+      if (ptIdx >= SAMPLE_POINTS.length) ptIdx = 0;
+      var p = SAMPLE_POINTS[ptIdx++];
+      var col = COLOURS_PT[points.length % COLOURS_PT.length];
+      var mesh = new THREE.Mesh(new THREE.SphereGeometry(0.18,10,10), new THREE.MeshBasicMaterial({color:col}));
+      mesh.position.set(p[0],p[1],p[2]);
+      pointGroup.add(mesh);
+      /* Projection lines to planes */
+      var lineMat = new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0.3});
+      [[p[0],0,p[2]],[p[0],p[1],0],[0,p[1],p[2]]].forEach(function(ep) {
+        var l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p[0],p[1],p[2]),new THREE.Vector3(ep[0],ep[1],ep[2])]),lineMat);
+        pointGroup.add(l);
+      });
+      points.push({x:p[0],y:p[1],z:p[2],col:col});
+      updateInfo();
+    }
+
+    function updateInfo() {
+      var info = document.getElementById('coord3dInfo');
+      if (!info) return;
+      if (points.length === 0) { info.innerHTML = 'Press + Add Point to plot points in 3D space.'; return; }
+      var last = points[points.length-1];
+      var dist = Math.sqrt(last.x*last.x + last.y*last.y + last.z*last.z).toFixed(2);
+      var rows = points.map(function(p,i){ return 'P'+(i+1)+'('+p.x+', '+p.y+', '+p.z+')'; }).join(' &nbsp; ');
+      info.innerHTML = rows + '<br>Distance of last point from origin = \u221a(' +
+        last.x+'\u00b2+'+last.y+'\u00b2+'+last.z+'\u00b2) = <b>'+dist+'</b>';
+    }
+
+    window.coord3dAdd = addPoint;
+    window.coord3dClear = function() { while(pointGroup.children.length) pointGroup.remove(pointGroup.children[0]); points=[]; ptIdx=0; updateInfo(); };
+    updateInfo();
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); scene.rotation.y=rotY; scene.rotation.x=rotX*0.3; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup=function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.coord3dAdd; delete window.coord3dClear; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   12. HEIGHTS AND DISTANCES 3D (Class 10 Maths)
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['heights-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Heights and Distances 3D — tan θ = h/d</div>' +
+    '<div id="ht3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:#000a0a"></div>' +
+    '<div style="display:flex;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap">' +
+      '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Angle θ° <input type="range" id="htAngle" min="10" max="75" value="45" step="1" oninput="htUpdate()"></label>' +
+      '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">Distance <input type="range" id="htDist" min="2" max="8" value="5" step="0.5" oninput="htUpdate()"></label>' +
+    '</div>' +
+    '<div id="ht3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:13px;line-height:2;border:1px solid var(--border);font-family:monospace"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('ht3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x000a0a);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(5, 4, 12); camera.lookAt(0,0,0);
+    scene.add(new THREE.AmbientLight(0xffffff,0.5));
+    var dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(5,10,5); scene.add(dl);
+    scene.add(new THREE.GridHelper(16,16,0x1a3a3a,0x0d2020));
+
+    var sceneGroup = new THREE.Group(); scene.add(sceneGroup);
+
+    /* Tower */
+    var tower = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.2,1,8), new THREE.MeshPhongMaterial({color:0xf87171,shininess:60}));
+    sceneGroup.add(tower);
+
+    /* Observer */
+    var observer = new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8), new THREE.MeshPhongMaterial({color:0x34d399}));
+    sceneGroup.add(observer);
+
+    /* Lines */
+    var horizLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0x60a5fa,transparent:true,opacity:0.7}));
+    var angleLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0xfbbf24,transparent:true,opacity:0.9}));
+    var vertLine  = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color:0xf87171,transparent:true,opacity:0.7}));
+    sceneGroup.add(horizLine); sceneGroup.add(angleLine); sceneGroup.add(vertLine);
+
+    function htUpdate() {
+      var angle = parseFloat(document.getElementById('htAngle').value);
+      var dist  = parseFloat(document.getElementById('htDist').value);
+      var h = dist * Math.tan(angle * Math.PI / 180);
+
+      tower.scale.y = h;
+      tower.position.set(0, h/2, 0);
+      observer.position.set(dist, 0, 0);
+
+      horizLine.geometry.setFromPoints([new THREE.Vector3(dist,0,0), new THREE.Vector3(0,0,0)]);
+      angleLine.geometry.setFromPoints([new THREE.Vector3(dist,0,0), new THREE.Vector3(0,h,0)]);
+      vertLine.geometry.setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,h,0)]);
+
+      var info = document.getElementById('ht3dInfo');
+      if (info) info.innerHTML =
+        '\u03b8 = <b>'+angle+'°</b> &nbsp;|&nbsp; Distance (d) = <b>'+dist+'</b><br>' +
+        'Height (h) = d \u00d7 tan\u03b8 = '+dist+' \u00d7 tan('+angle+'°) = <b style="color:#34d399">'+h.toFixed(2)+'</b>';
+    }
+    window.htUpdate = htUpdate;
+    htUpdate();
+
+    var rotX=0, rotY=0;
+    addDrag(renderer.domElement, function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); sceneGroup.rotation.y=rotY; sceneGroup.rotation.x=rotX*0.3; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup=function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.htUpdate; };
+  });
+};
+
+/* ════════════════════════════════════════════════════
+   13. CIRCLES AND TANGENTS 3D (Class 10 Maths)
+   ════════════════════════════════════════════════════ */
+SIM_REGISTRY['circles-tangents-3d'] = function(container) {
+  container.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:center;margin-bottom:6px">Circles and Tangents 3D</div>' +
+    '<div id="circ3dMount" style="width:100%;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse,#0a0a1f,#030310)"></div>' +
+    '<div style="display:flex;gap:6px;margin-top:8px;justify-content:center;flex-wrap:wrap">' +
+      '<button class="cbtn" onclick="circ3dThm(0)" id="cirBtn0" style="background:var(--acc);color:white">Tangent ⊥ Radius</button>' +
+      '<button class="cbtn" onclick="circ3dThm(1)" id="cirBtn1">Equal Tangents</button>' +
+      '<button class="cbtn" onclick="circ3dThm(2)" id="cirBtn2">Angle in Semicircle</button>' +
+    '</div>' +
+    '<div id="circ3dInfo" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;line-height:1.7;border:1px solid var(--border)"></div>';
+
+  withThree(function() {
+    var mount = document.getElementById('circ3dMount');
+    if (!mount) return;
+    var rr = makeRenderer(mount, 0x030310);
+    var renderer = rr.renderer, scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, rr.w/rr.h, 0.1, 100);
+    camera.position.set(0, 5, 10); camera.lookAt(0,0,0);
+    scene.add(new THREE.AmbientLight(0xffffff,0.5));
+    var dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(5,8,5); scene.add(dl);
+
+    var group = new THREE.Group(); scene.add(group);
+    var R = 2.5;
+
+    var THEOREMS = [
+      { label:'Tangent ⊥ Radius',      desc:'The tangent to a circle at any point is perpendicular to the radius at that point. Angle OAP = 90°.' },
+      { label:'Equal Tangents',         desc:'Tangents from an external point P to a circle are equal in length: PA = PB. The line OP bisects angle APB.' },
+      { label:'Angle in Semicircle',    desc:'The angle subtended by a diameter at any point on the circle is always 90°. This is Thales\' Theorem.' },
+    ];
+
+    function buildThm(i) {
+      while (group.children.length) group.remove(group.children[0]);
+      /* Circle */
+      group.add(new THREE.Mesh(new THREE.TorusGeometry(R,0.06,8,64), new THREE.MeshBasicMaterial({color:0x818cf8})));
+      /* Centre */
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8), new THREE.MeshBasicMaterial({color:0xffffff})));
+      var lineMat = function(c){ return new THREE.LineBasicMaterial({color:c,transparent:true,opacity:0.85}); };
+      var dotMat  = function(c){ return new THREE.MeshBasicMaterial({color:c}); };
+
+      if (i===0) {
+        /* Tangent point at (R,0,0), tangent vertical, radius horizontal */
+        var pt = new THREE.Vector3(R,0,0);
+        group.add(new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),dotMat(0xfbbf24))).position.copy(pt);
+        var rad = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),pt]),lineMat(0xfbbf24));
+        group.add(rad);
+        var tang = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(R,-2,0),new THREE.Vector3(R,2,0)]),lineMat(0x34d399));
+        group.add(tang);
+        /* Right angle marker */
+        var sq=[new THREE.Vector3(R-0.25,0,0),new THREE.Vector3(R-0.25,0.25,0),new THREE.Vector3(R,0.25,0)];
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sq),lineMat(0xffffff)));
+      } else if (i===1) {
+        var ext = new THREE.Vector3(5,0,0);
+        group.add(new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),dotMat(0xf87171))).position.copy(ext);
+        /* Two tangent points */
+        var ang = Math.acos(R/5);
+        var tA = new THREE.Vector3(R*Math.cos(ang), R*Math.sin(ang), 0);
+        var tB = new THREE.Vector3(R*Math.cos(ang),-R*Math.sin(ang), 0);
+        [tA,tB].forEach(function(t){
+          group.add(new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),dotMat(0xfbbf24))).position.copy(t);
+          group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([ext,t]),lineMat(0x34d399)));
+          group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),t]),lineMat(0x60a5fa)));
+        });
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),ext]),lineMat(0xffffff)));
+      } else {
+        /* Diameter + point on circle */
+        var dA = new THREE.Vector3(-R,0,0), dB = new THREE.Vector3(R,0,0);
+        var dC = new THREE.Vector3(R*Math.cos(1.1),R*Math.sin(1.1),0);
+        [dA,dB,dC].forEach(function(p){ group.add(new THREE.Mesh(new THREE.SphereGeometry(0.14,8,8),dotMat(0xfbbf24))).position.copy(p); });
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([dA,dB]),lineMat(0x60a5fa)));
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([dA,dC]),lineMat(0x34d399)));
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([dB,dC]),lineMat(0xf87171)));
+      }
+      document.querySelectorAll('[id^="cirBtn"]').forEach(function(btn,bi){
+        btn.style.background = bi===i ? 'var(--acc)' : '';
+        btn.style.color = bi===i ? 'white' : '';
+      });
+      var info = document.getElementById('circ3dInfo');
+      if (info) info.innerHTML = '<b style="color:var(--text)">'+THEOREMS[i].label+'</b><br>'+THEOREMS[i].desc;
+    }
+    window.circ3dThm = buildThm;
+    buildThm(0);
+
+    var rotX=0,rotY=0;
+    addDrag(renderer.domElement,function(dx,dy){ rotY+=dx*0.01; rotX+=dy*0.01; });
+    var raf;
+    function animate(){ raf=requestAnimationFrame(animate); rotY+=0.006; group.rotation.y=rotY; group.rotation.x=rotX*0.3; renderer.render(scene,camera); }
+    animate();
+    window.simCleanup=function(){ cancelAnimationFrame(raf); renderer.dispose(); delete window.circ3dThm; };
   });
 };
