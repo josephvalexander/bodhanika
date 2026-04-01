@@ -11845,3 +11845,314 @@ SIM_REGISTRY['negotiation'] = function(c) {
 ].forEach(function(id) {
   if (!SIM_REGISTRY[id]) SIM_REGISTRY[id] = null;
 });
+
+/* ══════════════════════════════════════════════════════
+   FINANCIAL LITERACY SIMS
+   ══════════════════════════════════════════════════════ */
+
+/* ── POCKET BUDGET (Class 6) ── */
+SIM_REGISTRY['pocket-budget'] = function(c) {
+  var entries = [], income = 0;
+  var CATS = ['Food','Transport','Stationery','Entertainment','Savings','Other'];
+  var COLORS = ['#f87171','#fbbf24','#818cf8','#34d399','#60a5fa','#9ca3af'];
+
+  function render() {
+    var totalSpent = entries.reduce(function(s,e){ return s + e.amt; }, 0);
+    var balance = income - totalSpent;
+    var catTotals = CATS.map(function(cat){
+      return entries.filter(function(e){ return e.cat===cat; }).reduce(function(s,e){ return s+e.amt; },0);
+    });
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">💰 My Pocket Money Budget</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Weekly Income ₹' +
+          '<input id="pbInc" type="number" value="'+income+'" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:12px" oninput="pbSetIncome(this.value)">' +
+        '</label>' +
+      '</div>' +
+      /* Summary row */
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">' +
+        [['Income','₹'+income,'#60a5fa'],['Spent','₹'+totalSpent,'#f87171'],['Balance','₹'+balance,balance>=0?'#34d399':'#f87171']].map(function(c2){
+          return '<div style="background:'+c2[2]+'22;border:1px solid '+c2[2]+'44;border-radius:10px;padding:8px;text-align:center">' +
+            '<div style="font-size:10px;color:var(--muted)">'+c2[0]+'</div>' +
+            '<div style="font-size:18px;font-weight:900;color:'+c2[2]+'">'+c2[1]+'</div></div>';
+        }).join('') +
+      '</div>' +
+      /* Category bar */
+      (totalSpent > 0 ? '<div style="height:10px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:8px">' +
+        catTotals.map(function(v,i){ return v>0 ? '<div style="flex:'+v+';background:'+COLORS[i]+'" title="'+CATS[i]+'"></div>' : ''; }).join('') +
+      '</div>' : '') +
+      /* Category legend */
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;font-size:11px">' +
+        CATS.map(function(cat,i){ return catTotals[i]>0 ? '<span style="color:'+COLORS[i]+'">■ '+cat+' ₹'+catTotals[i]+'</span>' : ''; }).join('') +
+      '</div>' +
+      /* Add entry form */
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<input id="pbDesc" placeholder="What?" style="flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px">' +
+        '<input id="pbAmt" type="number" placeholder="₹" style="width:60px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px">' +
+        '<select id="pbCat" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-size:12px">' +
+          CATS.map(function(cat){ return '<option>'+cat+'</option>'; }).join('') +
+        '</select>' +
+        '<button class="cbtn" onclick="pbAdd()">+ Add</button>' +
+      '</div>' +
+      /* Entries list */
+      (entries.length > 0 ? '<div style="max-height:120px;overflow-y:auto;font-size:11px">' +
+        entries.map(function(e,i){
+          return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">' +
+            '<span style="color:var(--muted)">'+e.cat+'</span>' +
+            '<span style="flex:1;padding:0 8px;color:var(--text)">'+e.desc+'</span>' +
+            '<span style="color:#f87171;font-weight:700">₹'+e.amt+'</span>' +
+            '<button onclick="pbDel('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0 4px;font-size:12px">✕</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' : '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">Add your spending above to see your budget breakdown.</div>') +
+      '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" onclick="pbClear()">↺ Reset</button></div>';
+  }
+
+  window.pbSetIncome = function(v) { income = parseInt(v)||0; render(); };
+  window.pbAdd = function() {
+    var desc = document.getElementById('pbDesc').value.trim();
+    var amt  = parseInt(document.getElementById('pbAmt').value)||0;
+    var cat  = document.getElementById('pbCat').value;
+    if (!desc || !amt) return;
+    entries.push({desc:desc, amt:amt, cat:cat});
+    render();
+  };
+  window.pbDel   = function(i) { entries.splice(i,1); render(); };
+  window.pbClear = function() { entries=[]; income=0; render(); };
+  render();
+};
+
+/* ── NEEDS vs WANTS (Class 7) ── */
+SIM_REGISTRY['needs-wants'] = function(c) {
+  var ITEMS = [
+    {name:'School textbooks',    need:true},  {name:'New video game',      need:false},
+    {name:'Rice and vegetables', need:true},  {name:'Brand-name shoes',    need:false},
+    {name:'Bus fare to school',  need:true},  {name:'Cinema ticket',       need:false},
+    {name:'School uniform',      need:true},  {name:'Latest smartphone',   need:false},
+    {name:'Drinking water',      need:true},  {name:'Branded snacks',      need:false},
+    {name:'Medical checkup',     need:true},  {name:'Streaming service',   need:false},
+  ];
+  var placed = {};
+
+  function render() {
+    var needItems = ITEMS.filter(function(it){ return placed[it.name]==='need'; });
+    var wantItems = ITEMS.filter(function(it){ return placed[it.name]==='want'; });
+    var unplaced  = ITEMS.filter(function(it){ return !placed[it.name]; });
+    var correct   = ITEMS.filter(function(it){ return placed[it.name] && ((placed[it.name]==='need')===it.need); }).length;
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">Needs vs Wants</div>' +
+      /* Score */
+      (Object.keys(placed).length === ITEMS.length ?
+        '<div style="background:var(--evs-dim);border:1px solid var(--evs);border-radius:10px;padding:10px;text-align:center;margin-bottom:10px;font-size:13px;font-weight:800;color:var(--evs)">'+
+        (correct===ITEMS.length ? '🎉 Perfect! All '+ITEMS.length+' correct!' : '✅ '+correct+'/'+ITEMS.length+' correct — review the highlighted ones') +
+        '</div>' : '') +
+      /* Unplaced items */
+      (unplaced.length > 0 ? '<div style="margin-bottom:10px">' +
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Sort each item:</div>' +
+        unplaced.map(function(it){
+          return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;margin-bottom:5px">' +
+            '<span style="font-size:12px;font-weight:600;color:var(--text)">'+it.name+'</span>' +
+            '<div style="display:flex;gap:5px">' +
+              '<button onclick="nwPlace(\''+it.name+'\',\'need\')" style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--evs);background:var(--evs-dim);color:var(--evs);font-size:11px;font-weight:800;cursor:pointer">Need</button>' +
+              '<button onclick="nwPlace(\''+it.name+'\',\'want\')" style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--math);background:var(--math-dim);color:var(--math);font-size:11px;font-weight:800;cursor:pointer">Want</button>' +
+            '</div></div>';
+        }).join('') +
+      '</div>' : '') +
+      /* Results columns */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        ['need','want'].map(function(type,ti){
+          var list = type==='need' ? needItems : wantItems;
+          var color = type==='need' ? 'var(--evs)' : 'var(--math)';
+          return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">' +
+            '<div style="font-size:11px;font-weight:800;color:'+color+';margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">'+(type==='need'?'✅ Needs':'⭐ Wants')+'</div>' +
+            list.map(function(it){
+              var correct2 = (type==='need')===it.need;
+              return '<div style="font-size:11px;padding:3px 0;color:'+(correct2?'var(--text)':'#f87171')+'">'+
+                (correct2?'':'✗ ')+ it.name+'</div>';
+            }).join('') +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" onclick="nwReset()">↺ Retry</button></div>';
+  }
+
+  window.nwPlace = function(name, type) { placed[name] = type; render(); };
+  window.nwReset = function() { placed = {}; render(); };
+  render();
+};
+
+/* ── GST CALCULATOR (Class 8) ── */
+SIM_REGISTRY['gst-calc'] = function(c) {
+  var SLABS = [
+    {rate:0,  label:'0% — Exempt',      examples:'Fresh food, healthcare, education, eggs'},
+    {rate:5,  label:'5% — Essential',   examples:'Packed food, tea, medicines, transport'},
+    {rate:12, label:'12% — Standard',   examples:'Butter, ghee, frozen meat, phones<₹12k'},
+    {rate:18, label:'18% — Most goods', examples:'Soap, toothpaste, hair oil, restaurants'},
+    {rate:28, label:'28% — Luxury',     examples:'ACs, premium cars, cigarettes, aerated drinks'},
+  ];
+  var selSlab = 2, price = 1000;
+
+  function render() {
+    var slab = SLABS[selSlab];
+    var gst  = price * slab.rate / 100;
+    var total = price + gst;
+    var cgst = gst / 2, sgst = gst / 2;
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">🧾 GST Calculator</div>' +
+      /* Slab selector */
+      '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">' +
+        SLABS.map(function(s,i){
+          return '<div onclick="gstSel('+i+')" style="display:flex;align-items:center;gap:8px;background:'+(i===selSlab?'var(--life-dim)':'var(--surface2)')+';border:1.5px solid '+(i===selSlab?'var(--life)':'var(--border)')+';border-radius:8px;padding:7px 10px;cursor:pointer">' +
+            '<div style="width:36px;height:36px;border-radius:8px;background:'+(i===selSlab?'var(--life)':'var(--border)')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:'+(i===selSlab?'white':'var(--muted)')+'">'+s.rate+'%</div>' +
+            '<div><div style="font-size:11px;font-weight:700;color:var(--text)">'+s.label+'</div>' +
+            '<div style="font-size:10px;color:var(--muted)">'+s.examples+'</div></div></div>';
+        }).join('') +
+      '</div>' +
+      /* Price input */
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+        '<span style="font-size:12px;color:var(--muted)">Item price (before GST)</span>' +
+        '<input type="number" id="gstPrice" value="'+price+'" oninput="gstSetPrice(this.value)" ' +
+          'style="width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;font-weight:700">' +
+      '</div>' +
+      /* Bill breakdown */
+      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12px">' +
+        '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Base price</span><span style="font-weight:700;color:var(--text)">₹'+price.toLocaleString()+'</span></div>' +
+        (slab.rate > 0 ?
+          '<div style="display:flex;justify-content:space-between;padding:5px 0"><span style="color:var(--muted)">CGST ('+slab.rate/2+'%)</span><span style="color:#f87171">+₹'+cgst.toFixed(2)+'</span></div>' +
+          '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">SGST ('+slab.rate/2+'%)</span><span style="color:#f87171">+₹'+sgst.toFixed(2)+'</span></div>' +
+          '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Total GST ('+slab.rate+'%)</span><span style="color:#f87171;font-weight:800">₹'+gst.toFixed(2)+'</span></div>'
+          : '<div style="padding:6px 0;color:var(--evs);font-weight:700">✓ GST Exempt — no tax on this item</div>') +
+        '<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:15px"><span style="font-weight:800;color:var(--text)">You pay</span><span style="font-weight:900;color:var(--life)">₹'+total.toFixed(2)+'</span></div>' +
+      '</div>';
+  }
+
+  window.gstSel      = function(i) { selSlab=i; render(); };
+  window.gstSetPrice = function(v) { price=parseInt(v)||0; render(); };
+  render();
+};
+
+/* ── INVESTMENT COMPARE (Class 10) ── */
+SIM_REGISTRY['invest-compare'] = function(c) {
+  var OPTIONS = [
+    {name:'Savings A/c', rate:3.5,  color:'#9ca3af', risk:'Zero',   icon:'🏦'},
+    {name:'Fixed Deposit',rate:7.0,  color:'#60a5fa', risk:'Zero',   icon:'🔒'},
+    {name:'Debt Fund',   rate:9.0,  color:'#34d399', risk:'Low',    icon:'📄'},
+    {name:'Index Fund',  rate:12.0, color:'#fbbf24', risk:'Medium', icon:'📊'},
+    {name:'Stocks',      rate:15.0, color:'#f87171', risk:'High',   icon:'📈'},
+  ];
+  var principal = 100000, years = 10;
+
+  function render() {
+    var inflation = 6.0;
+    var results = OPTIONS.map(function(opt) {
+      return { name:opt.name, icon:opt.icon, color:opt.color, risk:opt.risk,
+        value: Math.round(principal * Math.pow(1 + opt.rate/100, years)),
+        real:  Math.round(principal * Math.pow((1+opt.rate/100)/(1+inflation/100), years)) };
+    });
+    var maxVal = results[results.length-1].value;
+    var inflationVal = Math.round(principal * Math.pow(1+inflation/100, years));
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">📊 Investment Comparator</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Principal ₹' +
+          '<input type="number" value="'+principal+'" oninput="icSetP(this.value)" style="width:90px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:12px">' +
+        '</label>' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Years' +
+          '<input type="range" min="1" max="30" value="'+years+'" oninput="icSetY(this.value)" style="width:80px">' +
+          '<b style="color:var(--text)">'+years+'</b>' +
+        '</label>' +
+      '</div>' +
+      /* Bars */
+      results.map(function(r) {
+        var pct = Math.round(r.value / maxVal * 100);
+        return '<div style="margin-bottom:8px">' +
+          '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">' +
+            '<span style="color:var(--text);font-weight:700">'+r.icon+' '+r.name+'</span>' +
+            '<span style="color:'+r.color+';font-weight:800">₹'+r.value.toLocaleString()+'</span>' +
+          '</div>' +
+          '<div style="background:var(--surface2);border-radius:6px;height:10px;overflow:hidden">' +
+            '<div style="height:100%;width:'+pct+'%;background:'+r.color+';border-radius:6px;transition:width .4s"></div>' +
+          '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px">Risk: '+r.risk+' &nbsp;|&nbsp; Real value after 6% inflation: <span style="color:'+(r.real>principal?'#34d399':'#f87171')+'">₹'+r.real.toLocaleString()+'</span></div>' +
+        '</div>';
+      }).join('') +
+      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:11px;color:var(--muted)">' +
+        '📉 Inflation makes ₹'+principal.toLocaleString()+' worth only <b style="color:#f87171">₹'+inflationVal.toLocaleString()+'</b> in purchasing power after '+years+' years. You must beat inflation to grow real wealth.' +
+      '</div>';
+  }
+
+  window.icSetP = function(v) { principal=parseInt(v)||100000; render(); };
+  window.icSetY = function(v) { years=parseInt(v)||10; render(); };
+  render();
+};
+
+/* ── BANKING SIM (Class 10) ── */
+SIM_REGISTRY['banking-sim'] = function(c) {
+  var balance = 5000, transactions = [
+    {date:'01 Apr',desc:'Opening Balance',  type:'credit', amt:5000},
+  ];
+  var step = 0;
+  var SCENARIOS = [
+    {desc:'Received pocket money',type:'credit',amt:500},
+    {desc:'Bought stationery',   type:'debit', amt:120},
+    {desc:'UPI to friend',       type:'debit', amt:200},
+    {desc:'Interest credited',   type:'credit',amt:15},
+    {desc:'School fee',          type:'debit', amt:800},
+    {desc:'Gift from uncle',     type:'credit',amt:1000},
+  ];
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">📱 My Bank Account</div>' +
+      /* Balance card */
+      '<div style="background:linear-gradient(135deg,#1e3a5f,#0f1f3d);border-radius:14px;padding:16px 18px;margin-bottom:12px;color:white">' +
+        '<div style="font-size:10px;letter-spacing:2px;opacity:.7;margin-bottom:4px">AVAILABLE BALANCE</div>' +
+        '<div style="font-size:28px;font-weight:900">₹'+balance.toLocaleString()+'</div>' +
+        '<div style="font-size:10px;opacity:.6;margin-top:6px">Savings Account &nbsp;·&nbsp; **** 4721</div>' +
+      '</div>' +
+      /* Passbook */
+      '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">' +
+        '<div style="display:grid;grid-template-columns:60px 1fr 70px 70px;padding:6px 10px;background:var(--border);font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">' +
+          '<span>Date</span><span>Description</span><span style="text-align:right">Amount</span><span style="text-align:right">Balance</span>' +
+        '</div>' +
+        transactions.map(function(t,i){
+          var runBal = transactions.slice(0,i+1).reduce(function(b,tx){ return tx.type==='credit' ? b : b-tx.amt; },
+            transactions.slice(0,i+1).filter(function(tx){ return tx.type==='credit'; }).reduce(function(s,tx){ return s+tx.amt; },0));
+          return '<div style="display:grid;grid-template-columns:60px 1fr 70px 70px;padding:7px 10px;border-top:1px solid var(--border);font-size:11px">' +
+            '<span style="color:var(--muted)">'+t.date+'</span>' +
+            '<span style="color:var(--text)">'+t.desc+'</span>' +
+            '<span style="text-align:right;color:'+(t.type==='credit'?'#34d399':'#f87171');+';font-weight:700">'+(t.type==='credit'?'+':'-')+'₹'+t.amt+'</span>' +
+            '<span style="text-align:right;color:var(--text)">₹'+t.bal+'</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      (step < SCENARIOS.length ?
+        '<button class="cbtn" onclick="bankNext()" style="width:100%">▶ Next Transaction</button>' :
+        '<div style="background:var(--evs-dim);border:1px solid var(--evs);border-radius:8px;padding:10px;font-size:12px;color:var(--evs);text-align:center;font-weight:700">✅ You\'ve read a full bank statement! Debits reduce balance; credits increase it.</div>') +
+      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="bankReset()">↺ Reset</button></div>';
+  }
+
+  function addTransaction(tx) {
+    balance = tx.type === 'credit' ? balance + tx.amt : balance - tx.amt;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d = new Date(); d.setDate(d.getDate() + step * 3);
+    transactions.push({date:(d.getDate())+' '+months[d.getMonth()], desc:tx.desc, type:tx.type, amt:tx.amt, bal:balance});
+  }
+
+  /* Pre-calc balances */
+  transactions[0].bal = 5000;
+
+  window.bankNext = function() {
+    if (step >= SCENARIOS.length) return;
+    addTransaction(SCENARIOS[step]); step++; render();
+  };
+  window.bankReset = function() {
+    balance=5000; step=0;
+    transactions=[{date:'01 Apr',desc:'Opening Balance',type:'credit',amt:5000,bal:5000}];
+    render();
+  };
+  render();
+};

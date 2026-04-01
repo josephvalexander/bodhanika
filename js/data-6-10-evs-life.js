@@ -248,4 +248,90 @@ window.EXPERIMENTS_6_10_LIFE = [
    materials:['Exam syllabus','Calendar','Pencil'],
    steps:['List all subjects and their relative exam weightings.','Map remaining weeks; assign topics to specific days (spaced repetition — revisit each topic 3 times).','Use the Pomodoro method: 45-min focused sessions with 10-min breaks.','After each session, close the book and write everything you remember (retrieval practice).','Protect 7–8 hours of sleep — memory consolidates during deep sleep, not while studying.'],
    simId:'exam-strategy',buddy:'Students who test themselves during revision outperform re-readers by 50% in exams. Don\'t highlight and re-read — close the book and write what you remember. The struggle to recall IS the learning.'},
+
+  /* ══════════════════════════════════════════
+     FINANCIAL LITERACY — Life Skills subcategory
+     Mapped to CBSE / NCERT curriculum contexts
+     ══════════════════════════════════════════ */
+
+  /* Class 6 — Pocket Money Budget */
+  ,{id:'c6-l2',title:'Pocket Money Budget',subject:'Life Skills',classes:['6'],icon:'💰',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(52,211,153,.15))',
+   desc:'Track a week of pocket money — what you earned, what you spent, what you saved. Build your first personal budget.',
+   ncert:'Life Skills – CBSE Class 6 / Maths Class 6 – Knowing Our Numbers',
+   why:'A budget is simply a plan for money before you spend it. Income minus expenses equals savings. Every business, government, and household runs on this principle. Starting early builds a habit that compounds over a lifetime.',
+   materials:['Notebook','Pen','7 days of actual spending records'],
+   steps:['Write today\'s pocket money total at the top.','For 7 days, write every rupee spent and what it was for.','At week\'s end: add all spending. Subtract from total. What\'s left?','Sort spending into: Needs (food, transport) vs Wants (snacks, games).','Set a goal: save 10% of next week\'s money. Can you do it?'],
+   simId:'pocket-budget',buddy:'Warren Buffett received his first share of stock at age 11 and filed his first tax return at 13 — ₹17 in earnings from a paper route. He has said the most important financial habit is starting early. Your pocket money is your first portfolio.'}
+
+  /* Class 7 — Needs vs Wants */
+  ,{id:'c7-l2',title:'Needs vs Wants',subject:'Life Skills',classes:['7'],icon:'🛒',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(251,191,36,.15))',
+   desc:'Sort a shopping list into needs and wants. Practise delayed gratification — the most valuable financial skill.',
+   ncert:'Life Skills – CBSE Class 7 / Social Science Class 7 – Markets Around Us',
+   why:'Needs are essential for survival (food, shelter, clothing, education). Wants are desirable but not essential. Most financial problems come from spending on wants before needs are fully covered. Delayed gratification — the ability to wait for a better outcome — predicts financial success more reliably than IQ.',
+   materials:['A sample shopping list','Pencil','2 columns: Needs / Wants'],
+   steps:['Write a list of 15 things you or your family bought this month.','Sort each into Need or Want — be honest.','For the Wants column: which could you delay or skip entirely?','Calculate how much was spent on Wants vs Needs.','If you delayed one Want per week and saved instead, what would that total in a year?'],
+   simId:'needs-wants',buddy:'The famous Stanford marshmallow experiment showed that children who could wait 15 minutes to eat one marshmallow (to get two) ended up with better health, income, and life outcomes decades later. Delaying one want is a practisable skill — not a personality trait.'}
+
+  /* Class 8 — Simple & Compound Interest */
+  ,{id:'c8-l2',title:'Simple vs Compound Interest',subject:'Life Skills',classes:['8'],icon:'📈',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(52,211,153,.18))',
+   desc:'Compare simple and compound interest on a deposit — see why Einstein called compound interest the eighth wonder of the world.',
+   ncert:'NCERT Maths Class 8 – Comparing Quantities (Compound Interest)',
+   why:'Simple Interest = P×R×T/100. Compound Interest = P(1+R/100)^T - P. The difference is that compound interest earns interest on interest. Over 30 years at 10%, ₹10,000 grows to ₹30,000 (SI) vs ₹174,494 (CI). Starting 10 years earlier nearly triples your final amount.',
+   materials:['Calculator','Notebook'],
+   steps:['Start with ₹10,000 at 10% per year for 20 years.','Simple Interest: ₹10,000 × 10 × 20/100 = ₹20,000 interest. Total = ₹30,000.','Compound Interest: ₹10,000 × (1.10)^20 = ₹67,275. Total interest = ₹57,275.','Now try 30 years. The gap grows dramatically.','Which starts earlier — saving at 15 vs saving at 25 — and by how much does it differ at 60?'],
+   simId:'compound-interest',buddy:'If your great-grandparent had invested ₹100 in 1924 at 12% compound interest, it would be worth over ₹11 crore today. That\'s why time is the most valuable ingredient in investing — more than money, more than skill.'}
+
+  /* Class 8 — GST and Taxes */
+  ,{id:'c8-l3',title:'Understanding GST',subject:'Life Skills',classes:['8'],icon:'🧾',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(244,63,94,.15))',
+   desc:'Calculate GST on everyday items. Understand why taxes exist and what they fund.',
+   ncert:'NCERT Maths Class 8 – Comparing Quantities / Social Science Class 8 – Understanding Laws',
+   why:'GST (Goods and Services Tax) replaced 17 different taxes in India in 2017. It has four slabs: 5% (essentials), 12% (standard goods), 18% (most services), 28% (luxury). GST is paid by the final consumer but collected at every stage of production. Understanding it helps you read bills, file returns, and run a business.',
+   materials:['3 recent shopping bills (grocery, restaurant, clothing)','Calculator'],
+   steps:['Find your GST slab on a recent bill. Look for CGST + SGST columns.','GST paid = (GST rate / 100) × original price.','Calculate how much GST you paid on 3 items.','Now check: what services or goods are GST-exempt? (Fresh food, healthcare, education.)','Why might the government exempt these? Who benefits from the exemption?'],
+   simId:'gst-calc',buddy:'India collects over ₹1.7 lakh crore in GST per month. That money funds roads, schools, hospitals, and defence. Every time you buy a biscuit packet, a fraction goes toward building the highway you drove on to reach the shop.'}
+
+  /* Class 9 — Profit Loss and Discount */
+  ,{id:'c9-l2',title:'Profit, Loss and Discount',subject:'Life Skills',classes:['9'],icon:'🏪',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(251,146,60,.18))',
+   desc:'Run a virtual shop — set prices, apply discounts, calculate profit margins. See how businesses actually make money.',
+   ncert:'NCERT Maths Class 8/9 – Comparing Quantities (Profit and Loss)',
+   why:'Profit % = (SP-CP)/CP × 100. Discount % = Discount/MP × 100. SP after discount = MP × (1 - Discount/100). Businesses survive only when revenue exceeds cost. A 40% discount on a 60% markup still leaves profit — understanding this prevents you from being misled by sale prices.',
+   materials:['Paper','Calculator'],
+   steps:['You buy 10 notebooks at ₹25 each (Cost Price).','You mark them up 60% — Marked Price = ₹40.','During a sale you offer 25% discount — Selling Price = ₹30.','Profit per notebook = ₹30 - ₹25 = ₹5. Profit % = 20%.','Now try: what discount % would mean breaking even? What % would mean a loss?'],
+   simId:'profit-loss',buddy:'D-Mart, India\'s most profitable retailer, works on margins as thin as 3-4%. They make money through massive volume and near-zero wastage. The richest supermarket chains in the world are often the ones with the smallest margins — volume is everything.'}
+
+  /* Class 9 — Savings and Goals */
+  ,{id:'c9-l3',title:'Savings Goal Planner',subject:'Life Skills',classes:['9'],icon:'🎯',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(52,211,153,.2))',
+   desc:'Set a real savings goal — a phone, a trip, a course. Build a month-by-month plan to reach it.',
+   ncert:'Life Skills – CBSE Class 9',
+   why:'A savings goal converts vague intention into a concrete plan. Goal + deadline + monthly amount required = achievable. Automating savings (setting aside money before spending) is 3x more effective than saving what\'s left over. This is the core of all personal finance.',
+   materials:['Paper','Calculator'],
+   steps:['Name one thing you want to save for and its cost (e.g. ₹6,000 headphones).','Set a realistic deadline (e.g. 6 months).','Monthly saving needed = ₹6,000 / 6 = ₹1,000/month.','List your income sources (pocket money, gifts, small jobs).','What expenses can you reduce to find ₹1,000/month? Make a specific list.'],
+   simId:'savings-tracker',buddy:'The word "salary" comes from the Latin "salarium" — Roman soldiers were partly paid in salt (sal). Salt was so valuable it was used as currency. Today your salary may arrive digitally in milliseconds, but the principle hasn\'t changed: earn, save a portion before spending, then spend the rest.'}
+
+  /* Class 10 — Investment Basics */
+  ,{id:'c10-l2',title:'Introduction to Investing',subject:'Life Skills',classes:['10'],icon:'📊',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(99,102,241,.2))',
+   desc:'Compare savings accounts, fixed deposits, mutual funds, and stocks. Understand risk vs return. Build a first investment plan.',
+   ncert:'Life Skills – CBSE Class 10 / Social Science Class 10 – Development',
+   why:'Inflation (typically 6% in India) erodes money left in a savings account (3.5%). Real return = nominal return - inflation. To grow wealth, returns must beat inflation. Equity (stocks/mutual funds) historically returns 12-15% annually in India over long periods, but with higher short-term volatility than FDs.',
+   materials:['Current FD rates (check any bank website)','Calculator'],
+   steps:['₹1 lakh in savings account at 3.5% for 10 years = ₹1,41,059.','Same in FD at 7% = ₹1,96,715.','Same in equity mutual fund (assume 12%) = ₹3,10,585.','Inflation at 6% means ₹1 lakh of goods today costs ₹1,79,085 in 10 years.','Which option actually grew your money in real terms? Which lost value?'],
+   simId:'invest-compare',buddy:'Rakesh Jhunjhunwala started investing in 1985 with ₹5,000. He became India\'s most celebrated investor with a portfolio worth over ₹30,000 crore at his peak. He always said the first step is starting — even with a very small amount.'}
+
+  /* Class 10 — Banking and UPI */
+  ,{id:'c10-l3',title:'Banking, UPI and Digital Payments',subject:'Life Skills',classes:['10'],icon:'📱',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(34,211,238,.18))',
+   desc:'Understand how a bank account works, how UPI moves money, and how to protect yourself from digital payment fraud.',
+   ncert:'Life Skills – CBSE Class 10 / Social Science Class 10 – Money and Credit',
+   why:'UPI (Unified Payments Interface) processed 13.4 billion transactions worth ₹20 lakh crore in December 2023 alone — making India the world leader in real-time digital payments. Understanding how money flows through the banking system, what interest means, and how to spot fraud is now a core life skill.',
+   materials:['A bank passbook or app statement (real or sample)','Internet access'],
+   steps:['Open a bank statement and identify: credits (money in), debits (money out), balance.','What is the difference between a savings and current account?','Look up today\'s SBI savings rate vs a 1-year FD rate. Calculate the difference on ₹10,000.','Understand UPI: Sender bank → NPCI → Receiver bank. Happens in under 2 seconds.','Research 3 common UPI frauds. What is the one rule that prevents all of them?'],
+   simId:'banking-sim',buddy:'India\'s UPI was built by NPCI — a non-profit set up by RBI and Indian banks. It is now being adopted by countries across Asia, Africa, and the Middle East. The technology that lets you split a chai bill with your friend is reshaping global finance.'}
+
 ];
