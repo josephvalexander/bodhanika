@@ -4,7 +4,7 @@
    Changing VERSION forces all clients to refresh.
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v2026.04.02.0741';
+const VERSION = 'v2026.04.02.0801';
 const CACHE   = 'bodhanika-' + VERSION;
 
 /* Files to cache for offline use */
