@@ -12,9 +12,17 @@ window.setMathsMode = function(mode) {
   mathsMode = mode;
   document.getElementById('mmtExp').classList.toggle('active', mode === 'experiments');
   document.getElementById('mmtTip').classList.toggle('active', mode === 'tips');
-  if (mode === 'tips') renderTipsGrid();
-  else {
-    /* Restore experiment grid */
+  if (mode === 'tips') {
+    renderTipsGrid();
+  } else {
+    /* Remove all tip cards */
+    var grid = document.getElementById('grid');
+    if (grid) grid.querySelectorAll('.tip-card').forEach(function(c) { c.remove(); });
+    /* Restore exp cards — clear both style.display and hidden class */
+    document.querySelectorAll('#grid > .exp-card').forEach(function(c) {
+      c.style.display = '';
+      c.classList.remove('tips-hidden');
+    });
     window.applyAll();
   }
 };
@@ -39,8 +47,8 @@ function renderTipsGrid() {
   var grid = document.getElementById('grid');
   if (!grid) return;
 
-  /* Hide experiment cards */
-  grid.querySelectorAll('.exp-card').forEach(function(c) { c.style.display = 'none'; });
+  /* Hide experiment cards using class (style.display harder to undo) */
+  grid.querySelectorAll('.exp-card').forEach(function(c) { c.classList.add('tips-hidden'); });
   /* Remove old tip cards */
   grid.querySelectorAll('.tip-card').forEach(function(c) { c.remove(); });
 
@@ -92,7 +100,10 @@ window.setSub = function(sub, el) {
     var grid = document.getElementById('grid');
     if (grid) {
       grid.querySelectorAll('.tip-card').forEach(function(c) { c.remove(); });
-      grid.querySelectorAll('.exp-card').forEach(function(c) { c.style.display = ''; });
+      grid.querySelectorAll('.exp-card').forEach(function(c) {
+        c.classList.remove('tips-hidden');
+        c.style.display = '';
+      });
     }
   }
   if (sub === 'Maths' && mathsMode === 'tips') renderTipsGrid();
@@ -103,6 +114,28 @@ var _origSetClass = window.setClass;
 window.setClass = function(cls, el) {
   if (_origSetClass) _origSetClass(cls, el);
   if (mathsMode === 'tips') renderTipsGrid();
+};
+
+/* Intercept applyAll to also filter tip cards by search query */
+var _origApplyAll = window.applyAll;
+window.applyAll = function() {
+  if (_origApplyAll) _origApplyAll();
+  if (mathsMode !== 'tips') return;
+  var q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+  document.querySelectorAll('#grid > .tip-card').forEach(function(card) {
+    var tipId = card.dataset.tipId;
+    var tip = window.TIPS_MAP && window.TIPS_MAP[tipId];
+    if (!tip) return;
+    var searchStr = (tip.title + ' ' + tip.shortTrick + ' ' + tip.whyItWorks).toLowerCase();
+    var visible = !q || searchStr.indexOf(q) !== -1;
+    card.classList.toggle('hidden', !visible);
+  });
+  /* Update empty state */
+  var empty = document.getElementById('emptyState');
+  if (empty) {
+    var anyVisible = document.querySelectorAll('#grid > .tip-card:not(.hidden)').length > 0;
+    empty.classList.toggle('hidden', anyVisible);
+  }
 };
 
 /* ══════════════════════════════════════════

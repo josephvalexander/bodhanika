@@ -145,6 +145,9 @@ header {
 .stab[data-s="EVS"].active                { border-color:var(--evs);  color:var(--evs);  background:var(--evs-dim);  }
 .stab[data-s="Life Skills"].active        { border-color:var(--life); color:var(--life); background:var(--life-dim); }
 
+/* Tips mode hidden class */
+.tips-hidden { display: none !important; }
+
 /* ── Maths mode toggle ── */
 .maths-mode-wrap {
   display: flex;

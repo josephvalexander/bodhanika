@@ -1,5 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Bodhanika favicon — infinity knot, transparent background -->
+  <!-- Bodhanika favicon — dark background, sharp at 16–32px -->
+  <rect width="64" height="64" fill="#0d1b2a" rx="12"/>
+
   <!-- Outer knot — emerald -->
   <path d="M 32,32
     C 32,24 24,16 16,16
@@ -12,6 +14,7 @@
     C 40,48 32,40 32,32 Z"
     fill="none" stroke="#34D399" stroke-width="4.5"
     stroke-linecap="round" stroke-linejoin="round"/>
+
   <!-- Inner path — dashed blue -->
   <path d="M 16,16
     C 10,16  4,21  4,28
@@ -24,7 +27,8 @@
     fill="none" stroke="#60A5FA" stroke-width="3"
     stroke-linecap="round" stroke-linejoin="round"
     stroke-dasharray="6,4"/>
-  <!-- Centre node -->
+
+  <!-- Gold centre node -->
   <circle cx="32" cy="32" r="5.5" fill="#0d1b2a"/>
   <circle cx="32" cy="32" r="3.8" fill="#FCD34D"/>
   <circle cx="32" cy="32" r="1.8" fill="#FFFBEB"/>

@@ -13,7 +13,7 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -23,10 +23,17 @@
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "shortcuts": [
-    { "name": "Science", "url": "/?sub=Science" },
-    { "name": "Maths",   "url": "/?sub=Maths"   }
+    { "name": "Science",    "url": "/?sub=Science" },
+    { "name": "Maths",      "url": "/?sub=Maths"   },
+    { "name": "Life Skills","url": "/?sub=Life Skills" }
   ]
 }
