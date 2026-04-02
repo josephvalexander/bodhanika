@@ -145,6 +145,79 @@ header {
 .stab[data-s="EVS"].active                { border-color:var(--evs);  color:var(--evs);  background:var(--evs-dim);  }
 .stab[data-s="Life Skills"].active        { border-color:var(--life); color:var(--life); background:var(--life-dim); }
 
+/* ── Maths mode toggle ── */
+.maths-mode-wrap {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+}
+.maths-mode-toggle {
+  display: flex;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 2px;
+  gap: 2px;
+}
+.mmt-btn {
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.mmt-btn.active {
+  background: var(--math);
+  color: white;
+}
+.mmt-btn:not(.active):hover {
+  color: var(--math);
+}
+
+/* Tips cards — distinct style from experiment cards */
+.tip-card {
+  background: linear-gradient(135deg, rgba(255,217,61,.08), rgba(255,217,61,.03));
+  border: 1.5px solid rgba(255,217,61,.25);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform .18s, border-color .2s, box-shadow .2s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.tip-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--math);
+  box-shadow: 0 8px 24px rgba(255,217,61,.15);
+}
+.tip-card .card-top {
+  background: linear-gradient(135deg, rgba(255,217,61,.18), rgba(255,180,0,.1));
+  padding: 20px 16px;
+  text-align: center;
+  font-size: 44px;
+  position: relative;
+}
+.tip-badge {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: var(--math);
+  color: #1a0a00;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
 /* ── Experiment grid ── */
 .grid {
   position:relative; z-index:5;

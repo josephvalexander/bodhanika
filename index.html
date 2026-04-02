@@ -139,6 +139,13 @@
   <div class="stab" data-s="Maths"             onclick="setSub('Maths',this)">📐 Maths</div>
   <div class="stab" data-s="EVS"               onclick="setSub('EVS',this)">🌿 EVS</div>
   <div class="stab" data-s="Life Skills"       onclick="setSub('Life Skills',this)">💡 Life Skills</div>
+  <!-- Maths mode toggle — only visible when Maths is selected -->
+  <div class="maths-mode-wrap" id="mathsModeWrap" style="display:none;margin-left:auto;align-items:center;gap:0">
+    <div class="maths-mode-toggle" id="mathsModeToggle">
+      <button class="mmt-btn active" id="mmtExp" onclick="setMathsMode('experiments')">⚗ Experiments</button>
+      <button class="mmt-btn"        id="mmtTip" onclick="setMathsMode('tips')">⚡ Tips &amp; Tricks</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══ EXPERIMENT GRID ══ -->
@@ -207,6 +214,8 @@
 <script src="js/sims-3d.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/app.js"></script>
+<script src="js/data-maths-tips.js"></script>
+<script src="js/tips.js"></script>
 <script src="js/favourites.js"></script>
 <script src="js/fullscreen.js"></script>
 
