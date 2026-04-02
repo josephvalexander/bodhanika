@@ -6739,30 +6739,56 @@ SIM_REGISTRY['shapes-hunt'] = function(c) {
   }
 
   var raf2, t2 = 0;
+
   function animate() {
-    var _g=getCtx('shapeCanvas'); if(!_g)return; var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    var _g = getCtx('shapeCanvas');
+    if (!_g) return;
+    var ctx = _g.ctx, W = _g.W, H = _g.H;
     t2 += 0.01;
+    drawShape(ctx, W, H, shapes[sel], t2);
     raf2 = requestAnimationFrame(animate);
   }
 
-  function render() {
+  function renderUI() {
     var s = shapes[sel];
-    c.innerHTML =
-      '<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px">' +
-      shapes.map(function(sh,i) {
-        return '<button onclick="shapeSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:12px;border:1.5px solid '+(i===sel?sh.color:'var(--border)')+';background:'+(i===sel?sh.color+'22':'var(--surface2)')+';cursor:pointer">' + sh.emoji + '</button>';
-      }).join('') + '</div>' +
-      '<canvas id="shapeCanvas" width="220" height="180" style="border-radius:12px;display:block;margin:0 auto"></canvas>' +
-      '<div style="text-align:center;margin-top:8px">' +
-      '<div style="font-size:18px;font-weight:900;color:'+s.color+'">'+s.name+(s.sides>0?' ('+s.sides+' sides)':' (curved)')+' </div>' +
+    /* Only rebuild the HTML shell — don't reset innerHTML if canvas already exists */
+    var existing = document.getElementById('shapeCanvas');
+    if (!existing) {
+      c.innerHTML =
+        '<div id="shapeButtons" style="display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px"></div>' +
+        '<canvas id="shapeCanvas" data-w="280" data-h="200" style="border-radius:12px;display:block;width:100%;margin:0 auto"></canvas>' +
+        '<div id="shapeInfo" style="text-align:center;margin-top:8px"></div>';
+    }
+    /* Update buttons */
+    var btnWrap = document.getElementById('shapeButtons');
+    if (btnWrap) btnWrap.innerHTML = shapes.map(function(sh,i) {
+      return '<button onclick="shapeSel('+i+')" style="padding:5px 9px;border-radius:9px;font-size:18px;border:1.5px solid '+(i===sel?sh.color:'var(--border)')+';background:'+(i===sel?sh.color+'22':'var(--surface2)')+';cursor:pointer">'+sh.emoji+'</button>';
+    }).join('');
+    /* Update info panel */
+    var infoEl = document.getElementById('shapeInfo');
+    if (infoEl) infoEl.innerHTML =
+      '<div style="font-size:18px;font-weight:900;color:'+s.color+'">'+s.name+(s.sides>0?' ('+s.sides+' sides)':' (curved)')+'</div>' +
       '<div style="font-size:12px;color:var(--acc);margin:3px 0">📐 '+s.formula+'</div>' +
-      '<div style="font-size:11px;color:var(--muted);line-height:1.7">🌍 Found in: '+s.realWorld+'</div>' +
-      '</div>';
-    cancelAnimationFrame(raf2); animate();
+      '<div style="font-size:11px;color:var(--muted);line-height:1.7">🌍 Found in: '+s.realWorld+'</div>';
   }
-  window.shapeSel = function(i) { sel=i; cancelAnimationFrame(raf2); render(); };
+
+  function startAnim() {
+    cancelAnimationFrame(raf2);
+    /* Reset hiDPI flag so canvas remeasures after UI update */
+    var cv = document.getElementById('shapeCanvas');
+    if (cv) cv._hiDPIReady = false;
+    requestAnimationFrame(function() { requestAnimationFrame(animate); });
+  }
+
+  renderUI();
+  startAnim();
+
+  window.shapeSel = function(i) {
+    sel = i;
+    renderUI();   /* only updates buttons + info, keeps canvas intact */
+    /* no need to restart animation — it's already running */
+  };
   window.simCleanup = function() { cancelAnimationFrame(raf2); };
-  render();
 };
 
 /* ── 2. PUSH AND PULL (push-pull) ── */
@@ -7039,8 +7065,6 @@ SIM_REGISTRY['count-objects'] = function(c) {
       '<div class="ctrl-row">' +
       '<button class="cbtn" onclick="countNew()" style="background:var(--evs);color:white;border-color:var(--evs)">🔀 New Game</button>' +
       '<button class="cbtn" onclick="countReveal()">👁️ Reveal</button>' +
-      '<span style="font-size:11px;color:var(--muted)">Number: <b>' + count + '</b></span>' +
-      '<input type="range" class="slide" min="1" max="15" value="' + count + '" oninput="countSet(this.value)" style="width:80px">' +
       '</div>';
   }
 
