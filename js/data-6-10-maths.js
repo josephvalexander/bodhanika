@@ -207,7 +207,7 @@ window.EXPERIMENTS_6_10_MATH = [
    simId:'bayes-prob',buddy:'Medical tests are rarely as reliable as they seem. A 99% accurate test for a rare disease still gives a 50% false-positive rate. Understanding Bayes\' theorem literally helps you make life-saving decisions.'},
 
   /* ── 3D SIM ── */
-  ,{id:'c9-m6',title:'3D Shapes Explorer',subject:'Maths',classes:['9'],icon:'🔷',bgGrad:'linear-gradient(135deg,rgba(255,217,61,.25),rgba(251,146,60,.2))',
+  ,{id:'c9-m6',title:'3D Shapes Explorer',subject:'Maths',classes:['9','10'],icon:'🔷',bgGrad:'linear-gradient(135deg,rgba(255,217,61,.25),rgba(251,146,60,.2))',
    desc:'Rotate and explore 3D geometric solids — cube, cuboid, sphere, cone, cylinder, tetrahedron. Watch surface area and volume update live as you resize.',
    ncert:'NCERT Maths Class 9 – Surface Areas and Volumes',
    why:'3D solids have surface area (sum of all face areas) and volume (space enclosed). Key formulas: Cube SA=6a², V=a³. Cylinder SA=2πr(r+h), V=πr²h. Cone SA=πr(r+l), V=⅓πr²h. Sphere SA=4πr², V=⁴⁄₃πr³. Visualising these in 3D makes the formulas intuitive.',
@@ -242,7 +242,7 @@ window.EXPERIMENTS_6_10_MATH = [
   ,{id:'c10-m6-3d',title:'Heights and Distances 3D',subject:'Maths',classes:['10'],icon:'🏔️',
    bgGrad:'linear-gradient(135deg,rgba(34,211,238,.22),rgba(6,182,212,.18))',
    desc:'Solve heights and distances problems in a 3D scene — measure a tower, a cliff, a flying kite using angles of elevation and depression.',
-   ncert:'NCERT Maths Class 10 – Some Applications of Trigonometry',
+   ncert:'NCERT Maths Class 10 – Ch 9: Some Applications of Trigonometry (3D visualisation)',
    why:'tan(angle) = opposite/adjacent lets you find unknown heights from measured horizontal distance and angle of elevation. Angle of depression works the same way from above. Surveyors, pilots, and architects use this every day. Two observations from different distances let you find height without going near the object.',
    materials:['Protractor','Straw','String with weight (plumb line)','Ruler'],
    steps:['Make a clinometer: tape a straw to a protractor, hang a plumb line from centre.','Stand 10 m from a tree/building.','Look through the straw at the top — read the angle.','Height = distance x tan(angle) + your eye height.','Move 5 m closer and measure again — do both give the same height?'],
@@ -252,7 +252,7 @@ window.EXPERIMENTS_6_10_MATH = [
   ,{id:'c10-m7-3d',title:'Circles and Tangents 3D',subject:'Maths',classes:['10'],icon:'⭕',
    bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(245,158,11,.18))',
    desc:'Explore circle theorems in 3D — tangents from external point, angle in semicircle, alternate segment theorem. Rotate the 3D model to see proofs from any angle.',
-   ncert:'NCERT Maths Class 10 – Circles',
+   ncert:'NCERT Maths Class 10 – Ch 10: Circles (tangent theorems, 3D proof)',
    why:'Key theorems: tangent is perpendicular to radius at point of contact; tangents from external point are equal; angle in semicircle is 90 degrees; angles in same segment are equal. These properties are used in gear design, optical lenses, and road curve engineering.',
    materials:['Compass','Ruler','Pencil','Protractor'],
    steps:['Draw a circle with centre O.','Mark external point P and draw two tangents PA and PB.','Measure PA and PB — are they equal?','Draw diameter AB. Mark point C on circle. Measure angle ACB.','Is it always 90 degrees? Try 5 different positions for C.'],

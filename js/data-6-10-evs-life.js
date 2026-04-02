@@ -23,7 +23,7 @@ window.EXPERIMENTS_6_10_EVS = [
    ncert:'NCERT Geography Class 6 – Globe: Latitudes and Longitudes',
    why:'Earth rotates 360° in 24 hours = 15° per hour. India\'s Standard Meridian is 82.5°E. 82.5 ÷ 15 = 5.5 hours ahead of GMT — hence IST = GMT+5:30.',
    materials:['World map or globe','Calculator'],
-   steps:['Find 0° (Greenwich, London) on the map.','Find 82.5°E — where does it pass? (Mirzapur, UP).','Calculate: 82.5 ÷ 15 = 5.5 hours. Why 5 h 30 min?','When it\'s noon in London, what time is it in Kerala?','Calculate time in New York (74°W) and Tokyo (135°E).'],
+   steps:['Find 0° (Greenwich, London) on the map.','Find 82.5°E — the Indian Standard Meridian passing through Mirzapur, UP.','Calculate: 82.5 ÷ 15 = 5.5 hours. Why 5 h 30 min?','When it\'s noon in London, what time is it in India?','Calculate time in New York (74°W) and Tokyo (135°E).'],
    simId:'longitude-time',buddy:'India uses a single time zone despite being 30° wide — meaning sunrise in Arunachal Pradesh occurs almost 2 hours before Kutch, yet both read the same clock. A practical political compromise.'},
 
   {id:'c6-e4',title:'Water Quality Field Test',subject:'EVS',classes:['6'],icon:'🧫',bgGrad:'rgba(107,203,119,.18)',
@@ -75,13 +75,13 @@ window.EXPERIMENTS_6_10_EVS = [
    steps:['Find literacy rates for: Kerala, Bihar, Rajasthan, Maharashtra, national average.','Plot as a bar graph.','Find sex ratio (females per 1,000 males) for same states.','Kerala: 1,084 females per 1,000 males vs India: 940. Discuss why.','Which three indicators most predict quality of life in a state?'],
    simId:'census-data',buddy:'The "Kerala Model" — high literacy, high sex ratio, low infant mortality despite average GDP — proves social investment matters more than wealth. It\'s studied in universities worldwide.'},
 
-  {id:'c7-e5',title:'Natural Resource Map of Kerala',subject:'EVS',classes:['7'],icon:'🗺️',bgGrad:'rgba(107,203,119,.18)',
-   desc:'Map water bodies, forests, spice zones, and minerals on a Kerala outline map.',
-   ncert:'NCERT Geography Class 7 – Resources',
+  {id:'c7-e5',title:'Natural Resources Map of India',subject:'EVS',classes:['7'],icon:'🗺️',bgGrad:'rgba(107,203,119,.18)',
+   desc:'Map the natural resources of India by region — minerals, forests, rivers, and energy sources. Understand why resource distribution shapes economic development.',
+   ncert:'NCERT Social Science Class 7 – Our Environment: Natural Vegetation and Wildlife / Mineral and Power Resources',
    why:'Natural resources include land, water, forests, minerals, and climate. Mapping them reveals economic patterns — why industries locate where they do and which regions face environmental risks.',
-   materials:['Kerala map outline','Colour pencils','Atlas or internet'],
-   steps:['Mark major rivers: Periyar, Bharathapuzha, Chaliyar, Pamba.','Shade forest areas green: Western Ghats, Silent Valley, Periyar Tiger Reserve.','Mark plantation districts: cardamom (Idukki), tea (Munnar), rubber (Kottayam).','Mark minerals: china clay (Thrissur), silica sand (coastal).','Which district is richest in natural resources?'],
-   simId:'resource-map',buddy:'Kerala has no oil or coal — but has abundant water, fertile soil, and a highly educated population. Human capital can be more valuable than natural resources, as Singapore and Japan also prove.'},
+   materials:['India outline map','Colour pencils (6 colours)','Atlas or internet'],
+   steps:['Mark India\'s major river systems: Ganga, Godavari, Krishna, Brahmaputra, Narmada.','Shade forest areas: Northeast, Western Ghats, Central India.','Mark mineral belts: coal (Jharkhand), iron ore (Odisha), bauxite (Chhattisgarh).','Mark agricultural zones: wheat (Punjab), rice (West Bengal), cotton (Maharashtra).','Which states are richest in natural resources? Which depend most on human capital?'],
+   simId:'india-resources',buddy:'India has vast natural resources — 4th largest coal reserves, major iron ore deposits, 7,500 km of coastline — yet many resource-rich states have low HDI. Natural wealth only benefits people with the right institutions and education systems to convert it.'},
 
   // ── CLASS 8 EVS ──
   {id:'c8-e1',title:'Carbon Footprint Calculator',subject:'EVS',classes:['8'],icon:'👣',bgGrad:'rgba(107,203,119,.18)',
@@ -123,6 +123,15 @@ window.EXPERIMENTS_6_10_EVS = [
    materials:['Reference books or internet','Paper for research'],
    steps:['List 10 species found only in the Western Ghats (endemic).','Find how many are endangered.','Research 2 threats: forest loss, invasive species, climate change.','Find one conservation success: Nilgiri Tahr — near-extinct in 1980s, now 3,000+.','Design a poster: "Why the Western Ghats Matters to Kerala."'],
    simId:'biodiversity-hotspot',buddy:'The Nilgiri Tahr was saved from extinction by targeted conservation in Kerala and Tamil Nadu. Conservation works — but only when communities and governments act together before it\'s too late.'},
+  /* Class 8 — Crop Seasons (NCERT Agriculture) */
+  ,{id:'c8-e6',title:'Crop Seasons of India',subject:'EVS',classes:['8'],icon:'🌾',
+   bgGrad:'rgba(107,203,119,.18)',
+   desc:'Explore Kharif, Rabi, and Zaid seasons — which crops grow when and why. Understand how monsoon patterns control India\'s food supply.',
+   ncert:'NCERT Social Science Class 8 – Agriculture / EVS Class 8',
+   why:'India\'s agriculture depends on three distinct cropping seasons. Kharif (June–Oct) relies on monsoon rains — rice, maize, cotton. Rabi (Oct–Mar) uses winter moisture — wheat, mustard, peas. Zaid (Mar–Jun) uses irrigation — watermelon, cucumber. Climate change is disrupting these patterns with serious consequences for food security.',
+   materials:['Outline map of India','Coloured pencils','A calendar'],
+   steps:['Mark on a calendar: when does the southwest monsoon arrive in your state. Compare with Kerala (June 1), Mumbai (June 10), Delhi (late June), Rajasthan (July).','List 3 Kharif crops (rice, soybean, maize). When sown? When harvested?','List 3 Rabi crops (wheat, mustard, peas). What water source do they use in winter?','Find: which season dominates farming in your district?','Research: how did the delayed 2023 monsoon affect Kharif output in one state.'],
+   simId:'crop-seasons',buddy:'India\'s Kharif harvest — rice, soybean, cotton, sugarcane — depends entirely on the southwest monsoon arriving on time. A week\'s delay in the monsoon can reduce national food output by millions of tonnes. Every grain of rice on your plate has a monsoon story behind it.'},
 
   // ── CLASS 9 EVS ──
   {id:'c9-e1',title:'Mock Election: FPTP vs Proportional',subject:'EVS',classes:['9'],icon:'🗳️',bgGrad:'rgba(107,203,119,.18)',
@@ -182,13 +191,13 @@ window.EXPERIMENTS_6_10_EVS = [
    steps:['Read each label: ingredients, allergens, manufacturing date, expiry, net weight, manufacturer address.','Find one label that lists sugar under multiple names (sucrose, fructose, glucose syrup) — total hidden sugar.','Find one health claim — is it backed by information on the label?','Locate the manufacturer\'s address — this is who you complain to.','Learn: how to file a consumer complaint online at consumerhelpline.gov.in.'],
    simId:'consumer-rights',buddy:'A consumer court awarded ₹5,500 to a Mumbai man for a railway ticket delay. Consumer courts are free to access and you don\'t need a lawyer for claims below ₹1 crore. These rights are real and usable.'},
 
-  {id:'c10-e3',title:'Economic Sectors of Kerala',subject:'EVS',classes:['10'],icon:'🏭',bgGrad:'rgba(107,203,119,.18)',
-   desc:'Analyse primary, secondary, and tertiary sector contributions to Kerala\'s economy.',
-   ncert:'NCERT Economics Class 10 – Sectors of the Indian Economy',
-   why:'Primary (agriculture, fishing), secondary (manufacturing, construction), and tertiary (services, IT, tourism, remittances) sectors differ in productivity and employment patterns. Kerala\'s profile is unique in India.',
-   materials:['Kerala Economic Review data (published by State Planning Board)','Pencil and graph paper'],
-   steps:['Find % of Kerala workforce in each sector.','Find % of Kerala GDP from each sector.','Compare: does one sector employ many but contribute less to GDP?','Find Kerala\'s remittance income from Gulf — what % of state GDP?','Plot each sector as a pie chart for employment and GDP separately.'],
-   simId:'kerala-economy',buddy:'Gulf remittances account for roughly 35% of Kerala\'s economy — 1 in 5 families has a member working abroad. This unique economic link has funded the state\'s high social investment for decades.'},
+  {id:'c10-e3',title:'Economic Sectors of India',subject:'EVS',classes:['10'],icon:'🏭',bgGrad:'rgba(107,203,119,.18)',
+   desc:'Analyse the three sectors of India\'s economy — Primary (agriculture/mining), Secondary (manufacturing), Tertiary (services). Track how the share of each sector has shifted over 70 years of development.',
+   ncert:'NCERT Economics Class 10 – Ch 2: Sectors of the Indian Economy',
+   why:'Primary (agriculture, fishing, mining), secondary (manufacturing, construction, electricity), and tertiary (services, IT, banking, tourism) sectors differ in productivity and employment. India\'s economy has shifted from 55% primary in 1950 to over 55% tertiary today — a major structural transformation.',
+   materials:['MOSPI National Accounts Statistics (free online)','Pencil and graph paper'],
+   steps:['Find India\'s % workforce in each sector (MOSPI data).','Find India\'s % GDP from each sector.','Compare: which sector employs the most but contributes least to GDP?','Research how sector share has shifted: agriculture was 55% of GDP in 1950, now under 18%.','Plot each sector as a pie chart for employment and GDP separately. Why is the gap so large?'],
+   simId:'india-economy',buddy:'India\'s service sector now contributes over 55% of GDP but employs less than 30% of workers. Agriculture employs 45% of Indians but generates under 18% of GDP. This gap — called the structural transformation problem — is one of India\'s biggest economic challenges.'},
 
   {id:'c10-e4',title:'Independence: Multiple Perspectives',subject:'EVS',classes:['10'],icon:'🇮🇳',bgGrad:'rgba(107,203,119,.18)',
    desc:'Study the independence movement from Gandhi\'s, Ambedkar\'s, Bose\'s, and Nehru\'s perspectives.',
@@ -196,15 +205,15 @@ window.EXPERIMENTS_6_10_EVS = [
    why:'Historical events appear differently from different vantage points. Gandhi emphasised non-violence; Ambedkar prioritised Dalit emancipation; Bose advocated armed resistance; Nehru envisioned a modern secular state. All were right about different things.',
    materials:['One quote from each leader on independence','Paper'],
    steps:['Find one key quote from Gandhi, Ambedkar, Bose, and Nehru on freedom.','For each: what does "independence" mean in their words?','Which view most prioritised which group\'s interests?','Read about Partition — whose prediction did it most vindicate?','Write your own 3-sentence definition of what independence should mean.'],
-   simId:'independence-views',buddy:'Kerala\'s Vaikkom Satyagraha (1924) — a protest against caste discrimination blocking roads to temples — predated major national independence campaigns. Local struggles were happening in parallel, often unrecorded in national textbooks.'},
+   simId:'independence-views',buddy:'The Dandi March (1930), the Quit India Movement (1942), and the INA campaigns all had different leaders with different visions. The freedom movement was not a single story — it was millions of overlapping struggles across 565 princely states and British provinces.'},
 
-  {id:'c10-e5',title:'SDG Progress: India and Kerala',subject:'EVS',classes:['10'],icon:'🌱',bgGrad:'rgba(107,203,119,.18)',
-   desc:'Assess India\'s and Kerala\'s progress on 5 of the 17 UN Sustainable Development Goals.',
-   ncert:'NCERT Geography/Economics Class 10 – Sustainable Development',
+  {id:'c10-e5',title:'SDG Progress: India',subject:'EVS',classes:['10'],icon:'🌱',bgGrad:'rgba(107,203,119,.18)',
+   desc:'Track India\'s progress on the 17 UN Sustainable Development Goals — from zero hunger to clean energy. Which goals are on track? Which need urgent attention?',
+   ncert:'NCERT Social Science Class 10 / Economics Ch 1: Development',
    why:'The UN\'s 17 SDGs (2015–2030) are a global blueprint for ending poverty, protecting the planet, and ensuring prosperity. India has made progress on some (electrification, child mortality) and lags on others (gender equality, air quality).',
    materials:['NITI Aayog SDG India Index report (available free online)','Paper'],
    steps:['List the 17 SDGs.','Find India\'s 2023 SDG Index score.','Find Kerala\'s score — how does it compare to India\'s average and to the top state?','Choose 3 SDGs. Research India\'s challenge for each.','For each: identify one specific action a student could take.'],
-   simId:'sdg-kerala',buddy:'Kerala ranks #1 in India on the SDG Index — performing best in SDG 3 (Good Health), SDG 4 (Quality Education), and SDG 5 (Gender Equality). Your state sets the standard for the country.'},
+   simId:'sdg-india',buddy:'Kerala ranks #1 in India on the SDG Index — performing best in SDG 3 (Good Health), SDG 4 (Quality Education), and SDG 5 (Gender Equality). Your state sets the standard for the country.'},
 ];
 
 /* ── Life Skills, classes 6–10 ── */
@@ -282,7 +291,7 @@ window.EXPERIMENTS_6_10_LIFE = [
    why:'Simple Interest = P×R×T/100. Compound Interest = P(1+R/100)^T - P. The difference is that compound interest earns interest on interest. Over 30 years at 10%, ₹10,000 grows to ₹30,000 (SI) vs ₹174,494 (CI). Starting 10 years earlier nearly triples your final amount.',
    materials:['Calculator','Notebook'],
    steps:['Start with ₹10,000 at 10% per year for 20 years.','Simple Interest: ₹10,000 × 10 × 20/100 = ₹20,000 interest. Total = ₹30,000.','Compound Interest: ₹10,000 × (1.10)^20 = ₹67,275. Total interest = ₹57,275.','Now try 30 years. The gap grows dramatically.','Which starts earlier — saving at 15 vs saving at 25 — and by how much does it differ at 60?'],
-   simId:'compound-interest',buddy:'If your great-grandparent had invested ₹100 in 1924 at 12% compound interest, it would be worth over ₹11 crore today. That\'s why time is the most valuable ingredient in investing — more than money, more than skill.'}
+   simId:'compound-interest-life',buddy:'If your great-grandparent had invested ₹100 in 1924 at 12% compound interest, it would be worth over ₹11 crore today. That\'s why time is the most valuable ingredient in investing — more than money, more than skill.'}
 
   /* Class 8 — GST and Taxes */
   ,{id:'c8-l3',title:'Understanding GST',subject:'Life Skills',classes:['8'],icon:'🧾',
@@ -295,7 +304,7 @@ window.EXPERIMENTS_6_10_LIFE = [
    simId:'gst-calc',buddy:'India collects over ₹1.7 lakh crore in GST per month. That money funds roads, schools, hospitals, and defence. Every time you buy a biscuit packet, a fraction goes toward building the highway you drove on to reach the shop.'}
 
   /* Class 9 — Profit Loss and Discount */
-  ,{id:'c9-l2',title:'Profit, Loss and Discount',subject:'Life Skills',classes:['9'],icon:'🏪',
+  ,{id:'c9-l2',title:'Profit, Loss and Discount — Business Lens',subject:'Life Skills',classes:['9'],icon:'🏪',
    bgGrad:'linear-gradient(135deg,rgba(77,150,255,.22),rgba(251,146,60,.18))',
    desc:'Run a virtual shop — set prices, apply discounts, calculate profit margins. See how businesses actually make money.',
    ncert:'NCERT Maths Class 8/9 – Comparing Quantities (Profit and Loss)',

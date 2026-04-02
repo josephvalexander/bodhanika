@@ -4,13 +4,13 @@ window.EXPERIMENTS_6_10_SCI = [
   // ── CLASS 6 SCIENCE ──
   {id:'c6-s1',title:'Cell: The Unit of Life',subject:'Science',classes:['6'],icon:'🔬',bgGrad:'rgba(255,107,107,.18)',
    desc:'Prepare an onion-skin slide. Observe plant cells and label their parts.',
-   ncert:'NCERT Science Class 6 – Cell: Basic Unit of Life',
+   ncert:'NCERT Science Class 6 – Ch 1 (intro) | Full treatment: Class 8 Ch 8 – Cell',
    why:'All living things are made of cells. Plant cells have a cell wall, central vacuole, and (in green parts) chloroplasts. Robert Hooke first saw cells in cork in 1665.',
    materials:['Onion','Iodine solution','Glass slide & cover slip','Microscope or drop lens'],
    steps:['Peel a single translucent layer from an onion.','Place flat on the slide; add a drop of iodine.','Lower cover slip carefully — no bubbles.','Observe under microscope.','Draw and label: cell wall, nucleus, vacuole, cytoplasm.'],
    simId:'cell-view',buddy:'Your body has ~37 trillion cells. Each carries your complete DNA — a 2-metre-long molecule coiled inside a nucleus just 6 micrometres wide.'},
 
-  {id:'c6-s2',title:'Newton\'s Three Laws',subject:'Science',classes:['6'],icon:'🍎',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c6-s2',title:'Newton\'s Three Laws',subject:'Science',classes:['9'],icon:'🍎',bgGrad:'rgba(255,107,107,.18)',
    desc:'Demonstrate all three laws using a toy car, a book, and a balloon.',
    ncert:'NCERT Science Class 6 – Force and Motion',
    why:'Law 1: objects stay still or moving unless a force acts. Law 2: F = ma. Law 3: every action has an equal and opposite reaction.',
@@ -86,7 +86,7 @@ window.EXPERIMENTS_6_10_SCI = [
   // ── CLASS 8 SCIENCE ──
   {id:'c8-s1',title:'Extract Your Own DNA',subject:'Science',classes:['8'],icon:'🧬',bgGrad:'rgba(255,107,107,.18)',
    desc:'Extract visible DNA from a strawberry using dish soap, salt, and cold alcohol.',
-   ncert:'NCERT Science Class 8 – Cell Structure and Function',
+   ncert:'NCERT Science Class 8 – Ch 8: Cell – Structure and Functions (practical extension)',
    why:'Detergent breaks cell membranes; salt shields DNA charges so strands clump; cold alcohol precipitates DNA out of solution. The white threads you see are millions of DNA molecules.',
    materials:['2 strawberries','Zip-lock bag','1 tsp dish soap','Pinch of salt','Cold isopropyl alcohol','Coffee filter','Clear glass'],
    steps:['Mash strawberries in the zip-lock bag.','Add 2 tsp water + dish soap + salt. Gently mix.','Filter through coffee filter into the glass.','Slowly pour cold alcohol down the inside of the glass.','Watch white stringy strands appear — that\'s DNA!'],
@@ -116,9 +116,9 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Add each metal to water — any bubbles?','Add each metal to dilute acid — rank bubble intensity.','Place iron nail in copper sulphate solution — copper deposits on iron (displacement).','Arrange metals in order: most reactive → least reactive.','Compare to the standard reactivity series.'],
    simId:'reactivity-series',buddy:'Gold\'s unreactivity is why it has been treasured for 6,000 years — it never tarnishes. Gold from ancient Egyptian tombs looks freshly polished today.'},
 
-  {id:'c8-s5',title:'Electromagnetic Induction',subject:'Science',classes:['8'],icon:'💡',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c8-s5',title:'Electromagnetic Induction',subject:'Science',classes:['8','10'],icon:'💡',bgGrad:'rgba(255,107,107,.18)',
    desc:'Move a magnet through a copper coil. Watch an LED flicker from generated electricity.',
-   ncert:'NCERT Science Class 8 – Electricity',
+   ncert:'NCERT Science Class 10 – Ch 13: Magnetic Effects of Electric Current',
    why:'Faraday\'s law: a changing magnetic field induces a current in a nearby conductor. This is how every power plant on Earth generates electricity — spinning magnets near coils of wire.',
    materials:['Strong bar magnet','~100 turns of enamelled copper wire (solenoid)','LED','Sensitive ammeter (or galvanometer)'],
    steps:['Wind copper wire tightly into a solenoid (50–100 turns). Connect ends to LED and meter.','Quickly push the magnet into the coil.','Observe LED flicker and meter deflect.','Pull magnet out — current flows in opposite direction.','Push faster — does the LED shine brighter?'],
@@ -216,7 +216,7 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Take two long wires — these are the sugar-phosphate backbones.','Twist them around each other in a right-hand spiral.','Connect them with coloured beads: red-blue pairs (A-T) and green-yellow pairs (G-C).','Notice the pairs always match — A never bonds with G or C.','Measure: one full twist every 10 base pairs (3.4 nm in real DNA).'],
    simId:'dna-helix-3d',buddy:'If you uncoiled the DNA from just one of your cells, it would be 2 metres long. Packed into a nucleus 6 micrometres wide — that\'s like fitting a 40 km thread into a marble.'}
 
-  ,{id:'c9-s6',title:'Atomic Structure 3D',subject:'Science',classes:['9'],icon:'⚛️',bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(249,115,22,.18))',
+  ,{id:'c9-s6',title:'Atomic Structure 3D',subject:'Science',classes:['9','10'],icon:'⚛️',bgGrad:'linear-gradient(135deg,rgba(251,191,36,.22),rgba(249,115,22,.18))',
    desc:'Build and explore 3D atomic models — select any element, watch electron shells fill and orbit the nucleus. See Bohr model come alive.',
    ncert:'NCERT Science Class 9 – Structure of the Atom',
    why:'Atoms have a dense nucleus (protons + neutrons) surrounded by electron shells at fixed energy levels. Shells fill in order: K(2), L(8), M(18). The outermost electrons (valence electrons) determine an element\'s chemical behaviour and position in the periodic table.',
@@ -240,7 +240,7 @@ window.EXPERIMENTS_6_10_SCI = [
   ,{id:'c8-s7-3d',title:'Electromagnetic Induction 3D',subject:'Science',classes:['8'],icon:'⚡',
    bgGrad:'linear-gradient(135deg,rgba(251,191,36,.25),rgba(245,158,11,.18))',
    desc:'See a 3D bar magnet moving through a coil — watch current direction flip with magnet orientation. Faraday\'s law made visible.',
-   ncert:'NCERT Science Class 8 – Chemical Effects of Electric Current',
+   ncert:'NCERT Science Class 10 – Ch 13: Magnetic Effects of Electric Current',
    why:'When a magnet moves through a coil, the changing magnetic flux induces an EMF — Faraday\'s Law. The current direction depends on the pole orientation and motion direction — Lenz\'s Law. This is how every generator and alternator works.',
    materials:['Strong bar magnet','Copper wire coil (50 turns)','Galvanometer or LED','Cardboard tube'],
    steps:['Wind 50 turns of copper wire around a cardboard tube.','Connect ends to a galvanometer.','Push the north pole into the coil — note needle deflection.','Pull it out — needle deflects opposite.','Push south pole in — what happens?'],
