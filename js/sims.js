@@ -8858,7 +8858,7 @@ SIM_REGISTRY['crop-seasons'] = function(c) {
       crops:[
         {name:'🌾 Rice',     months:'Jun-Nov', states:'West Bengal, UP, AP',    water:'High'},
         {name:'🌽 Maize',    months:'Jun-Sep', states:'Karnataka, MP, Bihar',   water:'Medium'},
-        {name:'🫘 Soybean',  months:'Jun-Sep', states:'MP, Maharashtra',        water:'Medium'},
+        {name:'🌿 Soybean',  months:'Jun-Sep', states:'MP, Maharashtra',        water:'Medium'},
         {name:'🥜 Groundnut',months:'Jun-Oct', states:'Gujarat, AP, Tamil Nadu',water:'Low-Med'},
         {name:'🌿 Cotton',   months:'Jun-Nov', states:'Maharashtra, Gujarat',   water:'Medium'},
       ]
@@ -11846,6 +11846,78 @@ SIM_REGISTRY['negotiation'] = function(c) {
   if (!SIM_REGISTRY[id]) SIM_REGISTRY[id] = null;
 });
 
+
+/* ── COMPOUND INTEREST — LIFE SKILLS VERSION (Class 8 Life Skills) ── */
+SIM_REGISTRY['compound-interest-life'] = function(c) {
+  var principal = 10000, rate = 8, years = 20;
+
+  function render() {
+    var SI_final = principal * (1 + rate * years / 100);
+    var CI_final = principal * Math.pow(1 + rate / 100, years);
+    var diff = CI_final - SI_final;
+
+    /* Build year-by-year table (show every 5 years) */
+    var rows = '';
+    for (var y = 0; y <= years; y += 5) {
+      var si = principal * (1 + rate * y / 100);
+      var ci = principal * Math.pow(1 + rate / 100, y);
+      rows += '<tr style="border-top:1px solid var(--border)">' +
+        '<td style="padding:5px 8px;color:var(--muted)">' + y + '</td>' +
+        '<td style="padding:5px 8px;color:var(--text)">₹' + Math.round(si).toLocaleString() + '</td>' +
+        '<td style="padding:5px 8px;color:var(--math);font-weight:700">₹' + Math.round(ci).toLocaleString() + '</td>' +
+        '<td style="padding:5px 8px;color:var(--evs)">+₹' + Math.round(ci-si).toLocaleString() + '</td>' +
+      '</tr>';
+    }
+
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">Simple vs Compound Interest</div>' +
+      /* Controls */
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Principal ₹' +
+          '<input type="number" value="'+principal+'" oninput="cil_P(this.value)" style="width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-size:12px">' +
+        '</label>' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Rate %' +
+          '<input type="range" min="1" max="20" value="'+rate+'" oninput="cil_R(this.value)" style="width:70px">' +
+          '<b style="color:var(--text)">'+rate+'%</b>' +
+        '</label>' +
+        '<label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">Years' +
+          '<input type="range" min="5" max="40" value="'+years+'" oninput="cil_Y(this.value)" style="width:70px">' +
+          '<b style="color:var(--text)">'+years+'</b>' +
+        '</label>' +
+      '</div>' +
+      /* Summary cards */
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">' +
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Simple Interest</div>' +
+          '<div style="font-size:20px;font-weight:900;color:var(--text)">₹'+Math.round(SI_final).toLocaleString()+'</div>' +
+          '<div style="font-size:10px;color:var(--muted)">interest earns no interest</div>' +
+        '</div>' +
+        '<div style="background:var(--math-dim);border:1px solid var(--math);border-radius:10px;padding:10px;text-align:center">' +
+          '<div style="font-size:10px;color:var(--muted);margin-bottom:4px">Compound Interest</div>' +
+          '<div style="font-size:20px;font-weight:900;color:var(--math)">₹'+Math.round(CI_final).toLocaleString()+'</div>' +
+          '<div style="font-size:10px;color:var(--evs);font-weight:700">₹'+Math.round(diff).toLocaleString()+' more!</div>' +
+        '</div>' +
+      '</div>' +
+      /* Table */
+      '<div style="overflow-x:auto">' +
+        '<table style="width:100%;font-size:11px;border-collapse:collapse">' +
+          '<tr style="background:var(--surface2)">' +
+            '<th style="padding:5px 8px;text-align:left;color:var(--muted)">Year</th>' +
+            '<th style="padding:5px 8px;text-align:left;color:var(--muted)">Simple ₹</th>' +
+            '<th style="padding:5px 8px;text-align:left;color:var(--math)">Compound ₹</th>' +
+            '<th style="padding:5px 8px;text-align:left;color:var(--evs)">Advantage</th>' +
+          '</tr>' + rows +
+        '</table>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Formula: CI = P(1 + r/100)ⁿ &nbsp;|&nbsp; SI = P × r × n / 100</div>';
+  }
+
+  window.cil_P = function(v) { principal = parseInt(v)||10000; render(); };
+  window.cil_R = function(v) { rate = parseInt(v)||8; render(); };
+  window.cil_Y = function(v) { years = parseInt(v)||20; render(); };
+  render();
+};
+
 /* ══════════════════════════════════════════════════════
    FINANCIAL LITERACY SIMS
    ══════════════════════════════════════════════════════ */
@@ -12156,3 +12228,8 @@ SIM_REGISTRY['banking-sim'] = function(c) {
   };
   render();
 };
+
+/* ── Renamed simId aliases (India-generic versions) ── */
+SIM_REGISTRY['india-resources'] = SIM_REGISTRY['resource-map'] || null;
+SIM_REGISTRY['india-economy']   = SIM_REGISTRY['kerala-economy'] || null;
+SIM_REGISTRY['sdg-india']       = SIM_REGISTRY['sdg-kerala'] || null;
