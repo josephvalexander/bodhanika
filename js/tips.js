@@ -13,6 +13,8 @@ window.setMathsMode = function(mode) {
   document.getElementById('mmtExp').classList.toggle('active', mode === 'experiments');
   document.getElementById('mmtTip').classList.toggle('active', mode === 'tips');
   if (mode === 'tips') {
+    var box = document.getElementById('searchBox');
+    if (box) box.placeholder = '🔍 Search tips…';
     renderTipsGrid();
   } else {
     /* Remove all tip cards */
@@ -23,7 +25,8 @@ window.setMathsMode = function(mode) {
       c.style.display = '';
       c.classList.remove('tips-hidden');
     });
-    window.applyAll();
+    restoreSearchPlaceholder();
+    if (_origApplyAll) _origApplyAll();
   }
 };
 
@@ -104,6 +107,7 @@ window.setSub = function(sub, el) {
         c.classList.remove('tips-hidden');
         c.style.display = '';
       });
+      restoreSearchPlaceholder();
     }
   }
   if (sub === 'Maths' && mathsMode === 'tips') renderTipsGrid();
@@ -116,25 +120,55 @@ window.setClass = function(cls, el) {
   if (mathsMode === 'tips') renderTipsGrid();
 };
 
-/* Intercept applyAll to also filter tip cards by search query */
+/* Patch applyAll — in tips mode take full control, otherwise delegate */
 var _origApplyAll = window.applyAll;
-window.applyAll = function() {
-  if (_origApplyAll) _origApplyAll();
-  if (mathsMode !== 'tips') return;
+
+function filterTips() {
   var q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+  var shown = 0;
   document.querySelectorAll('#grid > .tip-card').forEach(function(card) {
     var tipId = card.dataset.tipId;
     var tip = window.TIPS_MAP && window.TIPS_MAP[tipId];
-    if (!tip) return;
+    if (!tip) { card.classList.add('hidden'); return; }
+    /* Also respect current class filter */
+    var classFilter = 'All';
+    document.querySelectorAll('.ctab.active').forEach(function(t) {
+      var oc = t.getAttribute('onclick') || '';
+      var m = oc.match(/setClass\('([^']+)'/);
+      if (m) classFilter = m[1];
+    });
+    var classOk = classFilter === 'All' || tip.classes.indexOf(classFilter) !== -1;
     var searchStr = (tip.title + ' ' + tip.shortTrick + ' ' + tip.whyItWorks).toLowerCase();
-    var visible = !q || searchStr.indexOf(q) !== -1;
+    var searchOk = !q || searchStr.indexOf(q) !== -1;
+    var visible = classOk && searchOk;
     card.classList.toggle('hidden', !visible);
+    if (visible) shown++;
   });
-  /* Update empty state */
+  /* Update placeholder */
   var empty = document.getElementById('emptyState');
-  if (empty) {
-    var anyVisible = document.querySelectorAll('#grid > .tip-card:not(.hidden)').length > 0;
-    empty.classList.toggle('hidden', anyVisible);
+  if (empty) empty.classList.toggle('hidden', shown > 0);
+  /* Update search placeholder to hint at tips */
+  var box = document.getElementById('searchBox');
+  if (box && box.placeholder.indexOf('tip') === -1) {
+    box.placeholder = '🔍 Search tips…';
+  }
+}
+
+function restoreSearchPlaceholder() {
+  var box = document.getElementById('searchBox');
+  if (box) box.placeholder = '🔍 Search experiments…';
+}
+
+window.applyAll = function() {
+  if (mathsMode === 'tips') {
+    /* In tips mode: keep exp cards hidden, only filter tips */
+    document.querySelectorAll('#grid > .exp-card').forEach(function(c) {
+      c.classList.add('tips-hidden');
+    });
+    filterTips();
+  } else {
+    /* Normal mode: delegate to original */
+    if (_origApplyAll) _origApplyAll();
   }
 };
 

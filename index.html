@@ -396,5 +396,23 @@ window.toggleTheme = function() {
 })();
 </script>
 
+<script>
+/* Live slider track fill — updates --val on every input event */
+document.addEventListener('input', function(e) {
+  if (e.target.type !== 'range') return;
+  var min = parseFloat(e.target.min) || 0;
+  var max = parseFloat(e.target.max) || 100;
+  var val = parseFloat(e.target.value) || 0;
+  var pct = ((val - min) / (max - min) * 100).toFixed(1) + '%';
+  e.target.style.setProperty('--val', pct);
+}, true);
+/* Init on page load for any pre-set sliders */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('input[type=range]').forEach(function(s) {
+    var min = parseFloat(s.min)||0, max = parseFloat(s.max)||100, val = parseFloat(s.value)||0;
+    s.style.setProperty('--val', ((val-min)/(max-min)*100).toFixed(1)+'%');
+  });
+});
+</script>
 </body>
 </html>
