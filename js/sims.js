@@ -8900,11 +8900,11 @@ SIM_REGISTRY['crop-seasons'] = function(c) {
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:5px">'+
       s.crops.map(function(crop){
-        return '<div style="display:grid;grid-template-columns:80px 1fr 1fr 50px;gap:6px;align-items:center;background:var(--surface2);border-radius:9px;padding:7px 10px;border:1px solid var(--border)">'+
-          '<div style="font-size:13px;font-weight:800;color:var(--text)">'+crop.name+'</div>'+
-          '<div style="font-size:10px;color:var(--muted)">📅 '+crop.months+'</div>'+
+        return '<div style="display:grid;grid-template-columns:minmax(90px,auto) 70px 1fr minmax(60px,auto);gap:6px;align-items:center;background:var(--surface2);border-radius:9px;padding:7px 10px;border:1px solid var(--border)">'+
+          '<div style="font-size:12px;font-weight:800;color:var(--text);white-space:nowrap">'+crop.name+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);white-space:nowrap">📅 '+crop.months+'</div>'+
           '<div style="font-size:10px;color:var(--muted)">📍 '+crop.states+'</div>'+
-          '<div style="font-size:10px;color:'+(crop.water==='High'?'var(--sci)':crop.water==='Medium'?'var(--math)':'var(--evs)')+'">💧 '+crop.water+'</div>'+
+          '<div style="font-size:10px;white-space:nowrap;color:'+(crop.water==='High'?'var(--sci)':crop.water==='Medium'?'var(--math)':'var(--evs)')+'">💧 '+crop.water+'</div>'+
           '</div>';
       }).join('')+'</div>';
   }

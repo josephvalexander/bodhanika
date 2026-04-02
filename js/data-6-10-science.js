@@ -286,4 +286,15 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Place a bar magnet flat under white paper.','Sprinkle iron filings evenly over the paper.','Gently tap the paper — filings align with field lines.','Sketch the pattern.','Place a compass at 10 different points — which way does it point each time?'],
    simId:'magfield-3d',buddy:'The Earth\'s magnetic field has flipped hundreds of times in geological history — north becomes south. We\'re overdue for another flip. Compasses would point south during the transition.'}
 
+
+  /* Class 8 — Solar System 3D (NCERT Science Ch 17: Stars and the Solar System) */
+  ,{id:'c8-s8-3d',title:'Solar System 3D',subject:'Science',classes:['8'],icon:'🪐',
+   bgGrad:'linear-gradient(135deg,rgba(16,16,40,.8),rgba(77,100,255,.2))',
+   desc:'Explore the solar system in full 3D — rotate freely, tap each planet, toggle real orbital scale vs compressed orrery view. See why scale models are impossible.',
+   ncert:'NCERT Science Class 8 – Ch 17: Stars and the Solar System',
+   why:'The solar system formed 4.6 billion years ago from a collapsing cloud of gas and dust. Planets closer to the Sun are rocky (inner planets); farther ones are gas/ice giants (outer planets). Real orbital distances are so vast that a true scale model with Earth the size of a marble would stretch 800 metres to Neptune.',
+   materials:['Balls of different sizes','Open space (school ground)','Measuring tape'],
+   steps:['If Sun = basketball (25cm), place it at one end of the ground.','Mercury (poppy seed) = 10m away. Venus (pea) = 19m. Earth (pea) = 26m.','Mars (aspirin) = 39m. Jupiter (golf ball) = 134m.','Saturn (marble) = 247m. Uranus (grape) = 496m. Neptune (grape) = 777m.','Walk it out — feel how empty space really is.'],
+   simId:'solar-system',buddy:'India\'s Chandrayaan and Mangalyaan missions navigated these vast distances using the same orbital mechanics you see in this sim. ISRO calculated trajectories accurate to metres across hundreds of millions of kilometres.'}
+
 ];
