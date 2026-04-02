@@ -6995,7 +6995,7 @@ SIM_REGISTRY['division-sharing'] = function(c) {
 
 /* ── 6. COUNT OBJECTS (count-objects) ── */
 SIM_REGISTRY['count-objects'] = function(c) {
-  var count=5, mode='count', userAnswer='', revealed=false;
+  var count=3+Math.floor(Math.random()*8), mode='count', userAnswer='', revealed=false;
   var emojis = ['🐸','🦋','🌟','🐠','🐶','🐱','🐻','🐼'];
   var currentEmoji = '🐸';
   var positions = [];
@@ -7044,7 +7044,7 @@ SIM_REGISTRY['count-objects'] = function(c) {
       '</div>';
   }
 
-  window.countEmoji = function(e) { currentEmoji=e; generatePositions(count); revealed=false; render(); };
+  window.countEmoji = function(e) { currentEmoji=e; count=3+Math.floor(Math.random()*10); generatePositions(count); revealed=false; userAnswer=''; render(); };
   window.countNew = function() { count=3+Math.floor(Math.random()*10); generatePositions(count); revealed=false; render(); };
   window.countReveal = function() { revealed=true; render(); };
   window.countSet = function(v) { count=parseInt(v); generatePositions(count); revealed=false; render(); };

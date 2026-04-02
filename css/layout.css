@@ -17,7 +17,7 @@ header {
 }
 
 /* ── Logo ── */
-.logo-wrap { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.logo-wrap { display:flex; align-items:center; gap:10px; flex-shrink:0; min-width:0; }
 .wordmark  { display:flex; flex-direction:column; gap:0px; }
 
 .logo {
@@ -47,18 +47,19 @@ header {
 [data-theme="light"] .logo-sub { opacity:0.55; }
 
 /* ── Header right ── */
-.hdr-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+.hdr-right { margin-left:auto; display:flex; gap:6px; align-items:center; min-width:0; overflow:hidden; }
 
 .search-wrap {
   position: relative;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .search-box {
   background:var(--surface2); border:1px solid var(--border); border-radius:10px;
   padding:7px 32px 7px 12px; color:var(--text); font-family:'Nunito',sans-serif;
-  font-size:13px; width:190px; min-width:80px; outline:none; transition:border-color .18s, background .25s;
+  font-size:13px; width:190px; min-width:0; flex-shrink:1; outline:none; transition:border-color .18s, background .25s;
 }
 .search-box::placeholder { color:var(--muted); }
 .search-box:focus { border-color:var(--acc); }
@@ -81,6 +82,16 @@ header {
   z-index: 2;
 }
 .search-clear:hover { background: var(--surface2); color: var(--text); }
+@media (max-width: 600px) {
+  .logo-sub { display: none; }
+  .search-box { width: 130px; font-size:12px; padding:6px 26px 6px 9px; }
+  header { padding: 8px 12px; gap:6px; }
+}
+@media (max-width: 400px) {
+  .logo { font-size: 18px; }
+  .search-box { width: 100px; }
+  .theme-btn { width:30px; height:30px; }
+}
 
 /* ── Theme toggle button ── */
 .theme-btn {
