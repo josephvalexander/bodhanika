@@ -27,36 +27,60 @@
 .slide{
   -webkit-appearance:none;appearance:none;
   height:8px;border-radius:8px;
-  background:linear-gradient(to right,var(--acc) var(--val,40%),var(--surface2) var(--val,40%));
+  /* Fallback bg — the track pseudo-element overrides this on webkit */
+  background:transparent;
   outline:none;cursor:pointer;width:100%;
   border:none;
   vertical-align:middle;
 }
+/* ── Webkit track — THIS is the visible track ── */
 .slide::-webkit-slider-runnable-track{
   height:8px;border-radius:8px;
+  /* Gradient: filled left (acc), unfilled right (surface2) */
+  background:linear-gradient(
+    to right,
+    var(--acc) var(--val,40%),
+    var(--surface2) var(--val,40%)
+  );
 }
+[data-theme="light"] .slide::-webkit-slider-runnable-track{
+  background:linear-gradient(
+    to right,
+    var(--acc) var(--val,40%),
+    rgba(0,0,0,0.12) var(--val,40%)
+  );
+}
+/* ── Webkit thumb ── */
 .slide::-webkit-slider-thumb{
   -webkit-appearance:none;
   width:22px;height:22px;border-radius:50%;
   background:var(--acc);
   border:none;
-  box-shadow:0 2px 8px rgba(0,0,0,0.28);
+  box-shadow:0 2px 10px rgba(0,0,0,0.32);
   cursor:pointer;
   transition:transform .12s,box-shadow .12s;
   margin-top:-7px;
 }
-.slide::-webkit-slider-thumb:hover{ box-shadow:0 2px 14px rgba(0,0,0,0.36); transform:scale(1.08); }
-.slide::-webkit-slider-thumb:active{ cursor:grabbing; transform:scale(1.15); }
-.slide::-moz-range-track{ height:8px;border-radius:8px;background:var(--surface2); }
-.slide::-moz-range-progress{ height:8px;border-radius:8px;background:var(--acc); }
+.slide::-webkit-slider-thumb:hover{
+  box-shadow:0 3px 16px rgba(0,0,0,0.4);
+  transform:scale(1.1);
+}
+.slide::-webkit-slider-thumb:active{ cursor:grabbing; transform:scale(1.18); }
+/* ── Firefox ── */
+.slide::-moz-range-track{
+  height:8px;border-radius:8px;
+  background:var(--surface2);
+}
+[data-theme="light"] .slide::-moz-range-track{ background:rgba(0,0,0,0.12); }
+.slide::-moz-range-progress{
+  height:8px;border-radius:8px;
+  background:var(--acc);
+}
 .slide::-moz-range-thumb{
   width:22px;height:22px;border-radius:50%;
   background:var(--acc);border:none;
-  box-shadow:0 2px 8px rgba(0,0,0,0.28);
+  box-shadow:0 2px 10px rgba(0,0,0,0.32);
   cursor:pointer;
-}
-[data-theme="light"] .slide{
-  background:linear-gradient(to right,var(--acc) var(--val,40%),rgba(0,0,0,0.10) var(--val,40%));
 }
 .h-section{margin-bottom:14px;}
 .h-section h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;}
