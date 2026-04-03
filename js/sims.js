@@ -12530,3 +12530,588 @@ SIM_REGISTRY['banking-sim'] = function(c) {
 SIM_REGISTRY['india-resources'] = SIM_REGISTRY['resource-map'] || null;
 SIM_REGISTRY['india-economy']   = SIM_REGISTRY['kerala-economy'] || null;
 SIM_REGISTRY['sdg-india']       = SIM_REGISTRY['sdg-kerala'] || null;
+
+/* ═══════════════════════════════════════════════════════════
+   NEW PRACTICAL EXPERIMENTS — Classes 8, 9, 10
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── TYNDALL EFFECT (Class 9 — Ch 1: Matter) ── */
+SIM_REGISTRY['tyndall-effect'] = function(c) {
+  var mode = 'colloid', raf;
+  var solutions = {
+    solution: { label:'True Solution (Salt Water)', particles:[], color:'rgba(180,220,255,0.15)', scatterColor:'rgba(200,220,255,0)', desc:'Salt dissolves completely — particles too small (< 1nm) to scatter light. Beam invisible.' },
+    colloid:  { label:'Colloid (Milk in Water)',    particles:[], color:'rgba(255,248,220,0.3)',  scatterColor:'rgba(255,220,80,0.55)',  desc:'Colloid particles (1–100nm) scatter light sideways — beam clearly visible. This is the Tyndall Effect!' },
+    suspension:{ label:'Suspension (Sand in Water)',particles:[], color:'rgba(210,180,140,0.5)',  scatterColor:'rgba(200,160,80,0.7)',  desc:'Large particles (>100nm) scatter AND absorb light — beam visible but muddy. Particles settle over time.' },
+  };
+
+  /* Generate random particle positions */
+  Object.keys(solutions).forEach(function(k) {
+    solutions[k].particles = [];
+    for (var i = 0; i < 80; i++) {
+      solutions[k].particles.push({ x: Math.random(), y: Math.random(), r: k==='suspension'?3:k==='colloid'?1.2:0.4, vx:(Math.random()-0.5)*0.002, vy:(Math.random()-0.5)*0.002 });
+    }
+  });
+
+  function draw() {
+    var _g = getCtx('tyndallCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    var sol = solutions[mode];
+    ctx.clearRect(0,0,W,H);
+
+    /* Beaker outline */
+    var bx=W*0.15, bw=W*0.7, by=H*0.08, bh=H*0.82;
+    ctx.fillStyle='rgba(200,230,255,0.08)';
+    ctx.strokeStyle='rgba(150,200,255,0.5)'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(bx,by); ctx.lineTo(bx,by+bh);
+    ctx.lineTo(bx+bw,by+bh); ctx.lineTo(bx+bw,by);
+    ctx.stroke();
+    /* Liquid fill */
+    ctx.fillStyle=sol.color;
+    ctx.fillRect(bx+2,by+2,bw-4,bh-4);
+
+    /* Animate particles */
+    sol.particles.forEach(function(p) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0.02 || p.x > 0.98) p.vx *= -1;
+      if (p.y < 0.02 || p.y > 0.98) p.vy *= -1;
+      var px = bx + p.x * bw, py = by + p.y * bh;
+      ctx.beginPath(); ctx.arc(px, py, p.r, 0, Math.PI*2);
+      ctx.fillStyle = mode==='solution'?'rgba(100,150,200,0.3)':mode==='colloid'?'rgba(200,180,100,0.5)':'rgba(180,140,80,0.7)';
+      ctx.fill();
+    });
+
+    /* Laser beam from left */
+    var beamY = H * 0.35;
+    var beamX1 = 8, beamX2 = bx + bw * 0.15; /* outside beaker */
+    /* Beam before beaker — always visible */
+    ctx.strokeStyle='rgba(220,50,50,0.9)'; ctx.lineWidth=2.5;
+    ctx.shadowColor='#ef4444'; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.moveTo(beamX1, beamY); ctx.lineTo(bx, beamY); ctx.stroke();
+
+    /* Beam inside beaker */
+    if (mode !== 'solution') {
+      /* Scattered beam — visible cone */
+      var grad = ctx.createLinearGradient(bx, beamY, bx+bw-4, beamY);
+      grad.addColorStop(0, 'rgba(255,80,80,0.85)');
+      grad.addColorStop(1, 'rgba(255,80,80,0.15)');
+      ctx.strokeStyle = grad; ctx.lineWidth = mode==='suspension'?4:2.5;
+      ctx.shadowColor='rgba(255,100,50,0.6)'; ctx.shadowBlur=12;
+      ctx.beginPath(); ctx.moveTo(bx, beamY); ctx.lineTo(bx+bw-4, beamY); ctx.stroke();
+      /* Scatter glow ellipse */
+      var sc = ctx.createRadialGradient(bx+bw*0.5,beamY,0,bx+bw*0.5,beamY,bw*0.3);
+      sc.addColorStop(0,sol.scatterColor); sc.addColorStop(1,'rgba(255,150,50,0)');
+      ctx.fillStyle=sc; ctx.beginPath(); ctx.ellipse(bx+bw*0.5,beamY,bw*0.35,H*0.18,0,0,Math.PI*2); ctx.fill();
+    } else {
+      /* No scatter — beam invisible inside */
+      ctx.strokeStyle='rgba(255,80,80,0.08)'; ctx.lineWidth=1.5; ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.moveTo(bx,beamY); ctx.lineTo(bx+bw-4,beamY); ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+
+    /* Beam after beaker */
+    ctx.strokeStyle='rgba(220,50,50,0.6)'; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.moveTo(bx+bw, beamY); ctx.lineTo(W-6, beamY); ctx.stroke();
+
+    /* Torch icon on left */
+    ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(8,beamY,5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(254,202,202,0.4)'; ctx.beginPath(); ctx.arc(8,beamY,10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#7f1d1d'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('LASER',8,beamY+18);
+
+    /* Label */
+    ctx.fillStyle='rgba(200,220,255,0.8)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(sol.label, W/2, by-4);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="tyndallCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;gap:5px;flex-wrap:wrap">' +
+      Object.keys(solutions).map(function(k) {
+        return '<button onclick="tyndallSet(\''+k+'\')" style="padding:5px 10px;border-radius:8px;font-size:11px;font-family:Nunito,sans-serif;border:1.5px solid '+(k===mode?'var(--sci)':'var(--border)')+';background:'+(k===mode?'var(--sci-dim)':'var(--surface2)')+';color:'+(k===mode?'var(--sci)':'var(--muted)')+';cursor:pointer">'+solutions[k].label.split(' (')[0]+'</button>';
+      }).join('') + '</div>' +
+      '<div id="tyndallDesc" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+solutions[mode].desc+'</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+  window.tyndallSet = function(m) { mode=m; cancelAnimationFrame(raf); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── REFRACTION THROUGH GLASS SLAB (Class 10 — Ch 10: Light) ── */
+SIM_REGISTRY['refraction-slab'] = function(c) {
+  var angleDeg = 40, raf;
+
+  function draw() {
+    var _g = getCtx('refrCanvas');
+    if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a0f1a'; ctx.fillRect(0,0,W,H);
+
+    /* Glass slab */
+    var sx = W*0.3, sw = W*0.4, sy = H*0.2, sh = H*0.6;
+    ctx.fillStyle='rgba(100,180,255,0.12)';
+    ctx.fillRect(sx,sy,sw,sh);
+    ctx.strokeStyle='rgba(100,180,255,0.4)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(sx,sy,sw,sh);
+    ctx.fillStyle='rgba(100,180,255,0.5)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('GLASS (n≈1.5)',sx+sw/2,sy-6);
+    ctx.fillStyle='rgba(150,200,255,0.3)'; ctx.fillText('AIR (n=1)',sx-W*0.15,sy+sh/2+3);
+    ctx.fillStyle='rgba(150,200,255,0.3)'; ctx.fillText('AIR (n=1)',sx+sw+W*0.1,sy+sh/2+3);
+
+    var angleRad = angleDeg * Math.PI / 180;
+    /* Snell's law: n1 sinθ1 = n2 sinθ2 => sinθ2 = sinθ1/1.5 */
+    var sinRefr = Math.sin(angleRad) / 1.5;
+    var refrAngle = Math.asin(Math.min(sinRefr, 1));
+    /* Emergent angle = incident angle (parallel sides) */
+
+    /* Entry point on top face */
+    var ex = sx + sw * 0.5, ey = sy;
+    /* Exit point on bottom face */
+    var exitX = ex + Math.tan(refrAngle) * sh;
+    var exitY = sy + sh;
+
+    /* Incident ray */
+    var incLen = H * 0.22;
+    var ix = ex - Math.sin(angleRad) * incLen;
+    var iy = ey - Math.cos(angleRad) * incLen;
+    ctx.strokeStyle='rgba(255,220,50,0.9)'; ctx.lineWidth=2;
+    ctx.shadowColor='#fde68a'; ctx.shadowBlur=6;
+    ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(ex,ey); ctx.stroke();
+
+    /* Refracted ray inside slab */
+    ctx.strokeStyle='rgba(255,200,50,0.7)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(exitX,exitY); ctx.stroke();
+
+    /* Emergent ray (parallel to incident) */
+    var emLen = H * 0.2;
+    var emX = exitX + Math.sin(angleRad) * emLen;
+    var emY = exitY + Math.cos(angleRad) * emLen;
+    ctx.strokeStyle='rgba(255,220,50,0.9)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(exitX,exitY); ctx.lineTo(emX,emY); ctx.stroke();
+    ctx.shadowBlur=0;
+
+    /* Normal lines (dashed) */
+    ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(ex,sy-30); ctx.lineTo(ex,sy+sh+30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(exitX-20,exitY-30); ctx.lineTo(exitX+20,exitY+30); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Lateral displacement line */
+    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(255,100,100,0.5)'; ctx.lineWidth=1;
+    /* Project incident direction to exit level */
+    var projX = ex + Math.tan(angleRad) * sh;
+    ctx.beginPath(); ctx.moveTo(projX,exitY); ctx.lineTo(exitX,exitY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,100,100,0.8)'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('lateral',  (projX+exitX)/2, exitY-6);
+    ctx.fillText('displacement', (projX+exitX)/2, exitY+10);
+
+    /* Angle labels */
+    ctx.fillStyle='rgba(255,220,100,0.9)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('i = '+angleDeg+'°', ex+6, ey-10);
+    ctx.fillText('r = '+Math.round(refrAngle*180/Math.PI)+'°', ex+6, ey+18);
+    ctx.fillText('e = '+angleDeg+'°', exitX+6, exitY+14);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="refrCanvas" data-w="300" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;gap:8px;align-items:center">' +
+      '<span style="font-size:11px;color:var(--muted)">Incident angle (i):</span>' +
+      '<input type="range" class="slide" min="5" max="70" value="40" oninput="refrAngle(this.value)" style="width:100px">' +
+      '<span style="font-size:11px;font-weight:900;color:var(--text)" id="refrVal">40°</span>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '📐 Snell\'s Law: n₁ sin i = n₂ sin r. The emergent ray is always parallel to the incident ray — only shifted sideways (lateral displacement). The greater the angle, the more the shift.' +
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+  window.refrAngle = function(v) {
+    angleDeg = parseInt(v);
+    var el = document.getElementById('refrVal'); if (el) el.textContent = v + '°';
+  };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── TEMPORARY SLIDE PREPARATION (Class 9 — Ch 13: Why Do We Fall Ill) ── */
+SIM_REGISTRY['temp-slide'] = function(c) {
+  var step = 0, specimen = 'onion', raf;
+  var specimens = {
+    onion: { name:'Onion Peel (Epidermal Cells)', color:'rgba(255,230,150,0.6)', cellColor:'rgba(255,200,80,0.4)', wallColor:'rgba(180,120,30,0.8)', nucleus:'rgba(180,80,30,0.9)', stain:'Safranin (pink-red)', fact:'Plant cells have a rigid cell wall. The nucleus stains pink with Safranin.' },
+    cheek: { name:'Human Cheek Cells', color:'rgba(255,200,180,0.5)', cellColor:'rgba(255,180,150,0.3)', wallColor:'rgba(200,100,80,0.6)', nucleus:'rgba(140,50,30,0.9)', stain:'Methylene Blue', fact:'Animal cells have no cell wall — they appear round/irregular. Nucleus stains blue.' },
+  };
+  var steps = [
+    { title:'1. Place slide on stage', desc:'Put a clean glass slide on the lab bench. Ensure it is dry and grease-free.' },
+    { title:'2. Add a drop of water', desc:'Place one drop of distilled water at the centre of the slide using a dropper.' },
+    { title:'3. Peel the specimen', desc:'For onion: peel a thin transparent layer from the inner surface of an onion scale. For cheek: gently scrape the inside of your cheek with a clean toothpick.' },
+    { title:'4. Place on slide', desc:'Spread the specimen flat in the water drop. Avoid folding or overlapping.' },
+    { title:'5. Add stain', desc:'Add one drop of stain (Safranin for onion, Methylene Blue for cheek cells).' },
+    { title:'6. Cover with coverslip', desc:'Lower the coverslip gently at an angle to avoid air bubbles. Press lightly.' },
+    { title:'7. Observe under microscope', desc:'Start with low power (10×). Focus carefully, then switch to high power (40×). You should now see individual cells clearly!' },
+  ];
+
+  function drawCell(ctx, cx, cy, rx, ry, s) {
+    /* Cell wall */
+    ctx.strokeStyle = s.wallColor; ctx.lineWidth = 1.8;
+    ctx.fillStyle = s.cellColor;
+    ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ctx.fill();
+    if (specimen==='onion') { ctx.stroke(); } /* plant cell has wall */
+    /* Cytoplasm texture */
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    ctx.beginPath(); ctx.ellipse(cx-rx*0.2,cy-ry*0.2,rx*0.5,ry*0.4,0,0,Math.PI*2); ctx.fill();
+    /* Nucleus */
+    ctx.fillStyle=s.nucleus; ctx.beginPath(); ctx.ellipse(cx,cy,rx*0.28,ry*0.28,0,0,Math.PI*2); ctx.fill();
+    /* Nucleolus */
+    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.arc(cx-rx*0.06,cy-ry*0.06,rx*0.08,0,Math.PI*2); ctx.fill();
+  }
+
+  function draw() {
+    var _g = getCtx('slideCanvas');
+    if (!_g) return;
+    var cv=_g.cv, ctx=_g.ctx, W=_g.W, H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    var s = specimens[specimen];
+
+    if (step < 6) {
+      /* Show the step being performed */
+      ctx.fillStyle='#0d1b2a'; ctx.fillRect(0,0,W,H);
+      /* Step number circle */
+      ctx.fillStyle=step<3?'#0ea5e9':step<5?'#f59e0b':'#22c55e';
+      ctx.beginPath(); ctx.arc(W/2,H*0.28,32,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='white'; ctx.font='bold 22px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(step+1, W/2, H*0.28+8);
+      /* Microscope/slide icon based on step */
+      var icons=['🧫','💧','🧅','📋','🎨','🔬','🔬'];
+      ctx.font='40px sans-serif';
+      ctx.fillText(icons[step], W/2, H*0.58);
+      /* Step title */
+      ctx.fillStyle='rgba(220,240,255,0.95)'; ctx.font='bold 12px Nunito,sans-serif';
+      ctx.fillText(steps[step].title, W/2, H*0.72);
+      /* Progress dots */
+      steps.forEach(function(_,i) {
+        ctx.beginPath(); ctx.arc(W/2 - (steps.length-1)*9 + i*18, H*0.88, 5, 0, Math.PI*2);
+        ctx.fillStyle = i<=step ? '#22c55e' : 'rgba(255,255,255,0.2)'; ctx.fill();
+      });
+    } else {
+      /* Step 7: microscope view */
+      ctx.fillStyle='#050810'; ctx.fillRect(0,0,W,H);
+      /* Circular microscope field */
+      var fieldR = Math.min(W,H)*0.42;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(W/2,H/2,fieldR,0,Math.PI*2); ctx.clip();
+      ctx.fillStyle=s.color; ctx.fillRect(0,0,W,H);
+      /* Cell grid */
+      var cw=52,ch=36;
+      for (var row=-1;row<=3;row++) for (var col=-1;col<=4;col++) {
+        var cx=W/2-100+col*cw+(row%2)*cw*0.5, cy=H/2-60+row*ch;
+        drawCell(ctx,cx,cy,cw*0.44,ch*0.44,s);
+      }
+      ctx.restore();
+      /* Circular vignette */
+      var vig=ctx.createRadialGradient(W/2,H/2,fieldR*0.7,W/2,H/2,fieldR);
+      vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,0.85)');
+      ctx.fillStyle=vig; ctx.beginPath(); ctx.arc(W/2,H/2,fieldR,0,Math.PI*2); ctx.fill();
+      /* Outer mask */
+      ctx.fillStyle='#050810';
+      ctx.beginPath(); ctx.rect(0,0,W,H); ctx.arc(W/2,H/2,fieldR,0,Math.PI*2,true); ctx.fill();
+      /* Crosshair */
+      ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(W/2,H/2-fieldR*0.5); ctx.lineTo(W/2,H/2+fieldR*0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W/2-fieldR*0.5,H/2); ctx.lineTo(W/2+fieldR*0.5,H/2); ctx.stroke();
+      /* Label */
+      ctx.fillStyle='rgba(200,230,255,0.8)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(s.name+' — 40× magnification', W/2, H*0.92);
+    }
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="slideCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;gap:6px;flex-wrap:wrap">' +
+      '<button class="cbtn" onclick="slideStep(-1)">← Back</button>' +
+      '<span style="font-size:11px;color:var(--muted)">' + steps[Math.min(step,steps.length-1)].desc + '</span>' +
+      '<button class="cbtn" onclick="slideStep(1)">Next →</button>' +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-top:6px;gap:6px">' +
+      '<span style="font-size:11px;color:var(--muted)">Specimen:</span>' +
+      ['onion','cheek'].map(function(sp) {
+        return '<button onclick="slideSpec(\''+sp+'\')" style="padding:4px 10px;border-radius:8px;font-size:11px;font-family:Nunito,sans-serif;border:1.5px solid '+(sp===specimen?'var(--evs)':'var(--border)')+';background:'+(sp===specimen?'var(--evs-dim)':'var(--surface2)')+';color:'+(sp===specimen?'var(--evs)':'var(--muted)')+';cursor:pointer">'+(sp==='onion'?'🧅 Onion':'🫦 Cheek')+'</button>';
+      }).join('') +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+specimens[specimen].fact+'</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+  window.slideStep = function(d) { step = Math.max(0,Math.min(steps.length-1,step+d)); cancelAnimationFrame(raf); render(); };
+  window.slideSpec = function(sp) { specimen=sp; step=0; cancelAnimationFrame(raf); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── MAGNETIC FIELD MAPPING (Class 10 — Ch 13: Magnetic Effects) ── */
+SIM_REGISTRY['magnetic-field-map'] = function(c) {
+  var magType='bar', raf, t=0;
+
+  function fieldAt(x,y,cx,cy,W,H) {
+    /* Returns {bx,by} — field vector at (x,y) for dipole at (cx,cy) */
+    var dx=x-cx, dy=y-cy;
+    var r2=dx*dx+dy*dy+1;
+    var r=Math.sqrt(r2);
+    /* North pole at (cx, cy-nh), South at (cx, cy+nh) */
+    var nh=H*0.18;
+    var dxN=x-cx, dyN=y-(cy-nh), r2N=dxN*dxN+dyN*dyN+1;
+    var dxS=x-cx, dyS=y-(cy+nh), r2S=dxS*dxS+dyS*dyS+1;
+    var bx = dxN/(r2N*Math.sqrt(r2N)) - dxS/(r2S*Math.sqrt(r2S));
+    var by = dyN/(r2N*Math.sqrt(r2N)) - dyS/(r2S*Math.sqrt(r2S));
+    return {bx:bx, by:by};
+  }
+
+  function draw() {
+    var _g = getCtx('magCanvas');
+    if (!_g) return;
+    var cv=_g.cv, ctx=_g.ctx, W=_g.W, H=_g.H;
+    t += 0.02;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#080c14'; ctx.fillRect(0,0,W,H);
+
+    var cx=W/2, cy=H/2;
+
+    /* Draw field lines using streamlines */
+    var nLines = 16;
+    for (var li=0;li<nLines;li++) {
+      var startAngle = li/nLines * Math.PI*2;
+      var startR = H*0.22;
+      var sx2 = cx + Math.cos(startAngle)*startR*0.5;
+      var sy2 = cy - H*0.18 + Math.sin(startAngle)*10; /* near north pole */
+      ctx.beginPath(); ctx.moveTo(sx2,sy2);
+      var px=sx2, py=sy2;
+      var hue = Math.round(200 + li/nLines*60);
+      ctx.strokeStyle='hsla('+hue+',70%,65%,0.55)'; ctx.lineWidth=1.2;
+      for (var step2=0;step2<120;step2++) {
+        var f=fieldAt(px,py,cx,cy,W,H);
+        var mag=Math.sqrt(f.bx*f.bx+f.by*f.by)+0.0001;
+        px += f.bx/mag*3; py += f.by/mag*3;
+        if (px<4||px>W-4||py<4||py>H-4) break;
+        ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+    }
+
+    /* Compass needles on a grid */
+    for (var gx2=W*0.1;gx2<W*0.9;gx2+=W*0.12) {
+      for (var gy2=H*0.08;gy2<H*0.92;gy2+=H*0.14) {
+        var f2=fieldAt(gx2,gy2,cx,cy,W,H);
+        var mag2=Math.sqrt(f2.bx*f2.bx+f2.by*f2.by)+0.0001;
+        var ang2=Math.atan2(f2.by,f2.bx);
+        /* Skip if inside magnet */
+        if (Math.abs(gx2-cx)<W*0.06 && Math.abs(gy2-cy)<H*0.22) continue;
+        var nl=9;
+        ctx.save(); ctx.translate(gx2,gy2); ctx.rotate(ang2);
+        ctx.fillStyle='#ef4444'; ctx.beginPath();
+        ctx.moveTo(nl,0); ctx.lineTo(-nl*0.3,3); ctx.lineTo(-nl*0.3,-3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#94a3b8'; ctx.beginPath();
+        ctx.moveTo(-nl,0); ctx.lineTo(nl*0.3,3); ctx.lineTo(nl*0.3,-3); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    /* Bar magnet */
+    var mw=W*0.08, mh=H*0.36;
+    /* North half */
+    ctx.fillStyle='#dc2626';
+    ctx.fillRect(cx-mw/2, cy-mh/2, mw, mh/2);
+    /* South half */
+    ctx.fillStyle='#2563eb';
+    ctx.fillRect(cx-mw/2, cy, mw, mh/2);
+    /* Labels */
+    ctx.fillStyle='white'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('N', cx, cy-mh/2+14);
+    ctx.fillText('S', cx, cy+mh/2-4);
+    /* Magnet border */
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(cx-mw/2, cy-mh/2, mw, mh);
+
+    /* Field strength indicator near poles */
+    ctx.fillStyle='rgba(255,100,100,0.15)';
+    ctx.beginPath(); ctx.arc(cx,cy-mh/2,18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(50,100,255,0.15)';
+    ctx.beginPath(); ctx.arc(cx,cy+mh/2,18,0,Math.PI*2); ctx.fill();
+
+    /* Legend */
+    ctx.fillStyle='#ef4444'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('▶ = N end of compass needle', 8, H-8);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Magnetic Field Lines — Bar Magnet</div>' +
+      '<canvas id="magCanvas" data-w="300" data-h="220" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
+      '🧲 Field lines emerge from North (red) and enter South (blue). Compass needles align with the field direction. Lines are closest near the poles — strongest field there.' +
+      '</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── FRICTION COMPARISON (Class 8 — Ch 12: Friction) ── */
+SIM_REGISTRY['friction-sim'] = function(c) {
+  var surface='wood', force=0, moving=false, blockX=30, raf;
+  var surfaces = {
+    glass:     { name:'Glass (smooth)', mu:0.15, color:'#93c5fd', texture:'smooth',  fact:'Very smooth — low friction. μ ≈ 0.15' },
+    wood:      { name:'Wood',           mu:0.35, color:'#d97706', texture:'wood',    fact:'Moderate friction. μ ≈ 0.35. Most everyday surfaces.' },
+    rubber:    { name:'Rubber mat',     mu:0.65, color:'#374151', texture:'rough',   fact:'High friction. μ ≈ 0.65. That\'s why tyres are rubber!' },
+    sandpaper: { name:'Sandpaper',      mu:0.85, color:'#b45309', texture:'grit',    fact:'Very high friction. μ ≈ 0.85. Abrasive surface.' },
+    ice:       { name:'Ice',            mu:0.05, color:'#bae6fd', texture:'ice',     fact:'Almost frictionless! μ ≈ 0.05. Water film acts as lubricant.' },
+  };
+  var blockW=44, blockH=28, mass=1, g=9.8;
+
+  function draw() {
+    var _g = getCtx('frictionCanvas');
+    if (!_g) return;
+    var cv=_g.cv, ctx=_g.ctx, W=_g.W, H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    var s=surfaces[surface];
+    var groundY=H*0.68;
+    var maxFriction=s.mu*mass*g;
+    var netForce=Math.max(0,force-maxFriction*10);
+    var accel=netForce/mass*0.015;
+
+    /* Background */
+    ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,W,H);
+
+    /* Surface */
+    if (s.texture==='wood') {
+      ctx.fillStyle='#d97706';
+      ctx.fillRect(0,groundY,W,H-groundY);
+      for (var gx=0;gx<W;gx+=18) {
+        ctx.strokeStyle='rgba(120,60,0,0.2)'; ctx.lineWidth=0.8;
+        ctx.beginPath(); ctx.moveTo(gx,groundY); ctx.lineTo(gx+3,H); ctx.stroke();
+      }
+    } else if (s.texture==='rough') {
+      ctx.fillStyle=s.color; ctx.fillRect(0,groundY,W,H-groundY);
+      for (var bx2=0;bx2<W;bx2+=6) for (var by2=groundY;by2<H;by2+=6) {
+        if (Math.random()>0.5) { ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(bx2,by2,3,3); }
+      }
+    } else if (s.texture==='grit') {
+      ctx.fillStyle=s.color; ctx.fillRect(0,groundY,W,H-groundY);
+      ctx.fillStyle='rgba(255,200,100,0.4)';
+      for (var gi=0;gi<60;gi++) ctx.fillRect(Math.random()*W,groundY+Math.random()*(H-groundY),2,2);
+    } else if (s.texture==='ice') {
+      var iceg=ctx.createLinearGradient(0,groundY,0,H);
+      iceg.addColorStop(0,'#e0f2fe'); iceg.addColorStop(1,'#bae6fd');
+      ctx.fillStyle=iceg; ctx.fillRect(0,groundY,W,H-groundY);
+      ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1;
+      for (var ix2=0;ix2<W;ix2+=30) {
+        ctx.beginPath(); ctx.moveTo(ix2,groundY); ctx.lineTo(ix2+15,groundY+8); ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle=s.color; ctx.fillRect(0,groundY,W,H-groundY);
+      for (var sx2=0;sx2<W;sx2+=3) {
+        ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(sx2,groundY); ctx.lineTo(sx2+2,groundY+4); ctx.stroke();
+      }
+    }
+
+    /* Ground line */
+    ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(W,groundY); ctx.stroke();
+
+    /* Move block */
+    if (moving && force > maxFriction*10) {
+      blockX = Math.min(blockX + accel, W - blockW - 8);
+    } else if (!moving && force <= maxFriction*10) {
+      /* Nudge back to start when force released */
+    }
+    if (blockX >= W - blockW - 8) moving=false;
+
+    /* Block */
+    var bx=blockX, by=groundY-blockH;
+    /* Shadow */
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    ctx.beginPath(); ctx.ellipse(bx+blockW/2,groundY+4,blockW*0.4,4,0,0,Math.PI*2); ctx.fill();
+    /* Block body */
+    var bg=ctx.createLinearGradient(bx,by,bx,by+blockH);
+    bg.addColorStop(0,'#60a5fa'); bg.addColorStop(1,'#2563eb');
+    ctx.fillStyle=bg; ctx.fillRect(bx,by,blockW,blockH);
+    ctx.strokeStyle='#1d4ed8'; ctx.lineWidth=1.5; ctx.strokeRect(bx,by,blockW,blockH);
+    ctx.fillStyle='white'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('1 kg', bx+blockW/2, by+blockH/2+3);
+
+    /* Applied force arrow */
+    if (force > 0) {
+      var arrowLen=Math.min(50,force*1.5);
+      ctx.strokeStyle='#16a34a'; ctx.lineWidth=2.5;
+      ctx.shadowColor='#22c55e'; ctx.shadowBlur=6;
+      ctx.beginPath(); ctx.moveTo(bx+blockW,by+blockH/2); ctx.lineTo(bx+blockW+arrowLen,by+blockH/2); ctx.stroke();
+      ctx.fillStyle='#16a34a';
+      ctx.beginPath(); ctx.moveTo(bx+blockW+arrowLen,by+blockH/2-5); ctx.lineTo(bx+blockW+arrowLen+10,by+blockH/2); ctx.lineTo(bx+blockW+arrowLen,by+blockH/2+5); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#15803d'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('F='+force+'N', bx+blockW+arrowLen/2+5, by-4);
+    }
+
+    /* Friction arrow (opposing) */
+    if (force > 0) {
+      var fLen=Math.min(40,maxFriction*10*0.8);
+      ctx.strokeStyle='#dc2626'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(bx,by+blockH/2); ctx.lineTo(bx-fLen,by+blockH/2); ctx.stroke();
+      ctx.fillStyle='#dc2626';
+      ctx.beginPath(); ctx.moveTo(bx-fLen,by+blockH/2-4); ctx.lineTo(bx-fLen-8,by+blockH/2); ctx.lineTo(bx-fLen,by+blockH/2+4); ctx.fill();
+      ctx.fillStyle='#b91c1c'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('f='+Math.round(maxFriction*10)+'N', bx-fLen/2-4, by-4);
+    }
+
+    /* Status */
+    var status = force===0?'No force applied':force<=maxFriction*10?'Static friction holds! Block stays still':'Kinetic friction — block moving!';
+    var statusCol = force===0?'#64748b':force<=maxFriction*10?'#b45309':'#16a34a';
+    ctx.fillStyle=statusCol; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(status, W/2, H*0.88);
+
+    /* Surface label */
+    ctx.fillStyle='#1e293b'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(s.name, W/2, groundY+22);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="frictionCanvas" data-w="320" data-h="190" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;gap:6px;flex-wrap:wrap">' +
+      Object.keys(surfaces).map(function(k) {
+        return '<button onclick="frSurface(\''+k+'\')" style="padding:4px 8px;border-radius:7px;font-size:10px;font-family:Nunito,sans-serif;border:1.5px solid '+(k===surface?'var(--sci)':'var(--border)')+';background:'+(k===surface?'var(--sci-dim)':'var(--surface2)')+';color:'+(k===surface?'var(--sci)':'var(--muted)')+';cursor:pointer">'+surfaces[k].name+'</button>';
+      }).join('') +
+      '</div>' +
+      '<div class="ctrl-row" style="margin-top:8px;gap:8px;align-items:center">' +
+      '<span style="font-size:11px;color:var(--muted)">Apply force:</span>' +
+      '<input type="range" class="slide" min="0" max="30" value="0" step="1" oninput="frForce(this.value)" style="width:110px">' +
+      '<span style="font-size:11px;font-weight:900;color:var(--text)" id="frVal">0 N</span>' +
+      '<button class="cbtn" onclick="frReset()">↺ Reset</button>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">'+surfaces[surface].fact+'</div>';
+    cancelAnimationFrame(raf); draw();
+  }
+  window.frSurface = function(s) { surface=s; force=0; blockX=30; moving=false; cancelAnimationFrame(raf); render(); };
+  window.frForce = function(v) {
+    force=parseInt(v);
+    var el=document.getElementById('frVal'); if(el) el.textContent=v+' N';
+    var s=surfaces[surface];
+    if (force > s.mu*mass*g*10) { moving=true; }
+  };
+  window.frReset = function() { force=0; blockX=30; moving=false; cancelAnimationFrame(raf); render(); };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};

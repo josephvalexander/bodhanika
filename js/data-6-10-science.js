@@ -298,4 +298,96 @@ window.EXPERIMENTS_6_10_SCI = [
    materials:['Open space (school ground)','Balls of different sizes','Chalk or markers','Measuring tape'],
    steps:['Sun = basketball (25 cm). Place at one end of the ground.','Mercury = poppy seed, 10m away.','Venus = pea, 19m away. Earth = pea, 26m away.','Mars = aspirin, 39m. Jupiter = golf ball, 134m.','Saturn = marble, 247m. Uranus = grape, 496m. Neptune = grape, 777m.'],
    simId:'solar-system',buddy:'Voyager 1, launched in 1977, left our solar system in 2012. It is now 23 billion km away — sending data home at the speed of light, which takes 22 hours to arrive.'}
+
+  /* ── NEW PRACTICALS BATCH ── */
+
+  /* Class 8 — Friction (Ch 12) */
+  ,{id:'c8-s10',title:'Friction on Different Surfaces',subject:'Science',classes:['8'],icon:'🧲',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(255,60,0,.08))',
+   desc:'Push a block across glass, wood, rubber, sandpaper and ice. Compare the force needed to start movement.',
+   ncert:'NCERT Science Class 8 – Ch 12: Friction',
+   why:'Friction is the force opposing relative motion between two surfaces. It depends on the nature of surfaces (coefficient of friction μ) and the normal force. F_friction = μ × N. Smoother surfaces have lower μ.',
+   materials:['A wooden block (or book)','Different surface materials: glass plate, rubber mat, sandpaper sheet','Spring balance or rubber band','A flat table'],
+   steps:['Place block on table. Attach spring balance horizontally.','Pull slowly — note force just as block starts moving (static friction).','Switch surface: place glass plate under block. Repeat.','Try rubber mat, then sandpaper. Record all readings.','Plot a bar chart: surface vs force needed.'],
+   simId:'friction-sim',
+   buddy:'Car tyres are made of rubber because rubber on tarmac gives μ ≈ 0.7 — enough grip to stop safely. Ice gives μ ≈ 0.05, which is why cars skid on icy roads!'},
+
+  /* Class 8 — Pin-hole camera (Ch 16: Light) */
+  ,{id:'c8-s11',title:'Pin-Hole Camera — Inverted Image',subject:'Science',classes:['8'],icon:'📷',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(200,0,50,.08))',
+   desc:'Build a pin-hole camera from a cardboard box. See how a tiny hole forms an inverted real image — the same principle as your eye!',
+   ncert:'NCERT Science Class 8 – Ch 16: Light',
+   why:'Light travels in straight lines. Rays from the top of an object pass through the pinhole and hit the screen below the centre — forming an inverted image. A convex lens does the same thing, just brighter. Your eye uses a lens to form an inverted image on the retina.',
+   materials:['Shoe box with lid','Pin or needle','Tracing paper or butter paper','Knife or scissors','Black paint (optional)'],
+   steps:['Make a pinhole (1–2mm) in one end of the box.','Stretch tracing paper over the other end — tape it.','Darken the inside of the box with black paper.','Point the pinhole at a bright object (window, lamp).','Look at the tracing paper — you should see an inverted image!'],
+   simId:'reflection-sim',
+   buddy:'The first cameras were called Camera Obscura (Latin for dark room) — entire rooms with a pinhole in one wall. Artists traced the projected image to draw accurate perspectives. Every modern camera and your eye works on this exact principle.'},
+
+  /* Class 9 — Tyndall Effect (Ch 1: Matter) */
+  ,{id:'c9-s9',title:'Tyndall Effect — Identify Colloids',subject:'Science',classes:['9'],icon:'💡',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(255,200,0,.1))',
+   desc:'Shine a laser beam through salt solution, milk, and muddy water. See which ones scatter light — the Tyndall Effect.',
+   ncert:'NCERT Science Class 9 – Ch 1: Matter in Our Surroundings',
+   why:'True solutions (salt water) have particles < 1nm — too small to scatter light. Colloids (milk, fog) have particles 1–100nm — they scatter light sideways (Tyndall Effect). Suspensions (muddy water) have particles > 100nm — they scatter and absorb. This is how we identify colloids.',
+   materials:['3 identical glasses of water','Salt (for true solution)','Milk — 2 drops (for colloid)','Soil/chalk dust (for suspension)','Laser pointer or bright torch'],
+   steps:['Prepare 3 glasses: (1) salt water, (2) 2 drops milk in water, (3) pinch of soil in water.','Darken the room.','Shine laser beam horizontally through each glass.','Observe: in which glass is the beam visible?','Salt water — invisible. Milk — clear bright beam. Soil — murky beam.'],
+   simId:'tyndall-effect',
+   buddy:'Fog in headlights, smoke in sunbeams, and the blue colour of the sky are all Tyndall scattering. The sky is blue because air scatters short (blue) wavelengths more than long (red) ones — called Rayleigh scattering, a related effect.'},
+
+  /* Class 9 — Temporary Slide (Ch 13: Why Do We Fall Ill) */
+  ,{id:'c9-s10',title:'Prepare a Temporary Slide',subject:'Science',classes:['9'],icon:'🔬',
+   bgGrad:'linear-gradient(135deg,rgba(107,203,119,.18),rgba(0,150,80,.08))',
+   desc:'Mount and stain onion peel and human cheek cells. Observe plant vs animal cell differences under a microscope.',
+   ncert:'NCERT Science Class 9 – Ch 5: The Fundamental Unit of Life',
+   why:'Plant cells have a rigid cell wall (cellulose), a large central vacuole, and chloroplasts. Animal cells lack cell walls and have smaller vacuoles. Staining (Safranin for plant cells, Methylene Blue for animal cells) makes the nucleus and cell boundaries visible.',
+   materials:['Microscope and glass slides','Coverslips','Onion bulb','Safranin stain (or food colouring)','Methylene blue stain','Dropper','Clean toothpick'],
+   steps:['Peel a thin transparent layer from inner surface of onion scale.','Place in a drop of water on a glass slide.','Add one drop of Safranin. Wait 30 seconds. Wash excess with water.','Lower coverslip slowly at 45° angle — avoid bubbles.','Observe under microscope: start at 10×, then 40×.','For cheek cells: gently scrape inner cheek, stain with Methylene Blue.'],
+   simId:'temp-slide',
+   buddy:'Robert Hooke first observed cells in 1665 — in a thin slice of cork under a primitive microscope. He named them "cells" because they looked like monks\' rooms (cellula in Latin). He had no idea he was looking at dead plant cell walls!'},
+
+  /* Class 10 — Refraction through glass slab (Ch 10: Light) */
+  ,{id:'c10-s9',title:'Refraction Through a Glass Slab',subject:'Science',classes:['10'],icon:'🔦',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(100,0,200,.1))',
+   desc:'Trace incident, refracted and emergent rays through a rectangular glass slab. Verify Snell\'s Law and measure lateral displacement.',
+   ncert:'NCERT Science Class 10 – Ch 10: Light — Reflection and Refraction',
+   why:'When light passes from air (n=1) to glass (n=1.5), it bends toward the normal (Snell\'s Law: n₁sinθ₁ = n₂sinθ₂). Through a parallel-sided slab, the emergent ray is always parallel to the incident ray but shifted sideways — called lateral displacement. The shift increases with angle.',
+   materials:['Rectangular glass slab','Pins (4)','White paper','Protractor and ruler','Soft board'],
+   steps:['Place glass slab on paper. Trace its outline with pencil.','Place two pins (P1, P2) to define the incident ray at ~40° to normal.','Look through the other side — align two more pins (P3, P4) with the images of P1 and P2.','Remove slab. Join P3-P4, extend inside slab outline — this is the refracted ray.','Measure angles i and r. Check if sin i / sin r ≈ 1.5.','Measure lateral displacement (perpendicular distance between incident and emergent rays).'],
+   simId:'refraction-slab',
+   buddy:'Optical fibres use total internal reflection — a related phenomenon. When light hits glass-air boundary at angles beyond the critical angle (~42° for glass), 100% of light reflects back inside. This is how your internet travels as light pulses through glass fibres thousands of km long.'},
+
+  /* Class 10 — Magnetic field mapping (Ch 13: Magnetic Effects) */
+  ,{id:'c10-s10',title:'Map Magnetic Field Lines',subject:'Science',classes:['10'],icon:'🧲',
+   bgGrad:'linear-gradient(135deg,rgba(77,150,255,.18),rgba(0,50,200,.1))',
+   desc:'Use a compass needle to trace the magnetic field around a bar magnet. Plot field lines and understand field strength.',
+   ncert:'NCERT Science Class 10 – Ch 13: Magnetic Effects of Electric Current',
+   why:'Magnetic field lines show the direction a free north pole would move. They emerge from the north pole and enter the south pole. Lines are closest (most dense) where the field is strongest — near the poles. A compass needle aligns tangentially to the field line at its position.',
+   materials:['Bar magnet','Small compass needle','White paper (A4)','Pencil'],
+   steps:['Place bar magnet at centre of paper. Trace its outline.','Place compass near north pole. Mark two dots: where needle points from and to.','Move compass to second dot. Mark new dot ahead. Repeat.','Connect dots — this traces one complete field line.','Repeat from different starting positions to get 8–10 field lines.','Observe: lines are curved, never cross, and are densest at poles.'],
+   simId:'magnetic-field-map',
+   buddy:'Earth is a giant magnet — its field extends 65,000 km into space, deflecting harmful solar wind particles. Without it, solar radiation would strip away our atmosphere over millions of years, as happened to Mars. The compass you hold is responding to the Earth\'s molten iron outer core.'},
+
+
+  /* Class 9 — Simple Pendulum (Ch 10: Gravitation) */
+  ,{id:'c9-s11',title:'Simple Pendulum — Measure g',subject:'Science',classes:['9'],icon:'⏱️',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(100,0,100,.1))',
+   desc:'Measure the time period of a pendulum for different lengths. Plot T² vs L to find the value of g experimentally.',
+   ncert:'NCERT Science Class 9 – Ch 10: Gravitation',
+   why:'For a simple pendulum: T = 2π√(L/g). Squaring: T² = 4π²L/g. So a graph of T² (y-axis) vs L (x-axis) gives a straight line with slope = 4π²/g. Measure the slope to calculate g experimentally. Expected: g ≈ 9.8 m/s².',
+   materials:['String (1.2m)','Metal nut or bob','Stopwatch','Ruler','Retort stand or fixed support','Protractor'],
+   steps:['Tie nut to string. Clamp string to fixed support.','Set length L = 20cm (from pivot to centre of bob).','Displace bob < 10° from rest. Release. Start stopwatch.','Count 20 complete oscillations. Record total time.','Calculate T = total time / 20.','Repeat for L = 40, 60, 80, 100cm.','Plot T² vs L on graph paper. Draw best-fit line. Slope = 4π²/g. Calculate g.'],
+   simId:'pendulum',
+   buddy:'Galileo discovered pendulum isochronism in 1602 by timing his own pulse against a swinging chandelier in Pisa Cathedral. He realised the period didn\'t depend on the swing size — only on the length. This led to the first accurate clocks, which enabled precise sea navigation.'},
+
+  /* Class 10 — Ohm's Law (Ch 12: Electricity) */
+  ,{id:'c10-s11',title:"Verify Ohm's Law",subject:'Science',classes:['10'],icon:'⚡',
+   bgGrad:'linear-gradient(135deg,rgba(255,107,107,.18),rgba(255,150,0,.1))',
+   desc:'Build a circuit with a resistor, ammeter and voltmeter. Vary voltage and plot V vs I to verify Ohm\'s Law.',
+   ncert:'NCERT Science Class 10 – Ch 12: Electricity',
+   why:'Ohm\'s Law: V = IR. For a conductor at constant temperature, current is directly proportional to voltage. Plot V (y) vs I (x) — you get a straight line through the origin. Slope = resistance R. If the line curves, the component is non-ohmic (e.g. LED, diode).',
+   materials:['1.5V cells (3)','Resistor (10Ω or 100Ω)','Ammeter (0–1A)','Voltmeter (0–5V)','Connecting wires','Rheostat (variable resistor)','Switch'],
+   steps:['Connect: battery → switch → rheostat → resistor → ammeter → back to battery.','Connect voltmeter across the resistor (in parallel).','Close switch. Adjust rheostat to minimum. Record V and I.','Increase rheostat step by step. Record V and I at each step (6 readings).','Plot V vs I graph. Draw best-fit line.','Calculate slope = V/I = R. Compare with resistor\'s marked value.'],
+   simId:'ohms-law',
+   buddy:'Georg Ohm published his law in 1827 and was initially ridiculed — scientists called it "a web of naked fancies." He lost his professorship over it. Within 10 years it became the foundation of all electrical engineering. Today every circuit you use is designed using V = IR.'},
+
 ];
