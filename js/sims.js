@@ -299,43 +299,100 @@ SIM_REGISTRY['shadow-play'] = function(c) {
 
   /* objHeight: how tall each object is above ground — used for shadow geometry */
   var objDefs = {
-    hand: { h: 42 },
-    tree: { h: 62 },
-    bird: { h: 50 }, /* bird flies above ground — h is centre height */
+    hand: { h: 50 },  /* hand fingers reach ~50px above ground */
+    tree: { h: 62 },  /* tree canopy top */
+    bird: { h: 54 },  /* bird wing top: centre(38) + wing rise(16) = 54px above ground */
   };
 
   function drawHand(ctx, x, groundY) {
-    var skin = '#f59e0b', dark = '#d97706';
-    /* Wrist / palm base */
-    ctx.fillStyle = skin;
+    /* Realistic upright open hand — skin tones, shading, nails */
+    var base = groundY;       /* hand base on ground */
+    var cx = x;               /* hand centre x */
+
+    /* ── Palm ── */
+    /* Palm gradient: lighter centre, darker edges */
+    var pg = ctx.createLinearGradient(cx - 13, base - 30, cx + 13, base - 10);
+    pg.addColorStop(0, '#fbbf24');
+    pg.addColorStop(0.5, '#fde68a');
+    pg.addColorStop(1, '#f59e0b');
+    ctx.fillStyle = pg;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x - 11, groundY - 26, 22, 20, 4);
-    else ctx.fillRect(x - 11, groundY - 26, 22, 20);
+    /* Rounded rectangle for palm */
+    ctx.moveTo(cx - 13, base - 8);
+    ctx.quadraticCurveTo(cx - 14, base, cx - 6, base);
+    ctx.lineTo(cx + 6, base);
+    ctx.quadraticCurveTo(cx + 14, base, cx + 13, base - 8);
+    ctx.lineTo(cx + 13, base - 28);
+    ctx.quadraticCurveTo(cx + 13, base - 32, cx + 8, base - 32);
+    ctx.lineTo(cx - 8, base - 32);
+    ctx.quadraticCurveTo(cx - 13, base - 32, cx - 13, base - 28);
+    ctx.closePath();
     ctx.fill();
-    /* Four fingers */
-    var fpos = [-10, -4, 3, 9];
-    var fh =   [20,  22, 22, 18];
-    ctx.fillStyle = skin;
-    for (var f = 0; f < 4; f++) {
+
+    /* Palm crease lines */
+    ctx.strokeStyle = 'rgba(180,100,0,0.25)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(cx - 10, base - 14); ctx.quadraticCurveTo(cx, base - 12, cx + 10, base - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 8, base - 20); ctx.quadraticCurveTo(cx, base - 18, cx + 8, base - 20); ctx.stroke();
+
+    /* ── Thumb (angled out to the left) ── */
+    ctx.save();
+    ctx.translate(cx - 14, base - 24);
+    ctx.rotate(0.35);
+    var tg = ctx.createLinearGradient(-6, 0, 6, 0);
+    tg.addColorStop(0, '#f59e0b'); tg.addColorStop(1, '#fde68a');
+    ctx.fillStyle = tg;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-5, -16, 10, 20, [5,5,2,2]);
+    else ctx.fillRect(-5, -16, 10, 20);
+    ctx.fill();
+    /* Thumb nail */
+    ctx.fillStyle = 'rgba(255,245,210,0.75)';
+    if (ctx.roundRect) ctx.roundRect(-3, -14, 6, 6, 2); else ctx.fillRect(-3, -14, 6, 6);
+    ctx.fill();
+    /* Thumb knuckle */
+    ctx.strokeStyle = 'rgba(180,100,0,0.2)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(-4, -6); ctx.lineTo(4, -6); ctx.stroke();
+    ctx.restore();
+
+    /* ── Four fingers ── */
+    var fingers = [
+      { dx: -9,  h: 24, w: 7  },  /* index */
+      { dx: -2,  h: 27, w: 7  },  /* middle (tallest) */
+      { dx:  5,  h: 25, w: 7  },  /* ring */
+      { dx: 11,  h: 21, w: 6  },  /* pinky */
+    ];
+    fingers.forEach(function(f, i) {
+      var fx = cx + f.dx, fy = base - 32;
+      var fg = ctx.createLinearGradient(fx, fy - f.h, fx + f.w, fy);
+      fg.addColorStop(0, '#fde68a');
+      fg.addColorStop(0.5, '#fbbf24');
+      fg.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = fg;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x + fpos[f], groundY - 26 - fh[f], 6, fh[f] + 4, [3,3,0,0]);
-      else ctx.fillRect(x + fpos[f], groundY - 26 - fh[f], 6, fh[f] + 4);
+      if (ctx.roundRect) ctx.roundRect(fx, fy - f.h, f.w, f.h + 2, [4,4,1,1]);
+      else ctx.fillRect(fx, fy - f.h, f.w, f.h + 2);
       ctx.fill();
-      /* Knuckle line */
-      ctx.strokeStyle = dark; ctx.lineWidth = 0.7;
-      ctx.beginPath(); ctx.moveTo(x + fpos[f], groundY - 26); ctx.lineTo(x + fpos[f] + 6, groundY - 26); ctx.stroke();
-    }
-    /* Thumb */
-    ctx.fillStyle = skin;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x - 19, groundY - 30, 10, 16, [3,0,0,3]);
-    else ctx.fillRect(x - 19, groundY - 30, 10, 16);
-    ctx.fill();
-    /* Fingernail highlights */
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    for (var n = 0; n < 4; n++) {
-      ctx.fillRect(x + fpos[n] + 1, groundY - 26 - fh[n], 4, 4);
-    }
+
+      /* Finger separation shadow */
+      if (i < 3) {
+        ctx.fillStyle = 'rgba(150,80,0,0.18)';
+        ctx.fillRect(fx + f.w - 1, fy - f.h + 2, 2, f.h - 2);
+      }
+      /* Knuckle lines */
+      ctx.strokeStyle = 'rgba(180,100,0,0.22)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(fx + 1, base - 33); ctx.lineTo(fx + f.w - 1, base - 33); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx + 1, base - 33 - f.h * 0.35); ctx.lineTo(fx + f.w - 1, base - 33 - f.h * 0.35); ctx.stroke();
+      /* Fingernail */
+      ctx.fillStyle = 'rgba(255,248,210,0.8)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(fx + 1, fy - f.h + 1, f.w - 2, 6, [2,2,0,0]);
+      else ctx.fillRect(fx + 1, fy - f.h + 1, f.w - 2, 6);
+      ctx.fill();
+    });
+
+    /* Wrist */
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(cx - 8, base, 16, 4);
   }
 
   function drawTree(ctx, x, groundY) {
@@ -362,47 +419,60 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   }
 
   function drawBird(ctx, x, centerY) {
-    /* A soaring bird — wings up */
+    /* Bird facing LEFT toward the lamp, wings spread upward */
+    /* Total width ~56px, centred on x. Head on left (toward lamp). */
+
     /* Body */
     ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath(); ctx.ellipse(x, centerY, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
-    /* Left wing */
+    ctx.beginPath(); ctx.ellipse(x, centerY, 13, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+
+    /* Left wing (toward lamp — visually on the LEFT) */
     ctx.fillStyle = '#1d4ed8';
     ctx.beginPath();
-    ctx.moveTo(x - 4, centerY - 2);
-    ctx.bezierCurveTo(x - 16, centerY - 18, x - 30, centerY - 14, x - 32, centerY - 8);
-    ctx.bezierCurveTo(x - 24, centerY - 4, x - 10, centerY + 2, x - 4, centerY - 2);
+    ctx.moveTo(x - 2, centerY - 1);
+    ctx.bezierCurveTo(x - 14, centerY - 16, x - 26, centerY - 13, x - 28, centerY - 7);
+    ctx.bezierCurveTo(x - 20, centerY - 3, x - 8, centerY + 2, x - 2, centerY - 1);
     ctx.fill();
-    /* Right wing */
+
+    /* Right wing (away from lamp) */
     ctx.beginPath();
-    ctx.moveTo(x + 4, centerY - 2);
-    ctx.bezierCurveTo(x + 16, centerY - 18, x + 30, centerY - 14, x + 32, centerY - 8);
-    ctx.bezierCurveTo(x + 24, centerY - 4, x + 10, centerY + 2, x + 4, centerY - 2);
+    ctx.moveTo(x + 2, centerY - 1);
+    ctx.bezierCurveTo(x + 14, centerY - 16, x + 26, centerY - 13, x + 28, centerY - 7);
+    ctx.bezierCurveTo(x + 20, centerY - 3, x + 8, centerY + 2, x + 2, centerY - 1);
     ctx.fill();
-    /* Wing highlight */
-    ctx.fillStyle = 'rgba(147,197,253,0.25)';
-    ctx.beginPath(); ctx.ellipse(x - 18, centerY - 11, 8, 4, -0.4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(x + 18, centerY - 11, 8, 4, 0.4, 0, Math.PI * 2); ctx.fill();
-    /* Tail */
+
+    /* Wing sheen */
+    ctx.fillStyle = 'rgba(147,197,253,0.22)';
+    ctx.beginPath(); ctx.ellipse(x - 16, centerY - 10, 7, 3.5, -0.35, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 16, centerY - 10, 7, 3.5, 0.35, 0, Math.PI * 2); ctx.fill();
+
+    /* Tail — on the RIGHT (trailing away from lamp) */
     ctx.fillStyle = '#1e3a8a';
     ctx.beginPath();
-    ctx.moveTo(x - 12, centerY + 4);
-    ctx.lineTo(x - 18, centerY + 12);
-    ctx.lineTo(x - 8, centerY + 8);
-    ctx.lineTo(x, centerY + 6);
-    ctx.lineTo(x + 8, centerY + 8);
-    ctx.lineTo(x + 18, centerY + 12);
-    ctx.lineTo(x + 12, centerY + 4);
+    ctx.moveTo(x + 10, centerY + 3);
+    ctx.lineTo(x + 20, centerY + 10);
+    ctx.lineTo(x + 14, centerY + 7);
+    ctx.lineTo(x + 8, centerY + 9);
+    ctx.lineTo(x + 3, centerY + 4);
     ctx.fill();
-    /* Head */
+
+    /* Head — on the LEFT facing the lamp */
     ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath(); ctx.arc(x + 12, centerY - 3, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x - 12, centerY - 2, 7, 0, Math.PI * 2); ctx.fill();
+
     /* Eye */
-    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(x + 14, centerY - 4, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(x + 14.5, centerY - 4, 1.2, 0, Math.PI * 2); ctx.fill();
-    /* Beak */
+    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(x - 14, centerY - 3, 2.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(x - 14.5, centerY - 3.5, 1.1, 0, Math.PI * 2); ctx.fill();
+    /* Eye shine */
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(x - 15, centerY - 4, 0.6, 0, Math.PI * 2); ctx.fill();
+
+    /* Beak facing LEFT */
     ctx.fillStyle = '#f59e0b';
-    ctx.beginPath(); ctx.moveTo(x+19, centerY-4); ctx.lineTo(x+24, centerY-3); ctx.lineTo(x+19, centerY-1); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x - 19, centerY - 3);
+    ctx.lineTo(x - 24, centerY - 2);
+    ctx.lineTo(x - 19, centerY);
+    ctx.fill();
   }
 
   function draw() {
