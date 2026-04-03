@@ -459,53 +459,55 @@ SIM_REGISTRY['shadow-play'] = function(c) {
     ctx.shadowColor = '#fde68a'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
 
     /* Object position: dist slider 10-70, maps to x range [70, W-60] */
-    var objX = 70 + (dist - 10) / 60 * (W - 130);
-    objX = Math.min(objX, W - 60); /* never reach edge */
+    /* Object position — dist 10 (close to lamp) → 70 (far from lamp) */
+    var objX = 70 + (dist - 10) / 60 * (W - 140);
+    objX = Math.max(70, Math.min(objX, W - 65));
     var def = objDefs[objType];
 
-    /* ── Shadow geometry (ground shadow) ──
-       Light at (lx, ly). Object top at (objX, groundY - def.h).
-       Ray from light through object top hits ground at shadowTipX.
-       t param: groundY = ly + t*(groundY - def.h - ly) → t = (groundY-ly)/(groundY-def.h-ly)
-       shadowTipX = lx + t*(objX - lx)
-       Shadow is ellipse on ground from objX to shadowTipX */
+    /* ── Shadow geometry ──
+       Point light at (lx, ly). Object top at (objX, objTopY).
+       Ray from light THROUGH object top, extended until it hits groundY.
+       s = (groundY − ly) / (objTopY − ly) → shadowTipX = lx + s*(objX − lx)
+       Shadow on ground: from objX rightward to shadowTipX. */
     var objTopY = groundY - def.h;
-    var t = (groundY - ly) / (objTopY - ly); /* should be > 1 since objTopY < groundY < ly? no: ly < groundY */
-    /* ly is above groundY: ly = groundY*0.45 < groundY. objTopY < groundY. */
-    /* ray: starts at (lx,ly), direction (objX-lx, objTopY-ly) */
-    /* hits y=groundY when: ly + s*(objTopY-ly) = groundY => s = (groundY-ly)/(objTopY-ly) */
     var s = (groundY - ly) / (objTopY - ly);
     var shadowTipX = lx + s * (objX - lx);
-    shadowTipX = Math.min(shadowTipX, W - 8);
+    var clipped = shadowTipX > W - 4;
+    shadowTipX = Math.min(shadowTipX, W - 4);
+    var shadowLen = Math.max(6, shadowTipX - objX);
 
-    var shadowLen = Math.max(4, shadowTipX - objX);
-
-    /* Draw ground shadow — ellipse, tapered */
+    /* ── 1. Light rays (draw first, behind everything) ── */
     ctx.save();
-    ctx.fillStyle = 'rgba(60,70,40,0.32)';
-    ctx.beginPath();
-    ctx.ellipse(objX + shadowLen / 2, groundY + 3, shadowLen / 2, Math.min(8, shadowLen * 0.12 + 3), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    /* Light rays — from lamp to object edges, continuing to show illuminated scene */
-    ctx.save();
-    ctx.strokeStyle = 'rgba(253,224,71,0.18)'; ctx.lineWidth = 1.2;
-    /* Upper ray: light → object top → continues */
-    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(shadowTipX, groundY); ctx.stroke();
-    /* Lower ray: light → object base → continues right */
-    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(W, groundY + (groundY - ly) / (objX - lx) * (W - lx) * 0.3); ctx.stroke();
-    /* Fill rays */
-    for (var ri = 1; ri < 4; ri++) {
-      var ry = ly + (groundY - ly) * ri / 4;
-      var rx2 = lx + (objX - lx + 30) * ri / 4;
-      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx2 * 1.8, ry); ctx.stroke();
+    /* Fan of illuminating rays around the object */
+    ctx.strokeStyle = 'rgba(253,224,71,0.14)'; ctx.lineWidth = 1;
+    /* Rays that miss the object — go into lit zone */
+    for (var ri = 0; ri < 5; ri++) {
+      var ang = -0.45 + ri * 0.12; /* angles above the object */
+      ctx.beginPath(); ctx.moveTo(lx, ly);
+      ctx.lineTo(lx + Math.cos(ang) * W, ly + Math.sin(ang) * W);
+      ctx.stroke();
     }
+    /* Two boundary rays (top and bottom of object) */
+    ctx.strokeStyle = 'rgba(253,224,71,0.35)'; ctx.lineWidth = 1.5;
+    /* Top boundary: lamp → object top → ground (shadowTipX) */
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(shadowTipX, groundY); ctx.stroke();
+    /* Bottom boundary: lamp → object base → continues */
+    var botDirX = objX - lx, botDirY = groundY - ly;
+    var botLen = Math.sqrt(botDirX*botDirX + botDirY*botDirY);
+    ctx.beginPath(); ctx.moveTo(lx, ly);
+    ctx.lineTo(lx + botDirX/botLen*(W*0.9), ly + botDirY/botLen*(W*0.9)); ctx.stroke();
     ctx.restore();
 
-    /* Shadow cone — darker region between the two boundary rays */
+    /* ── 2. Shadow cone (unlit region between boundary rays) ── */
     ctx.save();
-    ctx.fillStyle = 'rgba(60,70,40,0.08)';
+    ctx.beginPath();
+    ctx.rect(0, 0, W, H); /* clip to canvas */
+    ctx.clip();
+    var shadowGrad = ctx.createLinearGradient(objX, 0, shadowTipX, 0);
+    shadowGrad.addColorStop(0,   'rgba(30,50,20,0.28)');
+    shadowGrad.addColorStop(0.6, 'rgba(30,50,20,0.14)');
+    shadowGrad.addColorStop(1,   'rgba(30,50,20,0)');
+    ctx.fillStyle = shadowGrad;
     ctx.beginPath();
     ctx.moveTo(lx, ly);
     ctx.lineTo(objX, groundY);
@@ -514,20 +516,37 @@ SIM_REGISTRY['shadow-play'] = function(c) {
     ctx.fill();
     ctx.restore();
 
-    /* Draw object */
+    /* ── 3. Ground shadow (ellipse on ground surface) ── */
+    ctx.save();
+    var sHalfW = shadowLen / 2;
+    var sHalfH = Math.min(9, 4 + shadowLen * 0.06);
+    /* Gradient shadow — darker near object, fades toward tip */
+    var sGrad = ctx.createLinearGradient(objX, groundY, shadowTipX, groundY);
+    sGrad.addColorStop(0,   'rgba(40,55,25,0.45)');
+    sGrad.addColorStop(0.5, 'rgba(40,55,25,0.22)');
+    sGrad.addColorStop(1,   clipped ? 'rgba(40,55,25,0.15)' : 'rgba(40,55,25,0)');
+    ctx.fillStyle = sGrad;
+    ctx.beginPath();
+    ctx.ellipse(objX + sHalfW, groundY + 2, sHalfW, sHalfH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    /* ── 4. Object (drawn on top of shadow) ── */
     if (objType === 'hand') drawHand(ctx, objX, groundY);
     else if (objType === 'tree') drawTree(ctx, objX, groundY);
     else drawBird(ctx, objX, groundY - 38);
 
-    /* Light label */
+    /* ── 5. Labels ── */
     ctx.fillStyle = '#92400e'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Light', lx, ly - 18);
-
-    /* Shadow length label */
-    if (shadowLen > 20) {
-      ctx.fillStyle = 'rgba(60,70,40,0.7)'; ctx.font = 'bold 8px Nunito,sans-serif';
-      ctx.fillText('shadow: ' + Math.round(shadowLen) + 'px', objX + shadowLen / 2, groundY + 16);
-    }
+    ctx.fillText('Light', lx, ly - 20);
+    /* Shadow label on ground */
+    var labelX = Math.min(objX + sHalfW, W - 40);
+    ctx.fillStyle = 'rgba(50,70,30,0.75)'; ctx.font = '8px Nunito,sans-serif';
+    ctx.fillText((clipped ? '>' : '') + Math.round(shadowLen) + 'px shadow', labelX, groundY + 18);
+    /* Insight */
+    var insight = dist < 25 ? 'Very close — long shadow!' : dist < 45 ? 'Medium distance' : 'Far away — shorter shadow';
+    ctx.fillStyle = '#4a5240'; ctx.font = 'bold 9px Nunito,sans-serif';
+    ctx.fillText(insight, W / 2, H - 6);
 
     raf = requestAnimationFrame(draw);
   }
@@ -547,10 +566,23 @@ SIM_REGISTRY['shadow-play'] = function(c) {
       '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
       '📐 Closer to light = longer shadow. Further away = shorter shadow. Drag the slider to explore!' +
       '</div>';
-    cancelAnimationFrame(raf); draw();
+        cancelAnimationFrame(raf);
+    /* Init slider fill */
+    requestAnimationFrame(function() {
+      draw();
+      /* Init slider fill after draw so DOM exists */
+      requestAnimationFrame(function() {
+        var sl = document.querySelector('input[oninput*="shadowDist"]');
+        if (sl) { sl.style.setProperty('--val', ((dist-10)/60*100).toFixed(1)+'%'); }
+      });
+    });
   }
 
-  window.shadowDist = function(v) { dist = parseInt(v); };
+  window.shadowDist = function(v) {
+    dist = parseInt(v);
+    var sl = document.querySelector('input[oninput*="shadowDist"]');
+    if (sl) { var pct=((dist-10)/60*100).toFixed(1)+'%'; sl.style.setProperty('--val',pct); }
+  };
   window.shadowObj = function(o) { objType = o; cancelAnimationFrame(raf); render(); };
   window.simCleanup = function() { cancelAnimationFrame(raf); };
   render();
