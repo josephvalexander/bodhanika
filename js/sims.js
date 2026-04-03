@@ -847,72 +847,101 @@ SIM_REGISTRY['circuit-sim'] = function(c) {
 };
 SIM_REGISTRY['colour-mixing'] = function(c) {
   var selected = [];
-  var primaries = [
-    {name:'Red',    hex:'#ef4444', r:239,g:68,b:68},
-    {name:'Blue',   hex:'#3b82f6', r:59,g:130,b:246},
-    {name:'Yellow', hex:'#eab308', r:234,g:179,b:8},
-  ];
-  var facts = {
-    'Red+Blue':         {result:'Purple', hex:'#9333ea', fact:'Red + Blue = Purple. Mixing two cool-ish primaries!'},
-    'Blue+Red':         {result:'Purple', hex:'#9333ea', fact:'Red + Blue = Purple!'},
-    'Red+Yellow':       {result:'Orange', hex:'#f97316', fact:'Red + Yellow = Orange. The colour of fire and sunsets!'},
-    'Yellow+Red':       {result:'Orange', hex:'#f97316', fact:'Red + Yellow = Orange!'},
-    'Blue+Yellow':      {result:'Green',  hex:'#22c55e', fact:'Blue + Yellow = Green. Colour of all plant life!'},
-    'Yellow+Blue':      {result:'Green',  hex:'#22c55e', fact:'Blue + Yellow = Green!'},
-    'Blue+Red+Yellow':  {result:'Brown',  hex:'#7c2d12', fact:'All three primaries mixed = brown. Called a tertiary colour!'},
-    'Red+Blue+Yellow':  {result:'Brown',  hex:'#7c2d12', fact:'All three primaries mixed = brown!'},
-    'Red+Yellow+Blue':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
-    'Yellow+Red+Blue':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
-    'Blue+Yellow+Red':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
-    'Yellow+Blue+Red':  {result:'Brown',  hex:'#7c2d12', fact:'All three = brown!'},
+  var colourMode = 'pigment';
+
+  var modes = {
+    pigment: {
+      label: '🎨 Pigment (Paint)',
+      desc: 'Mixing paints — Primary colours: Red, Yellow, Blue. Mixing absorbs light (subtractive).',
+      primaries: [
+        {name:'Red',    hex:'#ef4444', r:239,g:68,b:68},
+        {name:'Yellow', hex:'#eab308', r:234,g:179,b:8},
+        {name:'Blue',   hex:'#3b82f6', r:59,g:130,b:246},
+      ],
+      mixes: {
+        'Blue+Red':    {result:'Purple',  hex:'#9333ea', fact:'Red + Blue paint = Purple! Two primaries make a secondary colour.'},
+        'Red+Yellow':  {result:'Orange',  hex:'#f97316', fact:'Red + Yellow paint = Orange! Seen in sunsets and fire.'},
+        'Blue+Yellow': {result:'Green',   hex:'#22c55e', fact:'Blue + Yellow paint = Green! The colour of all plant life.'},
+        'Blue+Red+Yellow': {result:'Brown', hex:'#78350f', fact:'All three paint primaries = Brown (muddy!). Pigments absorb light — more pigments absorb more light.'},
+      }
+    },
+    light: {
+      label: '💡 Light (RGB)',
+      desc: 'Mixing coloured light — used in screens, LEDs, projectors. Primary colours: Red, Green, Blue. Mixing adds light (additive).',
+      primaries: [
+        {name:'Red',   hex:'#ef4444', r:255,g:0,b:0},
+        {name:'Green', hex:'#22c55e', r:0,g:255,b:0},
+        {name:'Blue',  hex:'#3b82f6', r:0,g:0,b:255},
+      ],
+      mixes: {
+        'Green+Red':   {result:'Yellow',  hex:'#fbbf24', fact:'Red + Green light = Yellow! Light mixing is additive — you get brighter colours, not darker.'},
+        'Blue+Red':    {result:'Magenta', hex:'#d946ef', fact:'Red + Blue light = Magenta. Used in colour printing (CMYK) as a primary!'},
+        'Blue+Green':  {result:'Cyan',    hex:'#22d3ee', fact:'Green + Blue light = Cyan. Your phone screen mixes RGB to make every colour you see.'},
+        'Blue+Green+Red': {result:'White', hex:'#f1f5f9', fact:'All three light primaries = White! Newton proved sunlight contains all colours using a glass prism in 1666.'},
+      }
+    }
   };
 
   function getMix() {
     if (!selected.length) return null;
-    return facts[selected.slice().sort().join('+')] || null;
+    return modes[colourMode].mixes[selected.slice().sort().join('+')] || null;
+  }
+
+  function getMixedColour() {
+    var m = modes[colourMode];
+    if (!selected.length) return null;
+    var tr=0,tg=0,tb=0;
+    selected.forEach(function(n){
+      var p=m.primaries.find(function(p){return p.name===n;});
+      tr+=p.r; tg+=p.g; tb+=p.b;
+    });
+    if (colourMode==='light') {
+      return 'rgb('+Math.min(255,tr)+','+Math.min(255,tg)+','+Math.min(255,tb)+')';
+    } else {
+      var n=selected.length, d=n>1?0.78:1;
+      return 'rgb('+Math.round(tr/n*d)+','+Math.round(tg/n*d)+','+Math.round(tb/n*d)+')';
+    }
   }
 
   function render() {
+    var m = modes[colourMode];
     var mix = getMix();
-    var avg = {r:200,g:200,b:200};
-    if (selected.length) {
-      var tr=0,tg=0,tb=0;
-      selected.forEach(function(n){var p=primaries.find(function(p){return p.name===n;}); tr+=p.r;tg+=p.g;tb+=p.b;});
-      avg={r:Math.round(tr/selected.length),g:Math.round(tg/selected.length),b:Math.round(tb/selected.length)};
-    }
-    c.innerHTML=
-      '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center">Colour Mixing Lab</div>'+
-      '<div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin-bottom:16px">'+
-      primaries.map(function(p){
+    var mixedCol = getMixedColour();
+    var isLight = colourMode === 'light';
+    c.innerHTML =
+      '<div style="display:flex;gap:4px;margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:3px">' +
+      ['pigment','light'].map(function(mode) {
+        var active = mode===colourMode;
+        return '<button onclick="cmMode(\''+mode+'\')" style="flex:1;padding:6px;border-radius:8px;border:none;font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;transition:all .18s;background:'+(active?'var(--acc)':'transparent')+';color:'+(active?'white':'var(--muted)')+'">'+modes[mode].label+'</button>';
+      }).join('') + '</div>' +
+      '<div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:14px">' +
+      m.primaries.map(function(p, i) {
         var isSel=selected.includes(p.name);
-        return '<div onclick="cmToggle(\''+p.name+'\')" style="cursor:pointer;text-align:center">'+
-          '<div style="width:60px;height:60px;border-radius:50%;background:'+p.hex+
-          ';border:3px solid '+(isSel?'white':'transparent')+
-          ';transform:scale('+(isSel?'1.15':'1')+');transition:all .25s;'+
-          'box-shadow:'+(isSel?'0 0 20px '+p.hex+'99':'none')+'"></div>'+
-          '<div style="font-size:12px;font-weight:800;color:'+(isSel?p.hex:'var(--muted)')+';margin-top:6px">'+p.name+'</div>'+
-          (isSel?'<div style="color:'+p.hex+';font-size:14px;margin-top:-2px">✓</div>':'<div style="height:18px"></div>')+
-          '</div>';
-      }).join('<div style="font-size:20px;color:var(--muted);padding-bottom:30px">+</div>')+
+        var glow=isLight?'box-shadow:'+(isSel?'0 0 22px '+p.hex+'cc,0 0 8px '+p.hex:'0 0 10px '+p.hex+'44')+';':'';
+        return '<div onclick=\"cmToggle(\\\''+p.name+'\\\')\" style=\"cursor:pointer;text-align:center;user-select:none\">' +
+          '<div style="width:60px;height:60px;border-radius:50%;background:'+p.hex+';border:3px solid '+(isSel?'white':'transparent')+
+          ';transform:scale('+(isSel?'1.15':'1')+');transition:all .22s;'+glow+'"></div>'+
+          '<div style="font-size:11px;font-weight:800;color:'+(isSel?p.hex:'var(--muted)')+';margin-top:5px">'+p.name+'</div>'+
+          (isSel?'<div style="color:'+p.hex+';font-size:13px">✓</div>':'<div style="height:16px"></div>')+
+          '</div>'+(i<m.primaries.length-1?'<div style="font-size:18px;color:var(--muted);padding-bottom:26px">+</div>':'');
+      }).join('')+'</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px">'+
+      '<div style="font-size:9px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase">= Result</div>'+
+      '<div style="width:90px;height:90px;border-radius:50%;background:'+(mixedCol||'var(--surface2)')+';border:3px solid '+(mix?mix.hex:'var(--border)')+
+      ';display:flex;align-items:center;justify-content:center;transition:all .5s;font-size:12px;font-weight:900;'+
+      'color:'+(isLight&&selected.length===3?'#1a1d27':'white')+';text-shadow:0 1px 3px rgba(0,0,0,.5);text-align:center;padding:8px">'+
+      (mix?mix.result:selected.length?'...':'?')+'</div></div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:9px 14px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7;min-height:38px">'+
+      (mix?'🎨 '+mix.fact:selected.length===0?m.desc:selected.length===1?'Add another colour to mix!':'Try different combinations!')+
       '</div>'+
-      '<div style="display:flex;justify-content:center;margin-bottom:10px">'+
-      '<div style="width:100px;height:100px;border-radius:50%;background:'+(selected.length?'rgb('+avg.r+','+avg.g+','+avg.b+')':'var(--surface2)')+
-      ';border:3px solid '+(mix?mix.hex:'var(--border)')+
-      ';display:flex;align-items:center;justify-content:center;transition:all .5s;'+
-      'font-size:13px;font-weight:900;color:white;text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center;padding:8px">'+
-      (mix?mix.result:selected.length?'Mixing!':'?')+
-      '</div></div>'+
-      '<div style="background:var(--surface2);border-radius:10px;padding:10px 14px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7;text-align:center;min-height:40px">'+
-      (mix?'🎨 '+mix.fact:selected.length===0?'Tap the paint pots to mix colours!':selected.length===1?'Add another colour to mix!':'Try Red+Blue, Red+Yellow, or Blue+Yellow')+
-      '</div>'+
-      '<div class="ctrl-row" style="margin-top:8px"><button class="cbtn" onclick="cmClear()">↺ Clear</button></div>';
+      '<div class="ctrl-row" style="margin-top:8px">'+
+        '<button class="cbtn" onclick="cmClear()">↺ Clear</button>'+
+        '<span style="font-size:10px;color:var(--muted);margin-left:8px">'+(isLight?'Additive mixing (light + light = brighter)':'Subtractive mixing (pigment + pigment = darker)')+'</span>'+
+      '</div>';
   }
 
-  window.cmToggle=function(n){
-    var i=selected.indexOf(n);
-    if(i>=0)selected.splice(i,1); else if(selected.length<3)selected.push(n);
-    render();
-  };
+  window.cmMode=function(m){colourMode=m;selected=[];render();};
+  window.cmToggle=function(n){var i=selected.indexOf(n);if(i>=0)selected.splice(i,1);else if(selected.length<3)selected.push(n);render();};
   window.cmClear=function(){selected=[];render();};
   render();
 };
@@ -2981,14 +3010,15 @@ SIM_REGISTRY['plant-parts'] = function(c) {
       ['water','sun','soil'].map(function(n) {
         var val=n==='water'?water:n==='sun'?sun:soil;
         var emoji=n==='water'?'💧':n==='sun'?'☀️':'🌍';
+        var col=n==='water'?'var(--life)':n==='sun'?'var(--math)':'#8B5E3C';
+        var pct=val+'%';
         return '<div>' +
-          '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">' +
+          '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:2px">' +
           '<span>'+emoji+' '+n.charAt(0).toUpperCase()+n.slice(1)+'</span>' +
           '<span style="color:var(--text);font-weight:700">'+val+'%</span></div>' +
-          '<div style="position:relative;height:8px;background:var(--surface2);border-radius:4px">' +
-          '<div style="position:absolute;left:0;top:0;height:100%;width:'+val+'%;border-radius:4px;' +
-            'background:'+(n==='water'?'var(--life)':n==='sun'?'var(--math)':'#8B5E3C')+';transition:width .3s"></div></div>' +
-          '<input type="range" min="0" max="100" value="'+val+'" oninput="plantSet(\''+n+'\',this.value)" style="width:100%;margin-top:2px;height:3px;accent-color:'+(n==='water'?'var(--life)':n==='sun'?'var(--math)':'#8B5E3C')+'">' +
+          '<input type="range" class="slide" min="0" max="100" value="'+val+'" '+
+            'oninput="plantSet(\''+n+'\',this.value)" '+
+            'style="width:100%;--val:'+pct+';--acc:'+col+'">' +
           '</div>';
       }).join('') +
       '<div style="display:flex;gap:6px">' +
@@ -2996,15 +3026,17 @@ SIM_REGISTRY['plant-parts'] = function(c) {
       '<button class="cbtn" onclick="plantReset()" style="font-size:11px">↺</button>' +
       '</div></div></div>';
 
-    window.plantSet = function(n,v) {
-      if(n==='water')water=parseInt(v);
-      else if(n==='sun')sun=parseInt(v);
-      else soil=parseInt(v);
-      render();
-    };
-    window.plantGrow  = function() { day++; render(); };
-    window.plantReset = function() { day=0; water=50; sun=50; soil=50; render(); };
   }
+
+  window.plantSet = function(n,v) {
+    v = parseInt(v);
+    if(n==='water') water=v;
+    else if(n==='sun') sun=v;
+    else soil=v;
+    render();
+  };
+  window.plantGrow  = function() { day++; render(); };
+  window.plantReset = function() { day=0; water=50; sun=50; soil=50; render(); };
   render();
 };
 
