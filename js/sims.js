@@ -54,92 +54,210 @@ function getCtx(id) {
 /* ── SINK OR FLOAT (canvas, physics animation) ── */
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
-    { name:'Leaf',   floats:true,  color:'#22c55e', shape:'leaf',   fact:'Waxy surface traps air!' },
-    { name:'Coin',   floats:false, color:'#a0a0a0', shape:'circle', fact:'Metal is denser than water.' },
-    { name:'Cap',    floats:true,  color:'#3b82f6', shape:'cap',    fact:'Hollow shape traps air.' },
-    { name:'Stone',  floats:false, color:'#78716c', shape:'rect',   fact:'Rock is 2.7× denser than water.' },
-    { name:'Sponge', floats:true,  color:'#f59e0b', shape:'rect',   fact:'Full of air pockets!' },
-    { name:'Pencil', floats:true,  color:'#f97316', shape:'rect',   fact:'Wood is less dense than water.' },
+    { name:'Leaf',   floats:true,  color:'#22c55e', fact:'Waxy surface traps air — density < water!' },
+    { name:'Coin',   floats:false, color:'#9ca3af', fact:'Metal is ~8× denser than water.' },
+    { name:'Cap',    floats:true,  color:'#3b82f6', fact:'Hollow dome traps air, reducing average density.' },
+    { name:'Stone',  floats:false, color:'#78716c', fact:'Rock is 2.7× denser than water.' },
+    { name:'Sponge', floats:true,  color:'#f59e0b', fact:'Air pockets make overall density < water.' },
+    { name:'Pencil', floats:true,  color:'#f97316', fact:'Wood density ~0.5 g/cc — half that of water.' },
   ];
   var dropped = [];
   var raf;
+
+  function drawItem(ctx, item, x, y) {
+    ctx.save();
+    var n = item.name;
+    if (n === 'Leaf') {
+      /* Green leaf with veins */
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-0.3);
+      /* Main leaf body */
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.bezierCurveTo(12, -10, 16, 2, 10, 14);
+      ctx.bezierCurveTo(0, 18, -10, 18, -10, 14);
+      ctx.bezierCurveTo(-16, 2, -12, -10, 0, -14);
+      ctx.fill();
+      /* Lighter highlight */
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, 5, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      /* Midrib */
+      ctx.strokeStyle = '#14532d'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(0, 14); ctx.stroke();
+      /* Side veins */
+      ctx.strokeStyle = '#14532d'; ctx.lineWidth = 0.7;
+      for (var v = -8; v <= 8; v += 4) {
+        ctx.beginPath(); ctx.moveTo(0, v); ctx.lineTo(8, v - 3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, v); ctx.lineTo(-8, v - 3); ctx.stroke();
+      }
+      ctx.restore();
+    } else if (n === 'Coin') {
+      /* Metallic coin */
+      ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2);
+      var cg = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 13);
+      cg.addColorStop(0, '#e5e7eb'); cg.addColorStop(0.5, '#9ca3af'); cg.addColorStop(1, '#6b7280');
+      ctx.fillStyle = cg; ctx.fill();
+      ctx.strokeStyle = '#4b5563'; ctx.lineWidth = 1; ctx.stroke();
+      /* Rim detail */
+      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.5; ctx.stroke();
+      /* Centre text */
+      ctx.fillStyle = '#6b7280'; ctx.font = 'bold 7px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('₹', x, y + 3);
+    } else if (n === 'Cap') {
+      /* Bottle cap dome */
+      var cg2 = ctx.createLinearGradient(x - 14, y - 12, x + 14, y + 4);
+      cg2.addColorStop(0, '#60a5fa'); cg2.addColorStop(1, '#1d4ed8');
+      ctx.fillStyle = cg2;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2, 14, 4, 0, 0, Math.PI * 2); ctx.fill(); /* brim */
+      ctx.beginPath();
+      ctx.arc(x, y - 2, 14, Math.PI, 0); /* dome */
+      ctx.lineTo(x + 14, y + 2); ctx.lineTo(x - 14, y + 2); ctx.closePath(); ctx.fill();
+      /* Shine on dome */
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath(); ctx.ellipse(x - 4, y - 8, 5, 3, -0.3, 0, Math.PI * 2); ctx.fill();
+      /* Ridges */
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
+      for (var r = -10; r <= 10; r += 5) {
+        ctx.beginPath(); ctx.moveTo(x + r, y + 2); ctx.lineTo(x + r, y + 5); ctx.stroke();
+      }
+    } else if (n === 'Stone') {
+      /* Irregular stone shape */
+      ctx.save(); ctx.translate(x, y);
+      var sg = ctx.createRadialGradient(-3, -4, 1, 0, 0, 16);
+      sg.addColorStop(0, '#a8a29e'); sg.addColorStop(1, '#57534e');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.moveTo(-12, -6); ctx.bezierCurveTo(-14, -12, -4, -16, 4, -13);
+      ctx.bezierCurveTo(12, -10, 15, -4, 13, 4);
+      ctx.bezierCurveTo(11, 12, 4, 14, -4, 12);
+      ctx.bezierCurveTo(-12, 10, -15, 4, -12, -6); ctx.fill();
+      /* Cracks */
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(-4, -8); ctx.lineTo(2, 0); ctx.lineTo(-2, 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(9, 2); ctx.stroke();
+      ctx.restore();
+    } else if (n === 'Sponge') {
+      /* Yellow sponge with holes */
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x - 14, y - 10, 28, 20, 4);
+      else ctx.rect(x - 14, y - 10, 28, 20);
+      ctx.fill();
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x - 12, y - 8, 24, 16, 3);
+      else ctx.rect(x - 12, y - 8, 24, 16);
+      ctx.fill();
+      /* Pores */
+      ctx.fillStyle = '#d97706';
+      var pores = [[-6,-4],[2,-5],[8,-2],[-8,2],[0,3],[6,4],[-3,1],[4,-1]];
+      pores.forEach(function(p) {
+        ctx.beginPath(); ctx.ellipse(x+p[0], y+p[1], 2.5, 2, Math.random()*Math.PI, 0, Math.PI*2); ctx.fill();
+      });
+      /* Top shine */
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fillRect(x - 10, y - 8, 20, 4);
+    } else if (n === 'Pencil') {
+      /* Pencil lying flat */
+      ctx.save(); ctx.translate(x, y); ctx.rotate(0.08);
+      /* Body */
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-18, -5, 28, 10);
+      /* Tip (wood) */
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(20, 0); ctx.lineTo(10, 5); ctx.fill();
+      /* Graphite tip */
+      ctx.fillStyle = '#374151';
+      ctx.beginPath(); ctx.moveTo(17, -2); ctx.lineTo(20, 0); ctx.lineTo(17, 2); ctx.fill();
+      /* Eraser */
+      ctx.fillStyle = '#fda4af'; ctx.fillRect(-18, -5, 6, 10);
+      ctx.fillStyle = '#9ca3af'; ctx.fillRect(-14, -5, 2, 10); /* metal band */
+      /* Stripes */
+      ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(-6, -5); ctx.lineTo(-6, 5); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
 
   function draw() {
     var _g = getCtx('sfCanvas');
     if (!_g) return;
     var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    var t = Date.now();
     ctx.clearRect(0, 0, W, H);
 
-    /* Sky */
-    ctx.fillStyle = '#e0f2fe';
-    ctx.fillRect(0, 0, W, H * 0.45);
+    var waterY = H * 0.44;
 
-    /* Water */
-    var wg = ctx.createLinearGradient(0, H * 0.45, 0, H);
-    wg.addColorStop(0, 'rgba(59,130,246,0.7)');
-    wg.addColorStop(1, 'rgba(29,78,216,0.9)');
-    ctx.fillStyle = wg;
-    ctx.fillRect(0, H * 0.45, W, H * 0.55);
+    /* Sky bg */
+    ctx.fillStyle = '#bfdbfe'; ctx.fillRect(0, 0, W, waterY);
 
-    /* Water surface line */
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (var wx = 0; wx < W; wx += 4) {
-      var wy = H * 0.45 + Math.sin((wx + Date.now() * 0.03) * 0.08) * 3;
-      wx === 0 ? ctx.moveTo(wx, wy) : ctx.lineTo(wx, wy);
+    /* Deep water */
+    var wg = ctx.createLinearGradient(0, waterY, 0, H);
+    wg.addColorStop(0, 'rgba(37,99,235,0.85)');
+    wg.addColorStop(1, 'rgba(30,64,175,0.97)');
+    ctx.fillStyle = wg; ctx.fillRect(0, waterY, W, H - waterY);
+
+    /* Underwater light shafts */
+    ctx.save();
+    for (var s = 0; s < 4; s++) {
+      var sx = W * 0.2 + s * W * 0.2;
+      ctx.fillStyle = 'rgba(147,197,253,0.06)';
+      ctx.beginPath();
+      ctx.moveTo(sx - 8, waterY);
+      ctx.lineTo(sx + 8, waterY);
+      ctx.lineTo(sx + 20, H);
+      ctx.lineTo(sx - 20, H);
+      ctx.fill();
     }
-    ctx.stroke();
+    ctx.restore();
 
-    /* Draw dropped items */
+    /* Animated water surface */
+    ctx.save();
+    for (var wx = 0; wx <= W; wx += 2) {
+      var wy = waterY + Math.sin((wx * 0.06) + t * 0.002) * 3 + Math.sin((wx * 0.03) + t * 0.0015) * 2;
+      ctx.fillStyle = wx % 4 < 2 ? 'rgba(255,255,255,0.55)' : 'rgba(147,197,253,0.4)';
+      ctx.fillRect(wx, wy, 2, 2);
+    }
+    ctx.restore();
+
+    /* Draw items */
+    var spacing = Math.min(44, (W - 20) / Math.max(dropped.length, 1));
     dropped.forEach(function(item, i) {
-      var x = 30 + i * 44;
-      var targetY = item.floats ? H * 0.38 : H * 0.72;
-      if (Math.abs(item.y - targetY) > 0.5) {
-        item.y += (targetY - item.y) * 0.08;
+      var x = 24 + i * spacing;
+      /* Float: bob at surface. Sink: rest at bottom */
+      var bob = item.floats ? Math.sin(t * 0.003 + i * 1.2) * 2 : 0;
+      var targetY = item.floats ? waterY - 6 + bob : H - 28;
+      if (Math.abs(item.y - targetY) > 0.4) item.y += (targetY - item.y) * 0.07;
+
+      /* Water ripple for floating items */
+      if (item.floats) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(x, waterY + 1, 16, 3, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
       }
 
+      /* Underwater tint for sinking items */
+      if (!item.floats) {
+        ctx.save(); ctx.globalAlpha = 0.55;
+      }
+      drawItem(ctx, item, x, item.y);
+      if (!item.floats) ctx.restore();
+
+      /* Label above item */
       ctx.save();
-      ctx.shadowColor = item.color;
-      ctx.shadowBlur = 6;
-
-      /* Draw shape */
-      ctx.fillStyle = item.color;
-      if (item.shape === 'circle') {
-        ctx.beginPath();
-        ctx.arc(x, item.y, 12, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (item.shape === 'leaf') {
-        ctx.beginPath();
-        ctx.ellipse(x, item.y, 15, 8, Math.PI * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#16a34a';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x - 10, item.y + 3);
-        ctx.lineTo(x + 10, item.y - 3);
-        ctx.stroke();
-      } else if (item.shape === 'cap') {
-        ctx.beginPath();
-        ctx.arc(x, item.y, 14, Math.PI, 0);
-        ctx.rect(x - 14, item.y, 28, 6);
-        ctx.fill();
-      } else {
-        var rw = item.name === 'Pencil' ? 28 : 20;
-        var rh = item.name === 'Pencil' ? 8 : 14;
-        ctx.fillRect(x - rw / 2, item.y - rh / 2, rw, rh);
-      }
+      ctx.fillStyle = item.floats ? '#1e3a5f' : 'rgba(219,234,254,0.9)';
+      ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(item.name, x, item.floats ? item.y - 22 : item.y + 28);
+      ctx.fillText(item.floats ? '↑ float' : '↓ sink', x, item.floats ? item.y - 32 : item.y + 38);
       ctx.restore();
-
-      /* Label */
-      ctx.fillStyle = item.floats ? '#1e3a5f' : 'rgba(255,255,255,0.9)';
-      ctx.font = 'bold 9px Nunito,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(item.name, x, item.y + (item.floats ? -18 : 20));
-
-      /* Float/sink badge */
-      ctx.font = '10px sans-serif';
-      ctx.fillText(item.floats ? '🏄' : '⬇️', x, item.y + (item.floats ? -28 : 30));
     });
 
     raf = requestAnimationFrame(draw);
@@ -148,15 +266,14 @@ SIM_REGISTRY['sink-float'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">Sink or Float?</div>' +
-      '<canvas id="sfCanvas" data-w="280" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<canvas id="sfCanvas" data-w="300" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
       '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center">' +
       items.map(function(item) {
         return '<button onclick="sfDrop(\'' + item.name + '\')" style="padding:6px 12px;border-radius:10px;border:2px solid ' + item.color + ';background:' + item.color + '22;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif">' + item.name + '</button>';
       }).join('') +
       '</div>' +
-      '<div id="sfFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7;text-align:center">Drop an object into the water!</div>' +
-      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="sfReset()">↺ Clear</button></div>';
-
+      '<div id="sfFact" style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);min-height:36px;line-height:1.7;text-align:center">Tap any object to drop it into the water!</div>' +
+      '<div class="ctrl-row" style="margin-top:6px"><button class="cbtn" onclick="sfReset()">↺ Clear all</button></div>';
     cancelAnimationFrame(raf);
     requestAnimationFrame(function(){ requestAnimationFrame(draw); });
   }
@@ -165,10 +282,10 @@ SIM_REGISTRY['sink-float'] = function(c) {
     var item = items.find(function(i) { return i.name === name; });
     if (!item || dropped.find(function(d) { return d.name === name; })) return;
     if (dropped.length >= 6) return;
-    dropped.push({ name: item.name, floats: item.floats, color: item.color, shape: item.shape, y: 10 });
+    dropped.push({ name: item.name, floats: item.floats, color: item.color, y: 0 });
     document.getElementById('sfFact').innerHTML =
       '<b style="color:' + item.color + '">' + item.name + '</b> ' +
-      (item.floats ? '<span style="color:var(--evs)">floats</span>' : '<span style="color:var(--sci)">sinks</span>') +
+      (item.floats ? '<span style="color:var(--evs)">floats! ✓</span>' : '<span style="color:var(--sci)">sinks ✗</span>') +
       ' — ' + item.fact;
   };
   window.sfReset = function() { dropped = []; };
@@ -178,53 +295,115 @@ SIM_REGISTRY['sink-float'] = function(c) {
 
 /* ── SHADOW PLAY (canvas, real-time shadow) ── */
 SIM_REGISTRY['shadow-play'] = function(c) {
-  var dist = 50, objType = 'hand', raf;
+  var dist = 40, objType = 'hand', raf;
 
-  /* Objects draw upward from groundY (y = ground level) */
-  var objects = {
-    hand: { draw: function(ctx, x, y) {
-      /* Palm */
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath(); ctx.arc(x, y - 16, 14, 0, Math.PI * 2); ctx.fill();
-      /* Fingers pointing up */
-      ctx.fillStyle = '#d97706';
-      for (var f = 0; f < 4; f++) {
-        ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(x - 10 + f * 7, y - 38, 5, 18, 3) : ctx.fillRect(x - 10 + f * 7, y - 38, 5, 18);
-        ctx.fill();
-      }
-      /* Thumb pointing left */
-      ctx.beginPath();
-      ctx.roundRect ? ctx.roundRect(x - 26, y - 26, 14, 5, 3) : ctx.fillRect(x - 26, y - 26, 14, 5);
-      ctx.fill();
-    }},
-    tree: { draw: function(ctx, x, y) {
-      /* Trunk */
-      ctx.fillStyle = '#92400e';
-      ctx.fillRect(x - 5, y - 28, 10, 28);
-      /* Canopy layers */
-      ctx.fillStyle = '#15803d';
-      ctx.beginPath(); ctx.arc(x, y - 44, 20, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#16a34a';
-      ctx.beginPath(); ctx.arc(x, y - 56, 14, 0, Math.PI * 2); ctx.fill();
-    }},
-    bird: { draw: function(ctx, x, y) {
-      /* Body in flight — above ground */
-      var by = y - 36;
-      ctx.fillStyle = '#1e40af';
-      ctx.beginPath(); ctx.ellipse(x, by, 16, 7, 0, 0, Math.PI * 2); ctx.fill();
-      /* Wings spread */
-      ctx.fillStyle = '#1d4ed8';
-      ctx.beginPath(); ctx.ellipse(x - 20, by - 6, 16, 6, -0.35, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x + 20, by - 6, 16, 6,  0.35, 0, Math.PI * 2); ctx.fill();
-      /* Head */
-      ctx.fillStyle = '#1e40af';
-      ctx.beginPath(); ctx.arc(x + 14, by - 2, 6, 0, Math.PI * 2); ctx.fill();
-      /* Beak */
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath(); ctx.moveTo(x+20, by-2); ctx.lineTo(x+25, by); ctx.lineTo(x+20, by+2); ctx.fill();
-    }},
+  /* objHeight: how tall each object is above ground — used for shadow geometry */
+  var objDefs = {
+    hand: { h: 42 },
+    tree: { h: 62 },
+    bird: { h: 50 }, /* bird flies above ground — h is centre height */
   };
+
+  function drawHand(ctx, x, groundY) {
+    var skin = '#f59e0b', dark = '#d97706';
+    /* Wrist / palm base */
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - 11, groundY - 26, 22, 20, 4);
+    else ctx.fillRect(x - 11, groundY - 26, 22, 20);
+    ctx.fill();
+    /* Four fingers */
+    var fpos = [-10, -4, 3, 9];
+    var fh =   [20,  22, 22, 18];
+    ctx.fillStyle = skin;
+    for (var f = 0; f < 4; f++) {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x + fpos[f], groundY - 26 - fh[f], 6, fh[f] + 4, [3,3,0,0]);
+      else ctx.fillRect(x + fpos[f], groundY - 26 - fh[f], 6, fh[f] + 4);
+      ctx.fill();
+      /* Knuckle line */
+      ctx.strokeStyle = dark; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.moveTo(x + fpos[f], groundY - 26); ctx.lineTo(x + fpos[f] + 6, groundY - 26); ctx.stroke();
+    }
+    /* Thumb */
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - 19, groundY - 30, 10, 16, [3,0,0,3]);
+    else ctx.fillRect(x - 19, groundY - 30, 10, 16);
+    ctx.fill();
+    /* Fingernail highlights */
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    for (var n = 0; n < 4; n++) {
+      ctx.fillRect(x + fpos[n] + 1, groundY - 26 - fh[n], 4, 4);
+    }
+  }
+
+  function drawTree(ctx, x, groundY) {
+    /* Shadow root at ground */
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(x - 5, groundY - 34, 10, 34);
+    /* Bark texture */
+    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(x - 2, groundY - 30); ctx.lineTo(x - 1, groundY - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 2, groundY - 25); ctx.lineTo(x + 3, groundY - 15); ctx.stroke();
+    /* Lower canopy */
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath(); ctx.arc(x, groundY - 48, 22, 0, Math.PI * 2); ctx.fill();
+    /* Mid canopy */
+    ctx.fillStyle = '#16a34a';
+    ctx.beginPath(); ctx.arc(x - 6, groundY - 56, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + 6, groundY - 56, 15, 0, Math.PI * 2); ctx.fill();
+    /* Top */
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath(); ctx.arc(x, groundY - 64, 12, 0, Math.PI * 2); ctx.fill();
+    /* Highlight */
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.arc(x - 6, groundY - 62, 6, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawBird(ctx, x, centerY) {
+    /* A soaring bird — wings up */
+    /* Body */
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath(); ctx.ellipse(x, centerY, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
+    /* Left wing */
+    ctx.fillStyle = '#1d4ed8';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, centerY - 2);
+    ctx.bezierCurveTo(x - 16, centerY - 18, x - 30, centerY - 14, x - 32, centerY - 8);
+    ctx.bezierCurveTo(x - 24, centerY - 4, x - 10, centerY + 2, x - 4, centerY - 2);
+    ctx.fill();
+    /* Right wing */
+    ctx.beginPath();
+    ctx.moveTo(x + 4, centerY - 2);
+    ctx.bezierCurveTo(x + 16, centerY - 18, x + 30, centerY - 14, x + 32, centerY - 8);
+    ctx.bezierCurveTo(x + 24, centerY - 4, x + 10, centerY + 2, x + 4, centerY - 2);
+    ctx.fill();
+    /* Wing highlight */
+    ctx.fillStyle = 'rgba(147,197,253,0.25)';
+    ctx.beginPath(); ctx.ellipse(x - 18, centerY - 11, 8, 4, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 18, centerY - 11, 8, 4, 0.4, 0, Math.PI * 2); ctx.fill();
+    /* Tail */
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath();
+    ctx.moveTo(x - 12, centerY + 4);
+    ctx.lineTo(x - 18, centerY + 12);
+    ctx.lineTo(x - 8, centerY + 8);
+    ctx.lineTo(x, centerY + 6);
+    ctx.lineTo(x + 8, centerY + 8);
+    ctx.lineTo(x + 18, centerY + 12);
+    ctx.lineTo(x + 12, centerY + 4);
+    ctx.fill();
+    /* Head */
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath(); ctx.arc(x + 12, centerY - 3, 7, 0, Math.PI * 2); ctx.fill();
+    /* Eye */
+    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(x + 14, centerY - 4, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(x + 14.5, centerY - 4, 1.2, 0, Math.PI * 2); ctx.fill();
+    /* Beak */
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.moveTo(x+19, centerY-4); ctx.lineTo(x+24, centerY-3); ctx.lineTo(x+19, centerY-1); ctx.fill();
+  }
 
   function draw() {
     var _g = getCtx('shadowCanvas');
@@ -232,103 +411,123 @@ SIM_REGISTRY['shadow-play'] = function(c) {
     var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
     ctx.clearRect(0, 0, W, H);
 
-    /* Sky */
-    ctx.fillStyle = '#e0f2fe';
-    ctx.fillRect(0, 0, W, H * 0.78);
+    var groundY = Math.round(H * 0.72);
+
+    /* Sky gradient */
+    var sky = ctx.createLinearGradient(0, 0, 0, groundY);
+    sky.addColorStop(0, '#bae6fd'); sky.addColorStop(1, '#e0f2fe');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, groundY);
 
     /* Ground */
-    ctx.fillStyle = '#c8d6c0';
-    ctx.fillRect(0, H * 0.78, W, H * 0.22);
-    /* Ground line */
-    ctx.strokeStyle = '#a8b89a'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, H * 0.78); ctx.lineTo(W, H * 0.78); ctx.stroke();
+    var gr = ctx.createLinearGradient(0, groundY, 0, H);
+    gr.addColorStop(0, '#d4edbc'); gr.addColorStop(1, '#c8d8a8');
+    ctx.fillStyle = gr; ctx.fillRect(0, groundY, W, H - groundY);
 
-    /* Wall on right */
-    var wallX = W - 18;
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(wallX, 0, 18, H);
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(wallX, 0); ctx.lineTo(wallX, H); ctx.stroke();
-
-    /* Key positions */
-    var lightX = 26;
-    var lightY = H * 0.42;          /* light source height */
-    var groundY = H * 0.78;         /* ground plane */
-    /* Object sits on ground, its centre is at objX, bottom at groundY */
-    var objX = 48 + dist * 2.1;     /* moves right as dist increases */
-    var objRadius = 20;             /* approximate half-height of object */
-    var objTopY = groundY - objRadius * 2.2; /* top of object */
-    var objBotY = groundY;          /* bottom of object */
-
-    /* ── Ray geometry: rays from lightX,lightY through object top/bottom to wall ──
-       Top ray: light → top of object → hits wall at some Y
-       Bottom ray: light → bottom of object (ground level at objX) → hits wall
-       Shadow on wall spans between those two Y intercepts */
-    function rayToWall(fromX, fromY, throughX, throughY) {
-      /* parametric: P = from + t*(through-from), find t where x = wallX */
-      var t = (wallX - fromX) / (throughX - fromX);
-      return fromY + t * (throughY - fromY);
+    /* Grass detail */
+    ctx.strokeStyle = '#86a96a'; ctx.lineWidth = 1.2;
+    for (var gx = 8; gx < W; gx += 9) {
+      var gb = groundY + Math.sin(gx * 0.5) * 1;
+      ctx.beginPath(); ctx.moveTo(gx, gb); ctx.lineTo(gx - 2, gb - 5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(gx, gb); ctx.lineTo(gx + 2, gb - 5); ctx.stroke();
     }
 
-    var shadowTop = rayToWall(lightX, lightY, objX, objTopY);
-    var shadowBot = rayToWall(lightX, lightY, objX, objBotY);
-    /* Clamp shadow to wall visible area */
-    shadowTop = Math.max(0, shadowTop);
-    shadowBot = Math.min(H, shadowBot);
-    var shadowH = Math.max(4, shadowBot - shadowTop);
+    /* Light source: torch/lamp on the left, on a pole */
+    var lx = 28, ly = groundY * 0.45;
 
-    /* ── Light rays ── */
-    ctx.strokeStyle = 'rgba(253,224,71,0.3)';
-    ctx.lineWidth = 1;
-    /* Main rays from light source */
-    for (var r = 0; r <= 4; r++) {
-      var targetY = shadowTop + (shadowBot - shadowTop) * (r / 4);
-      ctx.beginPath();
-      ctx.moveTo(lightX, lightY);
-      ctx.lineTo(wallX, targetY);
-      ctx.stroke();
+    /* Lamp pole */
+    ctx.fillStyle = '#713f12';
+    ctx.fillRect(lx - 3, ly + 14, 6, groundY - ly - 14);
+
+    /* Lamp head */
+    ctx.fillStyle = '#a16207';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(lx - 10, ly - 8, 20, 10, 3);
+    else ctx.fillRect(lx - 10, ly - 8, 20, 10);
+    ctx.fill();
+
+    /* Glow halo */
+    var halo = ctx.createRadialGradient(lx, ly, 0, lx, ly, 30);
+    halo.addColorStop(0, 'rgba(254,240,138,0.5)');
+    halo.addColorStop(1, 'rgba(254,240,138,0)');
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(lx, ly, 30, 0, Math.PI * 2); ctx.fill();
+
+    /* Bulb */
+    var bulbG = ctx.createRadialGradient(lx - 3, ly - 3, 1, lx, ly, 11);
+    bulbG.addColorStop(0, '#fefce8'); bulbG.addColorStop(0.5, '#fef08a'); bulbG.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = bulbG;
+    ctx.beginPath(); ctx.arc(lx, ly, 10, 0, Math.PI * 2);
+    ctx.shadowColor = '#fde68a'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
+
+    /* Object position: dist slider 10-70, maps to x range [70, W-60] */
+    var objX = 70 + (dist - 10) / 60 * (W - 130);
+    objX = Math.min(objX, W - 60); /* never reach edge */
+    var def = objDefs[objType];
+
+    /* ── Shadow geometry (ground shadow) ──
+       Light at (lx, ly). Object top at (objX, groundY - def.h).
+       Ray from light through object top hits ground at shadowTipX.
+       t param: groundY = ly + t*(groundY - def.h - ly) → t = (groundY-ly)/(groundY-def.h-ly)
+       shadowTipX = lx + t*(objX - lx)
+       Shadow is ellipse on ground from objX to shadowTipX */
+    var objTopY = groundY - def.h;
+    var t = (groundY - ly) / (objTopY - ly); /* should be > 1 since objTopY < groundY < ly? no: ly < groundY */
+    /* ly is above groundY: ly = groundY*0.45 < groundY. objTopY < groundY. */
+    /* ray: starts at (lx,ly), direction (objX-lx, objTopY-ly) */
+    /* hits y=groundY when: ly + s*(objTopY-ly) = groundY => s = (groundY-ly)/(objTopY-ly) */
+    var s = (groundY - ly) / (objTopY - ly);
+    var shadowTipX = lx + s * (objX - lx);
+    shadowTipX = Math.min(shadowTipX, W - 8);
+
+    var shadowLen = Math.max(4, shadowTipX - objX);
+
+    /* Draw ground shadow — ellipse, tapered */
+    ctx.save();
+    ctx.fillStyle = 'rgba(60,70,40,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(objX + shadowLen / 2, groundY + 3, shadowLen / 2, Math.min(8, shadowLen * 0.12 + 3), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    /* Light rays — from lamp to object edges, continuing to show illuminated scene */
+    ctx.save();
+    ctx.strokeStyle = 'rgba(253,224,71,0.18)'; ctx.lineWidth = 1.2;
+    /* Upper ray: light → object top → continues */
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(shadowTipX, groundY); ctx.stroke();
+    /* Lower ray: light → object base → continues right */
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(W, groundY + (groundY - ly) / (objX - lx) * (W - lx) * 0.3); ctx.stroke();
+    /* Fill rays */
+    for (var ri = 1; ri < 4; ri++) {
+      var ry = ly + (groundY - ly) * ri / 4;
+      var rx2 = lx + (objX - lx + 30) * ri / 4;
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx2 * 1.8, ry); ctx.stroke();
     }
-    /* Show blocked rays (shadow cone) slightly darker */
-    ctx.strokeStyle = 'rgba(100,100,100,0.08)';
-    ctx.beginPath(); ctx.moveTo(lightX, lightY); ctx.lineTo(objX, objTopY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(lightX, lightY); ctx.lineTo(objX, objBotY); ctx.stroke();
+    ctx.restore();
 
-    /* ── Shadow on wall ── */
-    var opacity = Math.min(0.7, 0.35 + (1 - dist/80) * 0.35);
-    ctx.fillStyle = 'rgba(30,41,59,' + opacity + ')';
-    ctx.fillRect(wallX, shadowTop, 18, shadowH);
+    /* Shadow cone — darker region between the two boundary rays */
+    ctx.save();
+    ctx.fillStyle = 'rgba(60,70,40,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(lx, ly);
+    ctx.lineTo(objX, groundY);
+    ctx.lineTo(shadowTipX, groundY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
-    /* ── Object on ground ── */
-    objects[objType].draw(ctx, objX, groundY - 2);
+    /* Draw object */
+    if (objType === 'hand') drawHand(ctx, objX, groundY);
+    else if (objType === 'tree') drawTree(ctx, objX, groundY);
+    else drawBird(ctx, objX, groundY - 38);
 
-    /* ── Light bulb ── */
-    ctx.beginPath(); ctx.arc(lightX, lightY, 13, 0, Math.PI * 2);
-    ctx.fillStyle = '#fef08a';
-    ctx.shadowColor = '#fcd34d'; ctx.shadowBlur = 18; ctx.fill();
-    ctx.shadowBlur = 0;
-    /* Bulb base */
-    ctx.fillStyle = '#92400e';
-    ctx.fillRect(lightX - 4, lightY + 13, 8, 5);
-    /* Stand */
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(lightX - 2, lightY + 18, 4, H * 0.78 - lightY - 18);
+    /* Light label */
+    ctx.fillStyle = '#92400e'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Light', lx, ly - 18);
 
-    /* ── Labels ── */
-    ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillStyle = '#475569';
-    ctx.fillText('Light', lightX, lightY - 18);
-
-    /* Shadow size label on wall */
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.font = 'bold 8px Nunito,sans-serif';
-    if (shadowH > 16) ctx.fillText(Math.round(shadowH) + 'px', wallX + 9, shadowTop + shadowH / 2 + 3);
-
-    /* Insight label */
-    var insight = dist < 30 ? '🔆 Very close — HUGE shadow!' :
-                  dist < 50 ? '📐 Medium distance' :
-                  dist < 70 ? '🔅 Far — smaller shadow' : '🔅 Very far — tiny shadow';
-    ctx.fillStyle = '#334155'; ctx.font = '9px Nunito,sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(insight, W * 0.5, H * 0.78 + 14);
+    /* Shadow length label */
+    if (shadowLen > 20) {
+      ctx.fillStyle = 'rgba(60,70,40,0.7)'; ctx.font = 'bold 8px Nunito,sans-serif';
+      ctx.fillText('shadow: ' + Math.round(shadowLen) + 'px', objX + shadowLen / 2, groundY + 16);
+    }
 
     raf = requestAnimationFrame(draw);
   }
@@ -336,17 +535,17 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   function render() {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:center">Shadow Play</div>' +
-      '<canvas id="shadowCanvas" data-w="300" data-h="180" style="border-radius:12px;display:block;width:100%"></canvas>' +
-      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px">' +
-      '<span style="font-size:11px;color:var(--muted)">Object distance:</span>' +
-      '<input type="range" class="slide" min="10" max="80" value="50" oninput="shadowDist(this.value)" style="width:130px">' +
+      '<canvas id="shadowCanvas" data-w="320" data-h="200" style="border-radius:12px;display:block;width:100%"></canvas>' +
+      '<div class="ctrl-row" style="margin-top:8px;flex-wrap:wrap;gap:8px;align-items:center">' +
+      '<span style="font-size:11px;color:var(--muted)">Distance from light:</span>' +
+      '<input type="range" class="slide" min="10" max="70" value="40" oninput="shadowDist(this.value)" style="width:120px">' +
       '<span style="font-size:11px;color:var(--muted)">Object:</span>' +
       ['hand','tree','bird'].map(function(o) {
-        return '<button onclick="shadowObj(\'' + o + '\')" style="padding:4px 9px;border-radius:8px;font-size:11px;border:1.5px solid ' + (o === objType ? 'var(--math)' : 'var(--border)') + ';background:' + (o === objType ? 'var(--math-dim)' : 'var(--surface2)') + ';color:' + (o === objType ? 'var(--math)' : 'var(--muted)') + ';cursor:pointer">' + o + '</button>';
+        return '<button onclick="shadowObj(\'' + o + '\')" style="padding:4px 10px;border-radius:8px;font-size:11px;border:1.5px solid ' + (o === objType ? 'var(--math)' : 'var(--border)') + ';background:' + (o === objType ? 'var(--math-dim)' : 'var(--surface2)') + ';color:' + (o === objType ? 'var(--math)' : 'var(--muted)') + ';cursor:pointer;font-family:Nunito,sans-serif">' + o + '</button>';
       }).join('') +
       '</div>' +
       '<div style="background:var(--surface2);border-radius:10px;padding:9px 12px;margin-top:8px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7">' +
-      '📐 Closer to light = bigger shadow. Further = smaller. The wall blocks the rays — that\'s all a shadow is!' +
+      '📐 Closer to light = longer shadow. Further away = shorter shadow. Drag the slider to explore!' +
       '</div>';
     cancelAnimationFrame(raf); draw();
   }
