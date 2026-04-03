@@ -397,22 +397,31 @@ window.toggleTheme = function() {
 </script>
 
 <script>
-/* Live slider track fill — updates --val on every input event */
+/* ── Slider track fill ── */
+function initSlider(s) {
+  var min = parseFloat(s.min)||0, max = parseFloat(s.max)||100, val = parseFloat(s.value)||0;
+  s.style.setProperty('--val', ((val-min)/(max-min)*100).toFixed(1)+'%');
+}
+/* Update on drag */
 document.addEventListener('input', function(e) {
   if (e.target.type !== 'range') return;
-  var min = parseFloat(e.target.min) || 0;
-  var max = parseFloat(e.target.max) || 100;
-  var val = parseFloat(e.target.value) || 0;
-  var pct = ((val - min) / (max - min) * 100).toFixed(1) + '%';
-  e.target.style.setProperty('--val', pct);
+  var min = parseFloat(e.target.min)||0, max = parseFloat(e.target.max)||100, val = parseFloat(e.target.value)||0;
+  e.target.style.setProperty('--val', ((val-min)/(max-min)*100).toFixed(1)+'%');
 }, true);
-/* Init on page load for any pre-set sliders */
+/* Init all sliders present at load */
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[type=range]').forEach(function(s) {
-    var min = parseFloat(s.min)||0, max = parseFloat(s.max)||100, val = parseFloat(s.value)||0;
-    s.style.setProperty('--val', ((val-min)/(max-min)*100).toFixed(1)+'%');
-  });
+  document.querySelectorAll('input[type=range]').forEach(initSlider);
 });
+/* Init dynamically injected sliders (sim modals inject sliders into DOM) */
+new MutationObserver(function(mutations) {
+  mutations.forEach(function(m) {
+    m.addedNodes.forEach(function(node) {
+      if (node.nodeType !== 1) return;
+      if (node.matches && node.matches('input[type=range]')) { initSlider(node); return; }
+      node.querySelectorAll && node.querySelectorAll('input[type=range]').forEach(initSlider);
+    });
+  });
+}).observe(document.body, { childList:true, subtree:true });
 </script>
 </body>
 </html>
