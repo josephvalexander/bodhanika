@@ -201,6 +201,7 @@
         <div class="m-title" id="mTitle"></div>
         <div class="m-tags" id="mTags"></div>
       </div>
+      <button id="mShare" class="m-share" title="Share experiment">🔗 Share</button>
       <div class="m-close" onclick="closeModal()">✕</div>
     </div>
     <div class="mode-toggle">
@@ -310,6 +311,34 @@ window.toggleTheme = function() {
 </div>
 
 <!-- ══ PWA SERVICE WORKER ══ -->
+<script>
+/* ── Deep link: open experiment/tip from URL hash ── */
+function handleHash() {
+  var hash = location.hash.slice(1);
+  if (!hash) return;
+  var attempts = 0;
+  var check = setInterval(function() {
+    attempts++;
+    if (window.EXP_MAP && window.EXP_MAP[hash]) {
+      clearInterval(check);
+      window.openModal(hash);
+    } else if (window.TIPS_MAP && window.TIPS_MAP[hash]) {
+      clearInterval(check);
+      window.openTipModal(hash);
+    } else if (attempts > 60) {
+      clearInterval(check);
+    }
+  }, 50);
+}
+window.addEventListener('hashchange', function() {
+  var hash = location.hash.slice(1);
+  if (!hash) { window.closeModal && window.closeModal(); return; }
+  if (window.EXP_MAP && window.EXP_MAP[hash]) window.openModal(hash);
+  else if (window.TIPS_MAP && window.TIPS_MAP[hash]) window.openTipModal(hash);
+});
+window.addEventListener('load', handleHash);
+</script>
+
 <script>
 (function() {
   if (!('serviceWorker' in navigator)) return;

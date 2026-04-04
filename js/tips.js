@@ -175,9 +175,13 @@ window.applyAll = function() {
 /* ══════════════════════════════════════════
    TIP MODAL
    ══════════════════════════════════════════ */
+window.TIP_MAP = window.TIPS_MAP; /* alias for deep linking */
 window.openTipModal = function(tipId) {
   var tip = window.TIPS_MAP && window.TIPS_MAP[tipId];
   if (!tip) return;
+
+  /* Deep link */
+  history.replaceState(null, '', '#' + tipId);
 
   /* Re-use the existing modal shell */
   var modal  = document.getElementById('modal');
@@ -197,6 +201,7 @@ window.openTipModal = function(tipId) {
           '<span class="tag tag-mode" style="background:var(--math-dim);color:var(--math);border-color:var(--math)">⚡ Tip</span>' +
         '</div>' +
       '</div>' +
+      '<button class="m-share" onclick="shareTip(\''+tipId+'\',\''+tip.title+'\')" title="Share">🔗 Share</button>' +
       '<div class="m-close" onclick="closeTipModal()">✕</div>' +
     '</div>' +
     '<div class="mode-toggle">' +
@@ -213,6 +218,27 @@ window.openTipModal = function(tipId) {
 window.closeTipModal = function() {
   document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow = '';
+  history.replaceState(null, '', location.pathname);
+};
+
+window.shareTip = function(id, title) {
+  var url = location.origin + location.pathname + '#' + id;
+  if (navigator.share) {
+    navigator.share({ title: title + ' — Bodhanika Maths Tip', url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = document.querySelector('.m-share');
+      if (!btn) return;
+      var orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copied!';
+      btn.style.color = '#22c55e';
+      setTimeout(function() { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    }).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    });
+  }
 };
 
 window.tipTab = function(tab) {

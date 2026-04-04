@@ -9,6 +9,8 @@
     if (!e) return;
     currentId = id;
     currentMode = 'v';
+    /* Deep link — update URL hash without triggering hashchange */
+    history.replaceState(null, '', '#' + id);
 
     document.getElementById('mIcon').textContent = e.icon;
     document.getElementById('mTitle').textContent = e.title;
@@ -22,6 +24,12 @@
     document.getElementById('bVirt').classList.add('active');
     document.getElementById('bHome').classList.remove('active');
 
+    /* Share button */
+    var shareBtn = document.getElementById('mShare');
+    if (shareBtn) {
+      shareBtn.onclick = function() { shareExperiment(id, e.title); };
+    }
+
     renderVirtual(e);
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -33,6 +41,7 @@
     document.body.style.overflow = '';
     if (window.simCleanup) { window.simCleanup(); window.simCleanup = null; }
     currentId = null;
+    history.replaceState(null, '', location.pathname);
   };
 
   window.closeCheck = function (evt) {
@@ -56,7 +65,11 @@
   /* ── Virtual mode ── */
   function renderVirtual(e) {
     if (window.simCleanup) { window.simCleanup(); window.simCleanup = null; }
-    var body = document.getElementById('modalBody');
+    var modal = document.getElementById('modal');
+    var body  = document.getElementById('modalBody');
+
+    /* Tear down any previous desktop split */
+    collapseDesktopLayout(modal);
 
     var simFn = window.SIM_REGISTRY && window.SIM_REGISTRY[e.simId];
 
@@ -65,9 +78,90 @@
         '<div id="simContainer" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px"></div>' +
         renderBuddy(e);
       simFn(document.getElementById('simContainer'), e);
+
+      /* On desktop, switch to side-by-side layout */
+      if (window.innerWidth >= 1024) {
+        requestAnimationFrame(function() { buildDesktopLayout(modal, e); });
+      }
     } else {
       body.innerHTML = renderRichDefault(e) + renderBuddy(e);
     }
+  }
+
+  /* ── Desktop split layout ── */
+  function buildDesktopLayout(modal, e) {
+    var simContainer = document.getElementById('simContainer');
+    if (!simContainer) return;
+
+    /* Already split */
+    if (modal.classList.contains('has-sim')) return;
+
+    /* Grab the existing structural nodes */
+    var hdr    = modal.querySelector('.modal-hdr');
+    var toggle = modal.querySelector('.mode-toggle');
+    var body   = document.getElementById('modalBody');
+    var buddy  = body.querySelector('.buddy');
+
+    /* Build left panel: header + tabs + buddy */
+    var left = document.createElement('div');
+    left.className = 'modal-left';
+    left.appendChild(hdr);
+    left.appendChild(toggle);
+
+    /* Move buddy into left panel footer */
+    var leftBody = document.createElement('div');
+    leftBody.style.cssText = 'flex:1;overflow-y:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px;';
+    if (buddy) leftBody.appendChild(buddy);
+    left.appendChild(leftBody);
+
+    /* Build right panel: sim canvas fills remaining space */
+    var right = document.createElement('div');
+    right.className = 'modal-right';
+
+    /* Move simContainer into right, make it fill height */
+    simContainer.style.cssText = 'flex:1;width:100%;display:flex;flex-direction:column;min-height:0;';
+    var canvas = simContainer.querySelector('canvas');
+    if (canvas) {
+      canvas.style.cssText = 'flex:1;width:100%!important;min-height:320px;border-radius:0!important;display:block;';
+      /* Reset hiDPI so it remeasures at new size */
+      if (canvas._hiDPIReady) canvas._hiDPIReady = false;
+    }
+
+    /* Wrap sim + any controls below canvas */
+    right.appendChild(simContainer);
+
+    /* Clear modal and rebuild */
+    modal.innerHTML = '';
+    modal.appendChild(left);
+    modal.appendChild(right);
+    modal.classList.add('has-sim');
+
+    /* Force canvas redraw after layout settles */
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        var cv = simContainer.querySelector('canvas');
+        if (cv && cv._hiDPIReady !== undefined) cv._hiDPIReady = false;
+      });
+    });
+  }
+
+  function collapseDesktopLayout(modal) {
+    if (!modal.classList.contains('has-sim')) return;
+    modal.classList.remove('has-sim');
+
+    /* Restore standard structure from scratch — openModal already fills these */
+    modal.innerHTML =
+      '<div class="modal-hdr">' +
+        '<div class="m-icon" id="mIcon"></div>' +
+        '<div class="m-titles"><div class="m-title" id="mTitle"></div><div class="m-tags" id="mTags"></div></div>' +
+        '<button class="m-close fs-modal-btn" id="fsBtnModal" title="Fullscreen (F)" onclick="toggleFS ? toggleFS() : null"></button>' +
+        '<div class="m-close" onclick="closeModal()">✕</div>' +
+      '</div>' +
+      '<div class="mode-toggle">' +
+        '<button class="mbtn active" id="bVirt" onclick="switchMode(\'v\')">🖥️ Try Virtually</button>' +
+        '<button class="mbtn" id="bHome" onclick="switchMode(\'h\')">🏠 Do at Home</button>' +
+      '</div>' +
+      '<div class="modal-body" id="modalBody"></div>';
   }
 
   /* ── Subject colour themes ── */
@@ -211,6 +305,8 @@
   /* ── Home mode ── */
   function renderHome(e) {
     if (window.simCleanup) { window.simCleanup(); window.simCleanup = null; }
+    var modal = document.getElementById('modal');
+    collapseDesktopLayout(modal);
     var body = document.getElementById('modalBody');
     var mats = (e.materials || []).map(function (m) {
       return '<span class="mat">' + m + '</span>';
@@ -232,4 +328,34 @@
            '<div class="buddy-t">' + e.buddy + '</div></div>' +
            '</div>';
   }
+
+  /* ── Share ── */
+  window.shareExperiment = function(id, title) {
+    var url = location.origin + location.pathname + '#' + id;
+    if (navigator.share) {
+      navigator.share({ title: title + ' — Bodhanika', url: url })
+        .catch(function(){});
+    } else {
+      navigator.clipboard.writeText(url).then(function() {
+        var btn = document.getElementById('mShare');
+        if (!btn) return;
+        var orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        btn.style.color = '#22c55e';
+        setTimeout(function() {
+          btn.innerHTML = orig;
+          btn.style.color = '';
+        }, 2000);
+      }).catch(function() {
+        /* Fallback for older browsers */
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      });
+    }
+  };
+
 })();

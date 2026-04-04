@@ -104,3 +104,27 @@
 [data-theme="light"] .why-box { background:var(--acc-dim); }
 [data-theme="light"] .buddy   { background:rgba(124,58,237,0.06); border-color:rgba(124,58,237,0.15); }
 [data-theme="light"] .m-close:hover { background:var(--sci-dim); }
+
+/* Share button in modal header */
+.m-share {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.m-share:hover {
+  background: var(--acc-dim);
+  color: var(--acc);
+  border-color: var(--acc);
+}
