@@ -305,139 +305,125 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   };
 
   function drawHand(ctx, x, groundY) {
-    /* Realistic hand — bezier fingers with joints, proper skin tones */
+    /* Hand drawn at 2x scale for visibility — total height ~70px */
     var base = groundY;
     var cx   = x;
 
-    /* Indian medium skin palette */
-    var S  = '#d4956a';   /* base skin */
-    var SL = '#e8b48a';   /* lit highlight */
-    var SD = '#b06840';   /* shadow/crease */
-    var SN = 'rgba(240,210,185,0.9)'; /* nail */
-    var CR = 'rgba(140,70,25,0.28)';  /* crease lines */
+    /* Skin tones — warm Indian medium */
+    var S  = '#c8825a';   /* base */
+    var SL = '#dfa882';   /* lit face */
+    var SD = '#a05c38';   /* shadow */
+    var SN = 'rgba(235,200,175,0.92)'; /* nail */
+    var CR = 'rgba(120,55,20,0.32)';   /* crease */
 
-    /* Helper: draw one finger using bezier for natural taper + joint bumps */
-    function finger(tipX, tipY, w, h, hl) {
-      /* hl = highlight side: -1=left, 1=right */
-      var bx = tipX, by = tipY + h;    /* base of finger at palm join */
-      var tw = w * 0.72;               /* finger tapers toward tip */
-      var j1y = tipY + h * 0.35;       /* first joint y */
-      var j2y = tipY + h * 0.65;       /* second joint y */
+    /* ── Wrist ── */
+    var wg = ctx.createLinearGradient(cx-13, base, cx+13, base+6);
+    wg.addColorStop(0, SD); wg.addColorStop(0.5, S); wg.addColorStop(1, SL);
+    ctx.fillStyle = wg;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx-13,base,26,7,[0,0,4,4]) : ctx.fillRect(cx-13,base,26,7);
+    ctx.fill();
 
-      /* Side gradient — lit from left */
-      var fg = ctx.createLinearGradient(tipX - w/2, 0, tipX + w/2, 0);
-      fg.addColorStop(0,   hl < 0 ? SL : SD);
-      fg.addColorStop(0.4, S);
-      fg.addColorStop(1,   hl < 0 ? SD : SL);
-      ctx.fillStyle = fg;
+    /* ── Palm — trapezoidal, wider at finger base ── */
+    var pg = ctx.createLinearGradient(cx-15, base-40, cx+15, base);
+    pg.addColorStop(0, SL); pg.addColorStop(0.5, S); pg.addColorStop(1, SD);
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.moveTo(cx-13, base);
+    ctx.lineTo(cx+13, base);
+    ctx.lineTo(cx+16, base-38);
+    ctx.bezierCurveTo(cx+16, base-42, cx+10, base-44, cx+6, base-44);
+    ctx.lineTo(cx-6, base-44);
+    ctx.bezierCurveTo(cx-10, base-44, cx-16, base-42, cx-16, base-38);
+    ctx.closePath();
+    ctx.fill();
 
-      /* Finger outline with slight taper */
+    /* Palm lines */
+    ctx.strokeStyle = CR; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx-12,base-15); ctx.quadraticCurveTo(cx+2,base-12,cx+12,base-16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-11,base-26); ctx.quadraticCurveTo(cx+1,base-23,cx+11,base-27); ctx.stroke();
+
+    /* ── Thumb — angled left ── */
+    ctx.save();
+    ctx.translate(cx-15, base-28);
+    ctx.rotate(0.5);
+    var tg2 = ctx.createLinearGradient(-5,0,5,0);
+    tg2.addColorStop(0,SD); tg2.addColorStop(0.5,S); tg2.addColorStop(1,SL);
+    ctx.fillStyle = tg2;
+    /* Thumb body */
+    ctx.beginPath();
+    ctx.moveTo(-5,10);
+    ctx.bezierCurveTo(-5,-4,-3,-14,0,-16);
+    ctx.bezierCurveTo(3,-14,5,-4,5,10);
+    ctx.closePath();
+    ctx.fill();
+    /* Thumb tip arc */
+    ctx.fillStyle = tg2;
+    ctx.beginPath(); ctx.arc(0,-14,5,Math.PI,0); ctx.fill();
+    /* Thumb nail */
+    ctx.fillStyle = SN;
+    ctx.beginPath(); ctx.arc(0,-14,3.5,Math.PI,0); ctx.fill();
+    ctx.strokeStyle=CR; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(-4,0); ctx.lineTo(4,0); ctx.stroke();
+    ctx.restore();
+
+    /* ── Four fingers — each a distinct bezier shape ── */
+    var fingers = [
+      {dx:-10.5, tip:base-44-30, w:8,  side:-1}, /* index */
+      {dx:-2,    tip:base-44-34, w:8.5,side:-1}, /* middle — tallest */
+      {dx:6.5,   tip:base-44-31, w:8,  side: 1}, /* ring */
+      {dx:14,    tip:base-44-23, w:7,  side: 1}, /* pinky */
+    ];
+
+    fingers.forEach(function(f, i) {
+      var fx = cx + f.dx;
+      var fy = f.tip;
+      var fw = f.w;
+      var fh = base - 44 - fy; /* height from palm join to tip */
+      var palmJoin = base - 44;
+
+      /* Gradient: lit from the side */
+      var fg2 = ctx.createLinearGradient(fx - fw/2, 0, fx + fw/2, 0);
+      fg2.addColorStop(0,   f.side < 0 ? SL : SD);
+      fg2.addColorStop(0.4, S);
+      fg2.addColorStop(1,   f.side < 0 ? SD : SL);
+      ctx.fillStyle = fg2;
+
+      /* Finger shape — tapered bezier */
+      var tw3 = fw * 0.7; /* tip width narrower */
       ctx.beginPath();
-      ctx.moveTo(bx - w/2, by);
-      /* Left edge — curves slightly inward */
-      ctx.bezierCurveTo(bx - w/2, j2y, bx - tw/2, j1y, bx - tw/2 + 0.5, tipY + 3);
-      /* Rounded tip */
-      ctx.arc(bx, tipY + tw/2, tw/2, Math.PI, 0, false);
-      /* Right edge */
-      ctx.bezierCurveTo(bx + tw/2 - 0.5, j1y, bx + w/2, j2y, bx + w/2, by);
+      ctx.moveTo(fx - fw/2, palmJoin);
+      ctx.bezierCurveTo(fx - fw/2, palmJoin - fh*0.4, fx - tw3/2, fy + fh*0.3, fx - tw3/2, fy + tw3/2);
+      ctx.arc(fx, fy + tw3/2, tw3/2, Math.PI, 0, false); /* rounded tip */
+      ctx.bezierCurveTo(fx + tw3/2, fy + fh*0.3, fx + fw/2, palmJoin - fh*0.4, fx + fw/2, palmJoin);
       ctx.closePath();
       ctx.fill();
 
-      /* Joint bumps */
-      ctx.strokeStyle = CR; ctx.lineWidth = 0.7;
-      [j1y, j2y].forEach(function(jy) {
-        ctx.beginPath();
-        ctx.moveTo(bx - w/2 + 1, jy);
-        ctx.quadraticCurveTo(bx, jy - 1, bx + w/2 - 1, jy);
-        ctx.stroke();
-      });
+      /* Knuckle at palm join */
+      ctx.strokeStyle = CR; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(fx-fw/2+1, palmJoin-2); ctx.lineTo(fx+fw/2-1, palmJoin-2); ctx.stroke();
+      /* Middle joint */
+      var mid = fy + fh*0.55;
+      ctx.beginPath(); ctx.moveTo(fx-tw3/2+1, mid); ctx.quadraticCurveTo(fx, mid-1, fx+tw3/2-1, mid); ctx.stroke();
+      /* Upper joint */
+      var upper = fy + fh*0.28;
+      ctx.beginPath(); ctx.moveTo(fx-tw3/2+1, upper); ctx.quadraticCurveTo(fx, upper-1, fx+tw3/2-1, upper); ctx.stroke();
 
-      /* Nail — occupies top portion */
-      var nw = tw * 0.82, nh = Math.min(8, h * 0.26);
+      /* Nail */
+      var nw2 = tw3*0.8, nh2 = Math.min(9, fh*0.22);
       ctx.fillStyle = SN;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(bx - nw/2, tipY + 1, nw, nh, [nw/2, nw/2, 2, 2]);
-      else ctx.fillRect(bx - nw/2, tipY + 1, nw, nh);
+      if (ctx.roundRect) ctx.roundRect(fx-nw2/2, fy+1, nw2, nh2, [nw2/2,nw2/2,2,2]);
+      else { ctx.arc(fx, fy+nw2/2, nw2/2, Math.PI,0); ctx.fillRect(fx-nw2/2, fy+nw2/2, nw2, nh2-nw2/2); }
       ctx.fill();
       /* Nail shine */
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.fillRect(bx - nw/2 + 1, tipY + 2, nw * 0.45, nh * 0.45);
-    }
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fillRect(fx-nw2/2+1, fy+2, nw2*0.5, nh2*0.5);
 
-    /* ── Wrist / sleeve cuff ── */
-    var wg = ctx.createLinearGradient(cx - 12, base, cx + 12, base + 8);
-    wg.addColorStop(0, SD); wg.addColorStop(0.5, S); wg.addColorStop(1, SL);
-    ctx.fillStyle = wg;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(cx - 12, base, 24, 8, [0, 0, 4, 4]);
-    else ctx.fillRect(cx - 12, base, 24, 8);
-    ctx.fill();
-
-    /* ── Palm ── */
-    var pg = ctx.createLinearGradient(cx - 13, base - 35, cx + 13, base);
-    pg.addColorStop(0, SL); pg.addColorStop(0.55, S); pg.addColorStop(1, SD);
-    ctx.fillStyle = pg;
-    ctx.beginPath();
-    ctx.moveTo(cx - 12, base - 4);
-    ctx.quadraticCurveTo(cx - 14, base + 2, cx - 5, base + 2);
-    ctx.lineTo(cx + 5, base + 2);
-    ctx.quadraticCurveTo(cx + 14, base + 2, cx + 12, base - 4);
-    ctx.lineTo(cx + 12, base - 30);
-    ctx.quadraticCurveTo(cx + 12, base - 35, cx + 7, base - 35);
-    ctx.lineTo(cx - 7, base - 35);
-    ctx.quadraticCurveTo(cx - 12, base - 35, cx - 12, base - 30);
-    ctx.closePath();
-    ctx.fill();
-
-    /* Palm crease lines */
-    ctx.strokeStyle = CR; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(cx - 10, base - 13); ctx.quadraticCurveTo(cx + 1, base - 11, cx + 10, base - 14); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 9, base - 22); ctx.quadraticCurveTo(cx,     base - 20, cx + 9,  base - 23); ctx.stroke();
-
-    /* ── Thumb (rotated outward left) ── */
-    ctx.save();
-    ctx.translate(cx - 13, base - 20);
-    ctx.rotate(0.45);
-    var tw2 = 9, th = 20;
-    var tg = ctx.createLinearGradient(-tw2/2, 0, tw2/2, 0);
-    tg.addColorStop(0, SD); tg.addColorStop(0.5, S); tg.addColorStop(1, SL);
-    ctx.fillStyle = tg;
-    ctx.beginPath();
-    ctx.moveTo(-tw2/2, th/2);
-    ctx.bezierCurveTo(-tw2/2, 0, -tw2*0.4, -th/2, 0, -th/2 - 1);
-    ctx.arc(0, -th/2 + tw2*0.4, tw2*0.4, Math.PI, 0);
-    ctx.bezierCurveTo(tw2*0.4, 0, tw2/2, th*0.3, tw2/2, th/2);
-    ctx.closePath();
-    ctx.fill();
-    /* Thumb nail */
-    ctx.fillStyle = SN;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-3.5, -th/2 + 1, 7, 7, 3);
-    else ctx.fillRect(-3.5, -th/2 + 1, 7, 7);
-    ctx.fill();
-    /* Thumb joint */
-    ctx.strokeStyle = CR; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(-tw2/2 + 1, 2); ctx.lineTo(tw2/2 - 1, 2); ctx.stroke();
-    ctx.restore();
-
-    /* ── Four fingers ── */
-    /* [centerX offset from cx, finger height, width, highlight side] */
-    var fDefs = [
-      { dx: -9,  h: 27, w: 7.5, hl: -1 },  /* index */
-      { dx: -1,  h: 30, w: 8,   hl: -1 },  /* middle — tallest */
-      { dx:  7,  h: 28, w: 7.5, hl:  1 },  /* ring */
-      { dx: 14,  h: 22, w: 6.5, hl:  1 },  /* pinky */
-    ];
-    fDefs.forEach(function(f) {
-      var fx = cx + f.dx;
-      var tipY = base - 35 - f.h;
-      finger(fx, tipY, f.w, f.h, f.hl);
-    });
-
-    /* Finger gap shadows between fingers */
-    ctx.fillStyle = 'rgba(100,45,15,0.2)';
-    [-4.5, 3.5, 10.5].forEach(function(gx) {
-      ctx.fillRect(cx + gx, base - 38, 1.5, 12);
+      /* Gap shadow to next finger */
+      if (i < 3) {
+        ctx.fillStyle = 'rgba(90,35,10,0.25)';
+        ctx.fillRect(fx + fw/2 - 1, palmJoin - fh*0.7, 2, fh*0.65);
+      }
     });
   }
 
@@ -966,10 +952,9 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     var mixedCol = getMixedColour();
     var isLight = colourMode === 'light';
 
-    /* Build using DOM methods — zero escaping issues */
     c.innerHTML = '';
 
-    /* ── Mode toggle ── */
+    /* Mode toggle */
     var modeRow = document.createElement('div');
     modeRow.style.cssText = 'display:flex;gap:4px;margin-bottom:10px;background:var(--surface2);border-radius:10px;padding:3px';
     ['pigment','light'].forEach(function(mode) {
@@ -982,71 +967,164 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     });
     c.appendChild(modeRow);
 
-    /* ── Primary colour circles ── */
-    var circleRow = document.createElement('div');
-    circleRow.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:14px';
+    /* Canvas mixing bowl */
+    var canvas = document.createElement('canvas');
+    var dpr = window.devicePixelRatio || 1;
+    var CW = Math.min(c.offsetWidth || 320, 400), CH = 130;
+    canvas.width = CW * dpr; canvas.height = CH * dpr;
+    canvas.style.cssText = 'width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 10px;border-radius:12px;background:var(--surface2)';
+    var ctx2 = canvas.getContext('2d');
+    ctx2.scale(dpr, dpr);
+    c.appendChild(canvas);
+
+    /* Draw mixing bowl visual */
+    var n = m.primaries.length;
+    var slotW = CW / n;
+
+    /* Background */
+    ctx2.fillStyle = isLight ? '#0a0a1a' : '#f8f4f0';
+    ctx2.beginPath(); if (ctx2.roundRect) ctx2.roundRect(0,0,CW,CH,12); else ctx2.rect(0,0,CW,CH);
+    ctx2.fill();
+
     m.primaries.forEach(function(p, i) {
       var isSel = selected.indexOf(p.name) >= 0;
-      var glow = isLight ? ('box-shadow:'+(isSel?'0 0 22px '+p.hex+'cc,0 0 8px '+p.hex:'0 0 10px '+p.hex+'44')+';') : '';
+      var slotCx = slotW * i + slotW / 2;
+      var slotCy = 52;
 
-      var div = document.createElement('div');
-      div.style.cssText = 'cursor:pointer;text-align:center;user-select:none';
-      div.addEventListener('click', (function(name){ return function(){ window.cmToggle(name); }; })(p.name));
+      /* Glow for light mode */
+      if (isLight && isSel) {
+        var glow = ctx2.createRadialGradient(slotCx, slotCy, 0, slotCx, slotCy, 40);
+        glow.addColorStop(0, p.hex + 'aa');
+        glow.addColorStop(1, p.hex + '00');
+        ctx2.fillStyle = glow;
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, 40, 0, Math.PI*2); ctx2.fill();
+      }
 
-      var circle = document.createElement('div');
-      circle.style.cssText = 'width:60px;height:60px;border-radius:50%;background:'+p.hex+';border:3px solid '+(isSel?'white':'transparent')+';transform:scale('+(isSel?'1.15':'1')+');transition:all .22s;'+glow;
+      /* Paint blob / light circle */
+      if (isLight) {
+        /* Glowing light disc */
+        var lg = ctx2.createRadialGradient(slotCx-5, slotCy-5, 2, slotCx, slotCy, 28);
+        lg.addColorStop(0, 'white');
+        lg.addColorStop(0.3, p.hex);
+        lg.addColorStop(1, p.hex + (isSel?'cc':'44'));
+        ctx2.fillStyle = lg;
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?28:22, 0, Math.PI*2); ctx2.fill();
+      } else {
+        /* Paint blob — irregular for realism */
+        var pg2 = ctx2.createRadialGradient(slotCx-6, slotCy-6, 2, slotCx, slotCy, 26);
+        pg2.addColorStop(0, lighten(p.hex));
+        pg2.addColorStop(0.6, p.hex);
+        pg2.addColorStop(1, darken(p.hex));
+        ctx2.fillStyle = pg2;
+        ctx2.beginPath();
+        ctx2.ellipse(slotCx, slotCy, isSel?27:22, isSel?24:19, -0.2, 0, Math.PI*2);
+        ctx2.fill();
+        /* Paint texture highlight */
+        ctx2.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx2.beginPath(); ctx2.ellipse(slotCx-7, slotCy-7, 8, 5, -0.5, 0, Math.PI*2); ctx2.fill();
+      }
 
-      var label = document.createElement('div');
-      label.style.cssText = 'font-size:11px;font-weight:800;color:'+(isSel?p.hex:'var(--muted)')+';margin-top:5px';
-      label.textContent = p.name;
+      /* Selected tick ring */
+      if (isSel) {
+        ctx2.strokeStyle = 'white'; ctx2.lineWidth = 2.5;
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?30:24, 0, Math.PI*2); ctx2.stroke();
+        ctx2.fillStyle = 'white'; ctx2.font = 'bold 10px Nunito,sans-serif'; ctx2.textAlign = 'center';
+        ctx2.fillText('✓', slotCx, slotCy + (isLight?32:30));
+      }
 
-      var check = document.createElement('div');
-      if (isSel) { check.style.cssText = 'color:'+p.hex+';font-size:13px'; check.textContent = '✓'; }
-      else { check.style.height = '16px'; }
+      /* Colour name label */
+      ctx2.fillStyle = isSel ? p.hex : (isLight?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)');
+      ctx2.font = 'bold 11px Nunito,sans-serif'; ctx2.textAlign = 'center';
+      ctx2.fillText(p.name, slotCx, CH - 8);
 
-      div.appendChild(circle); div.appendChild(label); div.appendChild(check);
-      circleRow.appendChild(div);
-
-      if (i < m.primaries.length - 1) {
-        var plus = document.createElement('div');
-        plus.style.cssText = 'font-size:18px;color:var(--muted);padding-bottom:26px';
-        plus.textContent = '+';
-        circleRow.appendChild(plus);
+      /* + between colours */
+      if (i < n-1) {
+        ctx2.fillStyle = isLight?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.25)';
+        ctx2.font = 'bold 18px Nunito,sans-serif'; ctx2.textAlign = 'center';
+        ctx2.fillText('+', slotW*(i+1), slotCy+6);
       }
     });
-    c.appendChild(circleRow);
 
-    /* ── Result circle ── */
-    var resultWrap = document.createElement('div');
-    resultWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:10px';
+    /* Arrow → Result */
+    if (selected.length) {
+      ctx2.fillStyle = isLight?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.3)';
+      ctx2.font = 'bold 16px Nunito,sans-serif'; ctx2.textAlign = 'center';
+      ctx2.fillText('=', CW/2, slotCy + (selected.length===3?0:0));
+    }
+
+    /* Make blobs clickable via overlay buttons */
+    m.primaries.forEach(function(p, i) {
+      var btn2 = document.createElement('button');
+      btn2.style.cssText = 'position:absolute;left:'+(i*(100/n))+'%;width:'+(100/n)+'%;top:0;height:'+CH+'px;background:transparent;border:none;cursor:pointer';
+      btn2.addEventListener('click', function() { window.cmToggle(p.name); });
+    });
+
+    /* Result row */
+    var resultRow = document.createElement('div');
+    resultRow.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--surface2);border-radius:12px;margin-bottom:8px';
+
     var resultLabel = document.createElement('div');
-    resultLabel.style.cssText = 'font-size:9px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase';
-    resultLabel.textContent = '= Result';
-    var resultCircle = document.createElement('div');
-    resultCircle.style.cssText = 'width:90px;height:90px;border-radius:50%;background:'+(mixedCol||'var(--surface2)')+';border:3px solid '+(mix?mix.hex:'var(--border)')+';display:flex;align-items:center;justify-content:center;transition:all .5s;font-size:12px;font-weight:900;color:'+(isLight&&selected.length===3?'#1a1d27':'white')+';text-shadow:0 1px 3px rgba(0,0,0,.5);text-align:center;padding:8px';
-    resultCircle.textContent = mix ? mix.result : selected.length ? '...' : '?';
-    resultWrap.appendChild(resultLabel); resultWrap.appendChild(resultCircle);
-    c.appendChild(resultWrap);
+    resultLabel.style.cssText = 'font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap';
+    resultLabel.textContent = selected.length ? (mix ? 'You made:' : 'Mixing…') : 'Pick colours above';
 
-    /* ── Fact box ── */
+    var resultSwatch = document.createElement('div');
+    var swatchSize = mix ? 44 : 32;
+    resultSwatch.style.cssText = 'width:'+swatchSize+'px;height:'+swatchSize+'px;border-radius:50%;transition:all .4s;flex-shrink:0;'
+      + 'background:'+(mixedCol || 'var(--border)')+';'
+      + 'box-shadow:'+(mixedCol ? '0 0 12px '+(mixedCol)+'88' : 'none')+';'
+      + 'border:2px solid '+(mix?mix.hex:'var(--border)');
+
+    var resultName = document.createElement('div');
+    resultName.style.cssText = 'font-size:16px;font-weight:900;color:'+(mix?mix.hex:'var(--muted)');
+    resultName.textContent = mix ? mix.result : '';
+
+    resultRow.appendChild(resultLabel);
+    resultRow.appendChild(resultSwatch);
+    if (mix) resultRow.appendChild(resultName);
+    c.appendChild(resultRow);
+
+    /* Fact box */
     var fact = document.createElement('div');
-    fact.style.cssText = 'background:var(--surface2);border-radius:10px;padding:9px 14px;border:1px solid var(--border);font-size:12px;color:var(--text);line-height:1.7;min-height:38px';
-    fact.textContent = mix ? '🎨 '+mix.fact : selected.length===0 ? m.desc : selected.length===1 ? 'Add another colour to mix!' : 'Try different combinations!';
+    fact.style.cssText = 'background:var(--surface2);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--text);line-height:1.6;border:1px solid var(--border)';
+    fact.textContent = mix ? '🎨 '+mix.fact
+      : selected.length===0 ? m.desc
+      : selected.length===1 ? 'Tap another colour to mix!'
+      : 'Try a different combination!';
     c.appendChild(fact);
 
-    /* ── Controls ── */
-    var ctrlRow = document.createElement('div');
-    ctrlRow.className = 'ctrl-row';
-    ctrlRow.style.marginTop = '8px';
+    /* Clear button */
+    var ctrl = document.createElement('div');
+    ctrl.className = 'ctrl-row';
+    ctrl.style.marginTop = '7px';
     var clearBtn = document.createElement('button');
     clearBtn.className = 'cbtn';
     clearBtn.textContent = '↺ Clear';
     clearBtn.addEventListener('click', function(){ selected=[]; render(); });
     var hint = document.createElement('span');
     hint.style.cssText = 'font-size:10px;color:var(--muted);margin-left:8px';
-    hint.textContent = isLight ? 'Additive mixing (light + light = brighter)' : 'Subtractive mixing (pigment + pigment = darker)';
-    ctrlRow.appendChild(clearBtn); ctrlRow.appendChild(hint);
-    c.appendChild(ctrlRow);
+    hint.textContent = isLight ? 'Additive: light + light = brighter' : 'Subtractive: pigment + pigment = darker';
+    ctrl.appendChild(clearBtn); ctrl.appendChild(hint);
+    c.appendChild(ctrl);
+
+    /* Make canvas clickable */
+    canvas.style.cursor = 'pointer';
+    canvas.addEventListener('click', function(e) {
+      var rect = canvas.getBoundingClientRect();
+      var clickX = (e.clientX - rect.left) * (CW / rect.width);
+      var idx2 = Math.floor(clickX / slotW);
+      if (idx2 >= 0 && idx2 < m.primaries.length) {
+        window.cmToggle(m.primaries[idx2].name);
+      }
+    });
+  }
+
+  function lighten(hex) {
+    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return 'rgb('+Math.min(255,r+60)+','+Math.min(255,g+60)+','+Math.min(255,b+60)+')';
+  }
+  function darken(hex) {
+    var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+    return 'rgb('+Math.max(0,r-40)+','+Math.max(0,g-40)+','+Math.max(0,b-40)+')';
   }
 
   window.cmMode = function(m) { colourMode = m; selected = []; render(); };
@@ -3080,10 +3158,17 @@ SIM_REGISTRY['plant-parts'] = function(c) {
   var growthPts = 0; /* accumulated growth — increases each day based on conditions */
 
   function dailyGrowth() {
-    if (water < 15 || soil < 8) return -4;
-    if (water > 92) return -1; /* overwatered */
+    if (water < 15 || soil < 8) return -4;   /* drought / no soil */
+    if (water > 97) return -2;                /* overwatered — root rot */
     var h = (water + sun + soil) / 3;
     return Math.max(-2, Math.round((h - 28) / 8));
+  }
+  function growthWarning() {
+    if (water > 97)  return '⚠️ Overwatered! Roots need air too.';
+    if (water < 15)  return '🏜️ Too dry! Plant needs water.';
+    if (soil < 8)    return '🪨 No nutrients in soil!';
+    if (sun < 10)    return '🌑 Too dark — no photosynthesis.';
+    return '';
   }
 
   function status() {
@@ -3234,6 +3319,7 @@ SIM_REGISTRY['plant-parts'] = function(c) {
       '<div style="flex:1;display:flex;flex-direction:column;gap:9px">'+
       '<div style="font-size:13px;font-weight:900;color:'+st.col+'">'+st.label+'</div>'+
       '<div style="font-size:10px;color:var(--muted)">Growth: <b style="color:var(--text)">'+Math.max(0,Math.round(growthPts))+'pts</b> · Tomorrow: <b style="color:'+(dg>=0?'var(--evs)':'var(--sci)')+'">'+( dg>=0?'+':'')+dg+'</b></div>'+
+      (growthWarning()?'<div style="font-size:10px;color:#f59e0b;font-weight:700">'+growthWarning()+'</div>':'')+
       ['water','sun','soil'].map(function(n) {
         var val = n==='water'?water:n==='sun'?sun:soil;
         var emoji = n==='water'?'💧':n==='sun'?'☀️':'🌍';
