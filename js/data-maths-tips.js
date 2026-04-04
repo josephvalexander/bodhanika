@@ -46,7 +46,7 @@ window.MATHS_TIPS = [
    buddy:'This trick was known to ancient Indian mathematicians. Aryabhata\'s number system, written in 499 CE, used place value and these remainders to simplify calculations without a calculator.'},
 
   {id:'tip-pct10',  title:'Percentages — The 10% Anchor',
-   classes:['5','6','7'], icon:'%',
+   classes:['6','7','8'], icon:'%',
    bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
    shortTrick:'10% = move decimal one place left. Build any % from there: 20% = 2×10%. 15% = 10% + 5% (half of 10%). 25% = 10%+10%+5%.',
    whyItWorks:'Percentages are fractions of 100. Dividing by 10 is trivial. Any percentage is a combination of 10%, 5%, and 1% — all computable from 10%.',
@@ -68,7 +68,7 @@ window.MATHS_TIPS = [
 
   /* ── CLASSES 3–5 ── */
   ,{id:'tip-sq5',   title:'Square Numbers Ending in 5',
-   classes:['4','5','6'], icon:'5️⃣',
+   classes:['6','7','8'], icon:'5️⃣',
    bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
    shortTrick:'To square any number ending in 5: take the tens digit N, multiply N×(N+1), then stick 25 at the end.',
    whyItWorks:'(10N+5)² = 100N²+100N+25 = 100N(N+1)+25. The last two digits are always 25. The leading digits are always N×(N+1).',
@@ -156,7 +156,7 @@ window.MATHS_TIPS = [
 
   /* ── CLASSES 9–10 ── */
   ,{id:'tip-angle-sum', title:'Exterior Angle = Sum of Two Opposite Interior Angles',
-   classes:['8','9','10'], icon:'📐',
+   classes:['7','8'], icon:'📐',
    bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
    shortTrick:'In any triangle, the exterior angle at one vertex equals the sum of the two non-adjacent interior angles. No need to find the third interior angle first!',
    whyItWorks:'Exterior angle + interior angle = 180° (straight line). Three interior angles sum to 180°. Therefore exterior angle = 180° − interior angle = sum of the other two.',
@@ -222,7 +222,7 @@ window.MATHS_TIPS = [
 
   /* ── CLASS 6-8 ── */
   ,{id:'tip-mental-sq', title:'Squares of Numbers 11–19 Instantly',
-   classes:['5','6','7'], icon:'🔢',
+   classes:['7','8','9'], icon:'🔢',
    bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
    shortTrick:'For 11 to 19: square = (number + units digit) × 10 + (units digit)². So 13² → (13+3)×10 + 3² = 160+9 = 169 ✓',
    whyItWorks:'(10+a)² = 100 + 20a + a² = (10+2a)×10 + a² = (10+a+a)×10 + a². Here a is the units digit. The formula decomposes naturally.',
@@ -233,7 +233,7 @@ window.MATHS_TIPS = [
 
   /* ── CLASS 6-8 ── */
   ,{id:'tip-ap-middle', title:'Average of an AP — Always the Middle Term',
-   classes:['7','8','9'], icon:'📊',
+   classes:['9','10'], icon:'📊',
    bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
    shortTrick:'In an arithmetic progression (AP), the average equals the middle term. The sum = average × count = middle term × count. No need to add everything!',
    whyItWorks:'Terms in an AP are symmetric around the middle. Every term below the middle has a mirror term above it. They always average out to the middle term: (a + last)/2 = middle.',
@@ -265,16 +265,6 @@ window.MATHS_TIPS = [
    buddy:'Ancient Indian mathematicians listed Pythagorean triples in the Sulba Sutras (800 BCE) — the oldest known geometry text. The (3,4,5) triple was used to lay out perfect right angles for temple construction.'},
 
   /* ── CLASS 9-10 ── */
-  ,{id:'tip-log-rule',  title:'Logarithm Laws — Three Rules to Rule Them All',
-   classes:['9','10'], icon:'㏒',
-   bgGrad:'linear-gradient(135deg,rgba(255,217,61,.22),rgba(255,150,0,.12))',
-   shortTrick:'log(A×B) = logA + logB. log(A÷B) = logA − logB. log(Aⁿ) = n×logA. Multiplication becomes addition, division becomes subtraction, powers become multiplication.',
-   whyItWorks:'Logarithms convert multiplication to addition because they reverse exponentiation. If bˣ=A and bʸ=B then bˣ⁺ʸ=AB, so log(AB) = x+y = logA+logB.',
-   example:'log(4×25) = log4+log25 = log4+log25 = log100 = 2 ✓  |  log(1000³) = 3×log1000 = 3×3 = 9 ✓',
-   challenge:['log(8 * 125)','log(10000 * 100)','log(2^10)','log(1000000 / 1000)'],
-   simId:'tip-log-rule',
-   buddy:'Before calculators, scientists used log tables to multiply huge numbers — log tables converted hard multiplication to easy addition. Logarithms helped calculate the orbit of Neptune before it was even discovered.'},
-
 ];
 
 /* Build lookup map */

@@ -2,7 +2,7 @@
 window.EXPERIMENTS_6_10_SCI = [
 
   // ── CLASS 6 SCIENCE ──
-  {id:'c6-s1',title:'Cell: The Unit of Life',subject:'Science',classes:['6'],icon:'🔬',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c6-s1',title:'Cell: The Unit of Life',subject:'Science',classes:['8'],icon:'🔬',bgGrad:'rgba(255,107,107,.18)',
    desc:'Prepare an onion-skin slide. Observe plant cells and label their parts.',
    ncert:'NCERT Science Class 6 – Ch 1 (intro) | Full treatment: Class 8 Ch 8 – Cell',
    why:'All living things are made of cells. Plant cells have a cell wall, central vacuole, and (in green parts) chloroplasts. Robert Hooke first saw cells in cork in 1665.',
@@ -10,7 +10,7 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Peel a single translucent layer from an onion.','Place flat on the slide; add a drop of iodine.','Lower cover slip carefully — no bubbles.','Observe under microscope.','Draw and label: cell wall, nucleus, vacuole, cytoplasm.'],
    simId:'cell-view',buddy:'Your body has ~37 trillion cells. Each carries your complete DNA — a 2-metre-long molecule coiled inside a nucleus just 6 micrometres wide.'},
 
-  {id:'c6-s2',title:'Newton\'s Three Laws',subject:'Science',classes:['9'],icon:'🍎',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c9-s0',title:'Newton\'s Three Laws',subject:'Science',classes:['9'],icon:'🍎',bgGrad:'rgba(255,107,107,.18)',
    desc:'Demonstrate all three laws using a toy car, a book, and a balloon.',
    ncert:'NCERT Science Class 6 – Force and Motion',
    why:'Law 1: objects stay still or moving unless a force acts. Law 2: F = ma. Law 3: every action has an equal and opposite reaction.',
@@ -26,7 +26,7 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Mix iron filings and sand; separate with magnet.','Dissolve salt in water; filter (salt passes through).','Evaporate the salt-water on a warm plate — salt crystals remain.','Mix mud and water; let it settle (sedimentation), pour off clear water (decantation).','Draw and label each method.'],
    simId:'separation-sim',buddy:'Desalination plants on the Arabian coast use giant evaporation chambers to make fresh water from seawater — same principle, planetary scale.'},
 
-  {id:'c6-s4',title:'Photosynthesis Bubbles',subject:'Science',classes:['6'],icon:'🌿',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c6-s4',title:'Photosynthesis Bubbles',subject:'Science',classes:['7'],icon:'🌿',bgGrad:'rgba(255,107,107,.18)',
    desc:'Count oxygen bubbles from an aquatic plant in bright light vs dark.',
    ncert:'NCERT Science Class 6 – Photosynthesis',
    why:'Aquatic plants release O₂ as a by-product of photosynthesis. More light = more bubbles = more photosynthesis. Darkness stops the reaction, proving light is essential.',
@@ -34,7 +34,7 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Place plant in water in bright light; count bubbles per minute.','Cover with dark cloth; count bubbles after 5 minutes.','Move lamp closer — does bubble rate increase?','Record all three rates in a table.','Test: what gas is in the bubbles? (Relights a glowing splint — oxygen!)'],
    simId:'photo-bubbles',buddy:'Every breath of oxygen you take was produced by a plant or ocean algae. And every carbon atom in your body was once CO₂, captured by a leaf doing exactly what you\'re watching.'},
 
-  {id:'c6-s5',title:'Build Weather Instruments',subject:'Science',classes:['6'],icon:'🌡️',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c6-s5',title:'Build Weather Instruments',subject:'Science',classes:['7'],icon:'🌡️',bgGrad:'rgba(255,107,107,.18)',
    desc:'Make a rain gauge, wind vane, and simple barometer from household materials.',
    ncert:'NCERT Science Class 6 – Weather, Climate and Adaptations',
    why:'Meteorologists measure temperature, rainfall, wind direction, and pressure. Building your own instruments shows what each measurement physically means.',
@@ -59,7 +59,7 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Fill a large container with room-temperature water.','Gently pour red-coloured hot water at one end.','Drop a blue-dyed ice cube at the opposite end.','Observe: red rises, blue sinks, they circulate.','Draw the convection loop you see.'],
    simId:'convection-sim',buddy:'The same convection you see in the glass drives the Indian monsoon! Warm ocean heats air → air rises → cool moist ocean air rushes in = monsoon rain over Kerala.'},
 
-  {id:'c7-s3',title:'Build a Simple Electric Motor',subject:'Science',classes:['7'],icon:'🔌',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c7-s3',title:'Build a Simple Electric Motor',subject:'Science',classes:['10'],icon:'🔌',bgGrad:'rgba(255,107,107,.18)',
    desc:'Wind a copper coil, balance it over a magnet, connect a battery — watch it spin.',
    ncert:'NCERT Science Class 7 – Electric Current and its Effects',
    why:'A motor converts electrical energy to mechanical energy. Current through a coil in a magnetic field experiences a force and rotates. Every fan, mixer, pump, and EV uses this exact principle.',
@@ -67,15 +67,15 @@ window.EXPERIMENTS_6_10_SCI = [
    steps:['Coil copper wire around a battery (20 turns). Slip off carefully.','Sand the enamel off one side only of each wire end.','Balance the coil horizontally on two safety pins (acting as rails).','Tape the safety pins to battery terminals.','Place magnet below coil — it should spin!'],
    simId:'motor-model',buddy:'Michael Faraday built the first electric motor in 1821 with a magnet, wire, and battery. The same principle today powers electric buses, trains, and every EV on Indian roads.'},
 
-  {id:'c7-s4',title:'Verify Ohm\'s Law',subject:'Science',classes:['7'],icon:'⚡',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c7-s4',title:'Verify Ohm\'s Law',subject:'Science',classes:['10'],icon:'⚡',bgGrad:'rgba(255,107,107,.18)',
    desc:'Measure voltage and current across a resistor. Plot V vs I — expect a straight line.',
-   ncert:'NCERT Science Class 7 – Electricity',
+   ncert:'NCERT Science Class 10 – Ch 12: Electricity (Ohm\'s Law)',
    why:'Ohm\'s Law (V = IR): if resistance is constant, voltage and current are directly proportional. The straight line on your graph IS the proof.',
    materials:['1.5 V battery (×2)','100 Ω resistor','Voltmeter','Ammeter','Wires'],
    steps:['Connect: battery → ammeter → resistor → back to battery. Voltmeter across resistor.','Record V and I with 1 battery.','Add second battery (3 V) — record again.','Plot V (y-axis) vs I (x-axis). Draw best-fit line.','Slope = V/I = resistance. Does it match 100 Ω?'],
    simId:'ohms-law',buddy:'Georg Ohm published his law in 1827 and was mocked — peers called it "a tissue of naked fantasy." He was vindicated 15 years later and awarded the Royal Society Gold Medal.'},
 
-  {id:'c7-s5',title:'Bone Structure Lab',subject:'Science',classes:['7'],icon:'🦴',bgGrad:'rgba(255,107,107,.18)',
+  {id:'c7-s5',title:'Bone Structure Lab',subject:'Science',classes:['6'],icon:'🦴',bgGrad:'rgba(255,107,107,.18)',
    desc:'Soak a chicken bone in vinegar to remove calcium. Feel the difference.',
    ncert:'NCERT Science Class 7 – Body Movement',
    why:'Bone strength comes from calcium phosphate (mineral); flexibility from collagen (protein). Vinegar dissolves the mineral, leaving only collagen — bendy and rubbery.',
@@ -390,4 +390,48 @@ window.EXPERIMENTS_6_10_SCI = [
    simId:'ohms-law',
    buddy:'Georg Ohm published his law in 1827 and was initially ridiculed — scientists called it "a web of naked fancies." He lost his professorship over it. Within 10 years it became the foundation of all electrical engineering. Today every circuit you use is designed using V = IR.'},
 
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c2-s1',title:'Magnetic Attraction',subject:'Science',classes:['6'],icon:'🧲',bgGrad:'rgba(255,107,107,.18)',desc:'Test which objects are attracted to a magnet. Discover magnetic materials.',ncert:'NCERT Science Class 6 – Ch 13: Fun with Magnets',why:'Magnets attract iron and steel. Plastic, wood, and rubber are not magnetic. Magnets have two poles: north and south. Opposites attract, same poles repel.',materials:['A magnet (fridge magnet works)','10 objects: paper clip, coin, rubber, pencil, pin, foil, stone, key, paper'],steps:['Make a prediction table: Magnetic / Not Magnetic.','Test each object with the magnet.','Record your results.','Were any results surprising?','Find 5 magnetic things in your home.'],simId:'magnet-sim',buddy:"Earth itself is a giant magnet! That's why compass needles always point north. Birds, bees, and even some fish use Earth's magnetic field to navigate."}
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c2-s5',title:'Sound Vibrations',subject:'Science',classes:['8'],icon:'🔊',bgGrad:'rgba(255,107,107,.18)',desc:'Feel sound vibrations. Make a simple string telephone!',ncert:'NCERT Science Class 8 – Ch 13: Sound',why:'Sound is a vibration that travels through matter. In a string telephone, vibrations travel through the string — so sound is much clearer even at a distance.',materials:['2 paper cups','A long piece of string (3–5 metres)','A pin'],steps:['Pierce a small hole in the bottom of each cup.','Thread the string through — knot each end inside the cup.','You and a friend each hold a cup.','Pull the string taut. One speaks, one listens.','Try without the string — any difference?'],simId:'sound-vibration',buddy:'Sound travels 4x faster in water than in air, and 15x faster in steel! That\'s why you can hear a train coming by placing your ear on the rail.'}
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c3-s3',title:'Simple Electric Circuit',subject:'Science',classes:['6'],icon:'⚡',bgGrad:'rgba(255,107,107,.18)',desc:'Build a simple circuit with a battery, wire, and bulb. Learn circuit basics safely.',ncert:'NCERT Science Class 6 – Ch 12: Electricity and Circuits',why:'Electricity flows in a closed loop called a circuit. A switch breaks the loop to stop the flow. Conductors (metals) allow flow; insulators (rubber, plastic) stop it.',materials:['1.5V battery','Small torch bulb','2 wires with clips','Small switch'],steps:['Connect wire from battery + to bulb.','Connect from bulb back to battery −.','Does the bulb light? You made a circuit!','Disconnect one wire — bulb goes off.','Try inserting different materials in the gap — which conduct?'],simId:'circuit-sim',buddy:'Your brain runs on electricity! Neurons fire electrical signals to send messages. Your entire nervous system is a biological electrical network.'}
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c4-s1',title:'Digestive System Journey',subject:'Science',classes:['7'],icon:'🫃',bgGrad:'rgba(255,107,107,.18)',desc:'Trace food from mouth to toilet. Model digestion with simple materials.',ncert:'NCERT Science Class 7 – Ch 2: Nutrition in Animals',why:'Digestion breaks food into tiny molecules the blood can carry. Mouth → Oesophagus → Stomach → Small intestine (absorbs nutrients) → Large intestine (absorbs water) → Excretion.',materials:['A zip-lock bag (stomach)','Orange juice (acid)','Crackers','Tights (intestine)'],steps:['Put crackers in the bag. Add a splash of juice. Squeeze (chewing!).','Pour into a tights leg — squeeze down (intestine!).','Collect the "absorbed" liquid.','Map out the path on paper.','Which organ absorbs most nutrients?'],simId:'digestion-sim',buddy:'Your small intestine is 6–7 metres long but coiled inside your belly! If you spread out all its tiny projections (villi), its surface area equals a tennis court.'}
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c4-s2',title:'Electricity Conductors Test',subject:'Science',classes:['6'],icon:'💡',bgGrad:'rgba(255,107,107,.18)',desc:'Build a circuit tester and find which materials conduct electricity.',ncert:'NCERT Science Class 6 – Ch 12: Electricity and Circuits',why:'Conductors allow free electrons to move through them. Metals have loosely-bound electrons — they conduct well. Non-metals have tightly-bound electrons — they insulate.',materials:['9V battery','LED or small bulb','3 wires with alligator clips','Various test objects'],steps:['Build circuit: battery − LED − wire with gap in it.','Connect objects in the gap one at a time.','LED lights up = conductor. Stays off = insulator.','Test: coin, pencil, rubber, foil, plastic, key, wood, water.','Create a results table.'],simId:'conductor-test',buddy:'Graphite (pencil lead) is a non-metal that conducts! Carbon atoms in graphite have one free electron each. This is used in pencil-drawn circuits and touchscreens.'}
+
+
+  /* Moved from data-1-5.js */
+  ,{id:'c5-s4',title:'Acid or Base?',subject:'Science',classes:['7'],icon:'🧪',bgGrad:'rgba(255,107,107,.18)',desc:'Make a natural pH indicator from red cabbage. Test common liquids.',ncert:'NCERT Science Class 7 – Ch 5: Acids, Bases and Salts',why:'Red cabbage contains anthocyanin — a natural pH indicator. It turns red in acids, green/yellow in bases, and stays purple at neutral.',materials:['Red cabbage','Water','Glasses','Lemon juice, baking soda, vinegar, milk, soap'],steps:['Boil red cabbage in water. Strain — keep the purple liquid.','Pour into several glasses.','Add test liquids one per glass.','Record colour change.','Classify as acid, base, or neutral.'],simId:'ph-indicator',buddy:'Your stomach acid (pH 1.5–3.5) is strong enough to dissolve metal! Luckily, your stomach lining renews itself every 4 days to protect itself.'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c3-s5',title:'Lung Capacity Balloon',subject:'Science',classes:['7'],icon:'🫁',bgGrad:'rgba(255,107,107,.18)',desc:'Measure your lung capacity using a balloon. Compare between classmates.',ncert:'NCERT Science Class 3 – Breathing',why:'Lung capacity is the maximum air your lungs can hold. Average adult lungs hold about 6 litres. Exercise increases lung capacity over time.',materials:['A balloon per person','Ruler','Paper to record'],steps:['Take the deepest breath you can.','Blow it all into the balloon in one breath.','Pinch it shut quickly.','Measure the widest diameter of the balloon.','Compare with 3 others — who has biggest capacity?'],simId:'lung-capacity',buddy:'Trained swimmers and singers have much larger lung capacity. Singers practice breathing exercises daily. Your lungs can be strengthened just like muscles!'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c4-s4',title:'Sound and Pitch',subject:'Science',classes:['8'],icon:'🎵',bgGrad:'rgba(255,107,107,.18)',desc:'Make a musical scale with water glasses. Understand pitch and frequency.',ncert:'NCERT Science Class 4 – Sound',why:'Pitch depends on frequency — how fast air vibrates. More water = shorter air column = faster vibration = higher pitch. Less water = lower pitch.',materials:['6–8 identical glasses','Water','A metal spoon'],steps:['Line up glasses.','Fill each with different amounts of water (from empty to full).','Tap each gently with the spoon.','Listen — which gives the highest/lowest pitch?','Can you play a simple tune like "Do Re Mi"?'],simId:'sound-pitch',buddy:'A guitar string vibrating 440 times per second makes the note A. That\'s 440 Hz! Higher strings vibrate faster, producing higher notes.'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c4-s5',title:'Reflection and Mirrors',subject:'Science',classes:['6'],icon:'🪞',bgGrad:'rgba(255,107,107,.18)',desc:'Explore how mirrors reflect light. Build a simple periscope!',ncert:'NCERT Science Class 4 – Light',why:'Reflection law: the angle of incidence equals the angle of reflection. Mirrors are flat, polished surfaces that reflect nearly all light hitting them.',materials:['2 small mirrors','Cardboard tube or box','Tape','A torch'],steps:['Shine a torch at a mirror — see where the beam goes.','Angle the mirror differently — observe the reflected beam.','Build a periscope: 2 mirrors at 45° in a tall box.','Look through the bottom — you can see over obstacles!','Why do ambulances have reversed writing?'],simId:'reflection-sim',buddy:'Fun house mirrors distort your reflection because they\'re curved, not flat. Concave mirrors focus light (telescopes); convex mirrors widen the view (car side mirrors).'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c5-s3',title:'Photosynthesis in a Leaf',subject:'Science',classes:['7'],icon:'🍃',bgGrad:'rgba(255,107,107,.18)',desc:'Test for starch in leaves to prove photosynthesis happened.',ncert:'NCERT Science Class 5 – Photosynthesis',why:'Leaves produce glucose via photosynthesis, stored as starch. Iodine turns dark blue/black in the presence of starch — proving photosynthesis happened.',materials:['A leaf (kept in sunlight and one kept in dark)','Iodine solution','Boiling water (adult help)','Alcohol'],steps:['Boil the leaf in water 2 min to soften.','Place in alcohol 5 min to remove chlorophyll.','Wash leaf. Place flat on white paper.','Add drops of iodine.','Which leaf turns dark? Why?'],simId:'photosynthesis-test',buddy:'A single large tree produces enough oxygen for 4 people per day. And one tree can absorb up to 22 kg of CO₂ per year. That\'s why deforestation is an oxygen problem.'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c5-s5',title:'Gravity and Projectiles',subject:'Science',classes:['9'],icon:'🏀',bgGrad:'rgba(255,107,107,.18)',desc:'Drop a ball and throw one horizontally. Do they land at the same time?',ncert:'NCERT Science Class 5 – Force and Motion',why:'Gravity acts equally on all objects regardless of horizontal motion. A ball thrown horizontally and one dropped from the same height hit the ground simultaneously.',materials:['Two identical small balls','A table','Tape to mark starting point'],steps:['Hold both balls at the same height at the table edge.','Drop one straight down. Simultaneously roll the other off the table.','Listen carefully — do they land at the same time?','Try from different heights.','What do you notice?'],simId:'projectile-sim',buddy:'This is why a bullet fired horizontally and one dropped from the same height hit the ground at the same time! Galileo proved this in 1590 — and people refused to believe him.'}
 ];

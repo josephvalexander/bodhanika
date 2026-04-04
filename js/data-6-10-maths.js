@@ -67,7 +67,7 @@ window.EXPERIMENTS_6_10_MATH = [
    steps:['Collect 10 heights in cm.','Mean: sum all ÷ 10.','Median: arrange in order; take the middle value (average of 5th and 6th).','Mode: most frequent value.','Range: max − min.','Which average best represents the group?'],
    simId:'data-averages',buddy:'When news reports "average Indian income," they use mean — but a few billionaires pull it up enormously. Median income is much lower and more representative. Always ask: which average?'},
 
-  {id:'c7-m4',title:'Pythagoras Theorem Proof',subject:'Maths',classes:['7'],icon:'📐',bgGrad:'rgba(255,217,61,.18)',
+  {id:'c7-m4',title:'Pythagoras Theorem Proof',subject:'Maths',classes:['10'],icon:'📐',bgGrad:'rgba(255,217,61,.18)',
    desc:'Cut paper squares on each side of a right triangle. Show the areas add up.',
    ncert:'NCERT Maths Class 7 – The Triangle and its Properties',
    why:'In any right triangle, a² + b² = c². This ancient result (known to Babylonians 4,000 years ago) underpins construction, navigation, computer graphics, and signal processing.',
@@ -84,7 +84,7 @@ window.EXPERIMENTS_6_10_MATH = [
    simId:'congruence',buddy:'Manufacturing relies on congruence: every bolt must be identical to its specification. A 0.1 mm error in an aircraft component can cause failure. Precision starts with geometry.'},
 
   // ── CLASS 8 MATHS ──
-  {id:'c8-m1',title:'Graphing Two Linear Equations',subject:'Maths',classes:['8'],icon:'📊',bgGrad:'rgba(255,217,61,.18)',
+  {id:'c8-m1',title:'Graphing Two Linear Equations',subject:'Maths',classes:['9'],icon:'📊',bgGrad:'rgba(255,217,61,.18)',
    desc:'Plot two lines on graph paper. Find their intersection point algebraically and visually.',
    ncert:'NCERT Maths Class 8 – Linear Equations in Two Variables',
    why:'Two equations with two unknowns can be solved graphically (intersection point) or algebraically. This underlies every real-world optimisation — pricing, logistics, scheduling.',
@@ -100,7 +100,7 @@ window.EXPERIMENTS_6_10_MATH = [
    steps:['Represent x² + 4x + 4 with tiles.','Arrange into a square — what are its side lengths?','(x + 2)(x + 2) = (x + 2)²','Try x² + 5x + 6 — arrange into a rectangle.','Expand your answer to verify.'],
    simId:'factorisation',buddy:'"Factor" comes from Latin "facere" (to make). You\'re finding what makes up an expression. Babylonians used the same idea to divide land in 1800 BC — earliest recorded algebra.'},
 
-  {id:'c8-m3',title:'Derive Pi by Measuring Circles',subject:'Maths',classes:['8'],icon:'🥧',bgGrad:'rgba(255,217,61,.18)',
+  {id:'c8-m3',title:'Derive Pi by Measuring Circles',subject:'Maths',classes:['7','8'],icon:'🥧',bgGrad:'rgba(255,217,61,.18)',
    desc:'Measure circumference and diameter of 6 different circles. Calculate C ÷ D each time.',
    ncert:'NCERT Maths Class 8 – Mensuration',
    why:'π is the ratio of circumference to diameter for ANY circle. By measuring many different circles, you always get approximately 3.14159… This empirical discovery preceded the proof by millennia.',
@@ -198,9 +198,9 @@ window.EXPERIMENTS_6_10_MATH = [
    steps:['Draw a circle; mark external point P.','Draw two tangents from P. Measure both — are they equal?','Measure angle between tangent and radius at contact — is it 90°?','Draw a diameter; mark any point on the circumference; form triangle. Measure the angle at the point.','Is it 90°? (Angle in semicircle theorem.)'],
    simId:'circle-theorems',buddy:'Satellite orbits, gear teeth, camera apertures, roundabouts — everything circular is designed using circle theorems. The GPS signal that guides your car travels in an orbit computed with these.'},
 
-  {id:'c10-m5',title:'Conditional Probability and Bayes',subject:'Maths',classes:['10'],icon:'🎲',bgGrad:'rgba(255,217,61,.18)',
+  {id:'c10-m5',title:'Probability — Complementary and Compound Events',subject:'Maths',classes:['10'],icon:'🎲',bgGrad:'rgba(255,217,61,.18)',
    desc:'Work through a medical testing scenario. Discover why a positive test is not what it seems.',
-   ncert:'NCERT Maths Class 10 – Probability',
+   ncert:'NCERT Maths Class 10 – Ch 15: Probability',
    why:'P(A|B) = P(A∩B)/P(B). Bayes\' theorem lets you update a probability given new information. It powers spam filters, medical diagnosis, weather forecasting, and AI classification.',
    materials:['Calculator','Pencil and paper'],
    steps:['A disease affects 1% of the population. Test is 99% accurate.','100,000 people tested: 1,000 have disease; 99,000 don\'t.','True positives: 1,000 × 0.99 = 990. False positives: 99,000 × 0.01 = 990.','If you test positive, P(you have disease) = 990 ÷ (990+990) = 50%!','How does this change if disease affects 10% of the population?'],
@@ -258,4 +258,12 @@ window.EXPERIMENTS_6_10_MATH = [
    steps:['Draw a circle with centre O.','Mark external point P and draw two tangents PA and PB.','Measure PA and PB — are they equal?','Draw diameter AB. Mark point C on circle. Measure angle ACB.','Is it always 90 degrees? Try 5 different positions for C.'],
    simId:'circles-tangents-3d',buddy:'Every roundabout on Indian highways is designed using circle geometry — the entry and exit roads are tangents to the circular path. The radius determines the safe speed of the vehicle going around it.'}
 
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c5-m3',title:'Percentages and Discounts',subject:'Maths',classes:['7'],icon:'🏷️',bgGrad:'rgba(255,217,61,.18)',desc:'Calculate sale prices. Understand what 10%, 25%, 50% off really means.',ncert:'NCERT Maths Class 5 – Percentages',why:'Percentage means "per hundred." 25% off ₹200 = 25/100 × 200 = ₹50 off → ₹150. Understanding this protects you from misleading sales.',materials:['Newspaper ads or make price tags','Calculator optional'],steps:['Find an item priced ₹500 with 20% off.','Calculate: 20/100 × 500 = ₹100 off. New price = ₹400.','Find 3 items in a newspaper sale.','Calculate actual sale price for each.','Which deal gives the biggest saving in rupees?'],simId:'percentage-sim',buddy:'Shops show "50% off" but on what original price? A trick: inflate the original price then "discount" it. Always calculate the actual price you pay, not the % shown!'}
+
+
+  /* Moved: correct NCERT class */
+  ,{id:'c5-m5',title:'Average and Mean',subject:'Maths',classes:['6'],icon:'📊',bgGrad:'rgba(255,217,61,.18)',desc:'Calculate average rainfall, temperature, or scores from real data.',ncert:'NCERT Maths Class 5 – Statistics',why:'The mean (average) gives a single number representing a dataset. Add all values and divide by count. Used in weather forecasting, school grades, cricket batting averages.',materials:['Weather data from a newspaper or memory','Pencil and paper'],steps:['Record last 7 days\' temperature.','Add all 7 temperatures.','Divide by 7 — that\'s the weekly mean.','If one day was unusually hot, how does it affect the average?','Find your maths test average over last 3 tests.'],simId:'mean-sim',buddy:"Virat Kohli's batting average of ~50 means on average he scores 50 runs per innings. But he's sometimes out for 0 and sometimes scores 200. The average hides the variation!"}
 ];
