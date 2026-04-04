@@ -858,9 +858,9 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     /* Canvas mixing bowl */
     var canvas = document.createElement('canvas');
     var dpr = window.devicePixelRatio || 1;
-    var CW = Math.min(c.offsetWidth || 320, 400), CH = 130;
+    var CW = Math.min(c.offsetWidth || 300, 380), CH = 105;
     canvas.width = CW * dpr; canvas.height = CH * dpr;
-    canvas.style.cssText = 'width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 10px;border-radius:12px;background:var(--surface2)';
+    canvas.style.cssText = 'width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 8px;border-radius:12px;background:var(--surface2)';
     var ctx2 = canvas.getContext('2d');
     ctx2.scale(dpr, dpr);
     c.appendChild(canvas);
@@ -877,15 +877,15 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     m.primaries.forEach(function(p, i) {
       var isSel = selected.indexOf(p.name) >= 0;
       var slotCx = slotW * i + slotW / 2;
-      var slotCy = 52;
+      var slotCy = 44;
 
       /* Glow for light mode */
       if (isLight && isSel) {
-        var glow = ctx2.createRadialGradient(slotCx, slotCy, 0, slotCx, slotCy, 40);
+        var glow = ctx2.createRadialGradient(slotCx, slotCy, 0, slotCx, slotCy, 30);
         glow.addColorStop(0, p.hex + 'aa');
         glow.addColorStop(1, p.hex + '00');
         ctx2.fillStyle = glow;
-        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, 40, 0, Math.PI*2); ctx2.fill();
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, 32, 0, Math.PI*2); ctx2.fill();
       }
 
       /* Paint blob / light circle */
@@ -896,7 +896,7 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
         lg.addColorStop(0.3, p.hex);
         lg.addColorStop(1, p.hex + (isSel?'cc':'44'));
         ctx2.fillStyle = lg;
-        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?28:22, 0, Math.PI*2); ctx2.fill();
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?24:19, 0, Math.PI*2); ctx2.fill();
       } else {
         /* Paint blob — irregular for realism */
         var pg2 = ctx2.createRadialGradient(slotCx-6, slotCy-6, 2, slotCx, slotCy, 26);
@@ -905,7 +905,7 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
         pg2.addColorStop(1, darken(p.hex));
         ctx2.fillStyle = pg2;
         ctx2.beginPath();
-        ctx2.ellipse(slotCx, slotCy, isSel?27:22, isSel?24:19, -0.2, 0, Math.PI*2);
+        ctx2.ellipse(slotCx, slotCy, isSel?23:18, isSel?20:16, -0.2, 0, Math.PI*2);
         ctx2.fill();
         /* Paint texture highlight */
         ctx2.fillStyle = 'rgba(255,255,255,0.2)';
@@ -915,15 +915,15 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
       /* Selected tick ring */
       if (isSel) {
         ctx2.strokeStyle = 'white'; ctx2.lineWidth = 2.5;
-        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?30:24, 0, Math.PI*2); ctx2.stroke();
+        ctx2.beginPath(); ctx2.arc(slotCx, slotCy, isSel?26:21, 0, Math.PI*2); ctx2.stroke();
         ctx2.fillStyle = 'white'; ctx2.font = 'bold 10px Nunito,sans-serif'; ctx2.textAlign = 'center';
-        ctx2.fillText('✓', slotCx, slotCy + (isLight?32:30));
+        ctx2.fillText('✓', slotCx, slotCy + (isLight?27:26));
       }
 
       /* Colour name label */
       ctx2.fillStyle = isSel ? p.hex : (isLight?'rgba(255,255,255,0.5)':'rgba(0,0,0,0.45)');
       ctx2.font = 'bold 11px Nunito,sans-serif'; ctx2.textAlign = 'center';
-      ctx2.fillText(p.name, slotCx, CH - 8);
+      ctx2.fillText(p.name, slotCx, CH - 6);
 
       /* + between colours */
       if (i < n-1) {
@@ -934,7 +934,7 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     });
 
     /* fixedSlotCy — slotCy was scoped inside forEach, pull it out */
-    var fixedSlotCy = 52;
+    var fixedSlotCy = 44;
     if (selected.length) {
       ctx2.fillStyle = isLight?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.3)';
       ctx2.font = 'bold 16px Nunito,sans-serif'; ctx2.textAlign = 'center';
@@ -943,7 +943,7 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
 
     /* Result row */
     var resultRow = document.createElement('div');
-    resultRow.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--surface2);border-radius:12px;margin-bottom:8px';
+    resultRow.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--surface2);border-radius:10px;margin-bottom:6px';
 
     var resultLabel = document.createElement('div');
     resultLabel.style.cssText = 'font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap';
@@ -1869,6 +1869,677 @@ SIM_REGISTRY['quadratic-real'] = function(c) {
 };
 
 /* Default fallback for any simId not specifically registered */
+
+
+/* ══════════════════════════════════════════════════
+   NEWLY IMPLEMENTED SIMS — priority science Class 6-10
+   ══════════════════════════════════════════════════ */
+
+/* ── FRICTION SIM (Class 8 Ch 12) ── */
+SIM_REGISTRY['friction-sim'] = function(c) {
+  var surface = 'wood', mass = 3, pushing = false, vel = 0, pos = 60, raf;
+  var surfaces = {
+    wood:    { label:'🪵 Wood',    mu: 0.4,  col:'#92400e', tex:'rough planks' },
+    ice:     { label:'🧊 Ice',     mu: 0.05, col:'#bae6fd', tex:'smooth ice' },
+    rubber:  { label:'⚫ Rubber',  mu: 0.7,  col:'#1f2937', tex:'grippy rubber' },
+    glass:   { label:'🪟 Glass',   mu: 0.15, col:'#e0f2fe', tex:'polished glass' },
+    carpet:  { label:'🟥 Carpet',  mu: 0.55, col:'#b91c1c', tex:'coarse carpet' },
+  };
+
+  function friction() { return surfaces[surface].mu * mass * 9.8; }
+
+  function draw() {
+    var _g = getCtx('frictionCanvas'); if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    ctx.clearRect(0,0,W,H);
+
+    var groundY = H * 0.65;
+    var sf = surfaces[surface];
+
+    /* Sky */
+    ctx.fillStyle = '#f0f9ff'; ctx.fillRect(0,0,W,groundY);
+    /* Surface */
+    var sg = ctx.createLinearGradient(0,groundY,0,H);
+    sg.addColorStop(0, sf.col); sg.addColorStop(1, '#000');
+    ctx.fillStyle = sg; ctx.fillRect(0,groundY,W,H-groundY);
+    /* Surface texture label */
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(sf.tex, W/2, groundY+16);
+
+    /* Block */
+    var bw = 50, bh = 36;
+    var bx = Math.max(10, Math.min(pos, W-bw-10));
+    var by = groundY - bh;
+    var bg = ctx.createLinearGradient(bx,by,bx+bw,by+bh);
+    bg.addColorStop(0,'#fbbf24'); bg.addColorStop(1,'#d97706');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(bx,by,bw,bh,4); else ctx.fillRect(bx,by,bw,bh);
+    ctx.fill();
+    /* Mass label */
+    ctx.fillStyle = '#fff'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(mass+'kg', bx+bw/2, by+bh/2+4);
+
+    /* Push arrow */
+    if (pushing && vel > 0) {
+      ctx.strokeStyle='#6366f1'; ctx.fillStyle='#6366f1'; ctx.lineWidth=2.5;
+      var ax = bx+bw, ay = by+bh/2;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax+30,ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax+30,ay); ctx.lineTo(ax+22,ay-5); ctx.lineTo(ax+22,ay+5); ctx.fill();
+      ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Push', ax+15, ay-8);
+    }
+    /* Friction arrow (opposing) */
+    if (vel > 0.3) {
+      ctx.strokeStyle='#ef4444'; ctx.fillStyle='#ef4444'; ctx.lineWidth=2;
+      var fx2 = bx, fy2 = by+bh/2;
+      ctx.beginPath(); ctx.moveTo(fx2,fy2); ctx.lineTo(fx2-25,fy2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx2-25,fy2); ctx.lineTo(fx2-17,fy2-4); ctx.lineTo(fx2-17,fy2+4); ctx.fill();
+      ctx.fillText('Friction', fx2-12, fy2-8);
+    }
+
+    /* Friction force readout */
+    ctx.fillStyle='#1e293b'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('Friction force: '+friction().toFixed(1)+'N', 8, 20);
+    ctx.fillText('μ = '+sf.mu, 8, 34);
+    ctx.fillText('Speed: '+(Math.max(0,vel)).toFixed(1)+' m/s', 8, 48);
+
+    raf = requestAnimationFrame(draw);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="frictionCanvas" style="width:100%;height:160px;border-radius:10px;display:block;margin-bottom:10px"></canvas>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">'+
+      Object.keys(surfaces).map(function(k){
+        return '<button class="cbtn'+(surface===k?' evs':'')+'" data-sf="'+k+'" onclick="frSurface(this.dataset.sf)" style="font-size:11px">'+surfaces[k].label+'</button>';
+      }).join('')+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'+
+      '<span style="font-size:11px;color:var(--muted)">Mass:</span>'+
+      '<input type="range" class="slide" min="1" max="10" value="'+mass+'" oninput="frMass(this.value)" style="flex:1;--val:'+((mass-1)/9*100)+'%">'+
+      '<span style="font-size:11px;font-weight:800;color:var(--text)">'+mass+'kg</span></div>'+
+      '<div class="ctrl-row">'+
+      '<button class="cbtn evs" onmousedown="frPush(true)" onmouseup="frPush(false)" ontouchstart="frPush(true)" ontouchend="frPush(false)" style="flex:1">👊 Push & Hold</button>'+
+      '<button class="cbtn" onclick="frReset()">↺ Reset</button></div>';
+
+    cancelAnimationFrame(raf);
+    draw();
+  }
+
+  window.frSurface = function(s) { surface=s; render(); };
+  window.frMass = function(v) { mass=parseInt(v); document.querySelector('input[oninput*="frMass"]').style.setProperty('--val',((mass-1)/9*100)+'%'); };
+  window.frPush = function(on) {
+    pushing = on;
+    if (!on) return;
+    (function loop() {
+      if (!pushing) { return; }
+      vel = Math.min(vel + 0.5, 8);
+      pos += vel * 0.8;
+      if (pos > 400) { pos = 60; vel = 0; }
+      setTimeout(loop, 40);
+    })();
+  };
+  window.frReset = function() { pos=60; vel=0; pushing=false; };
+  window.simCleanup = function() { cancelAnimationFrame(raf); };
+  render();
+};
+
+/* ── SOUND VIBRATION (Class 8 Ch 13) ── */
+SIM_REGISTRY['sound-vibration'] = function(c) {
+  var freq = 440, amp = 50, medium = 'air', playing = false, audioCtx = null, osc = null, gain2 = null, raf2;
+  var mediums = {
+    air:   { label:'🌬️ Air',   speed:343,  col:'#bae6fd', desc:'Sound travels at 343 m/s in air' },
+    water: { label:'💧 Water', speed:1480, col:'#3b82f6', desc:'Sound travels 4× faster in water!' },
+    metal: { label:'🔩 Metal', speed:5100, col:'#94a3b8', desc:'Sound travels 15× faster in steel!' },
+    vacuum:{ label:'🌌 Vacuum',speed:0,    col:'#1e1b4b', desc:'No medium — no sound! Space is silent.' },
+  };
+  var t = 0;
+
+  function drawWave() {
+    var _g = getCtx('soundCanvas'); if (!_g) return;
+    var cv = _g.cv, ctx = _g.ctx, W = _g.W, H = _g.H;
+    ctx.clearRect(0,0,W,H);
+    var m = mediums[medium];
+    /* Background */
+    ctx.fillStyle = m.col+'44'; ctx.fillRect(0,0,W,H);
+    /* Medium label */
+    ctx.fillStyle = '#1e293b'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(m.desc, W-6, 14);
+
+    if (medium === 'vacuum') {
+      ctx.fillStyle = '#6366f1'; ctx.font = 'bold 14px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('🔇 No sound in vacuum!', W/2, H/2);
+      raf2 = requestAnimationFrame(drawWave); return;
+    }
+
+    t += 0.05;
+    var waveSpeed = m.speed / 5000;
+    /* Draw waveform */
+    ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (var i=0;i<=W;i++) {
+      var y = H/2 + (amp/100)*(H*0.4) * Math.sin(2*Math.PI * (i/(W/3) * freq/440) - t * waveSpeed * 60);
+      if (i===0) ctx.moveTo(i,y); else ctx.lineTo(i,y);
+    }
+    ctx.stroke();
+    /* Vibrating object */
+    var vib = Math.sin(t*freq/44)*8*(amp/100);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(W/2-6+vib, H/2-20, 12, 40);
+
+    raf2 = requestAnimationFrame(drawWave);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="soundCanvas" style="width:100%;height:130px;border-radius:10px;display:block;margin-bottom:8px"></canvas>'+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">'+
+      Object.keys(mediums).map(function(k){
+        return '<button class="cbtn'+(medium===k?' evs':'')+'" data-med="'+k+'" onclick="sndMedium(this.dataset.med)" style="font-size:10px">'+mediums[k].label+'</button>';
+      }).join('')+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+      '<span style="font-size:11px;color:var(--muted);white-space:nowrap">Pitch (Hz):</span>'+
+      '<input type="range" class="slide" min="100" max="1000" value="'+freq+'" oninput="sndFreq(this.value)" style="flex:1;--val:'+((freq-100)/900*100).toFixed(1)+'%">'+
+      '<span style="font-size:11px;font-weight:800;color:var(--text)">'+freq+'Hz</span></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<span style="font-size:11px;color:var(--muted);white-space:nowrap">Volume:</span>'+
+      '<input type="range" class="slide" min="1" max="100" value="'+amp+'" oninput="sndAmp(this.value)" style="flex:1;--val:'+amp+'%">'+
+      '<span style="font-size:11px;font-weight:800;color:var(--text)">'+amp+'%</span></div>'+
+      '<div class="ctrl-row">'+
+      '<button class="cbtn evs" onclick="sndPlay()" style="flex:1">'+(playing?'⏹ Stop':'▶ Play Sound')+'</button></div>';
+
+    cancelAnimationFrame(raf2);
+    drawWave();
+  }
+
+  window.sndMedium = function(m) { medium=m; if(playing&&m==='vacuum'){sndPlay();} render(); };
+  window.sndFreq = function(v) { freq=parseInt(v); if(osc) osc.frequency.value=freq; };
+  window.sndAmp = function(v) { amp=parseInt(v); if(gain2) gain2.gain.value=amp/400; };
+  window.sndPlay = function() {
+    if (medium==='vacuum') return;
+    if (playing) {
+      if(osc){osc.stop();osc=null;} playing=false;
+    } else {
+      try {
+        if (!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+        osc=audioCtx.createOscillator(); gain2=audioCtx.createGain();
+        osc.type='sine'; osc.frequency.value=freq; gain2.gain.value=amp/400;
+        osc.connect(gain2); gain2.connect(audioCtx.destination);
+        osc.start(); playing=true;
+      } catch(e) {}
+    }
+    render();
+  };
+  window.simCleanup = function() { cancelAnimationFrame(raf2); if(osc){osc.stop();osc=null;} };
+  render();
+};
+
+/* ── SOUND PITCH (alias — same sim) ── */
+SIM_REGISTRY['sound-pitch'] = SIM_REGISTRY['sound-vibration'];
+
+/* ── SEPARATION TECHNIQUES (Class 6 Ch 5) ── */
+SIM_REGISTRY['separation-sim'] = function(c) {
+  var method = null;
+  var methods = [
+    { id:'filtration', icon:'🧪', name:'Filtration', desc:'Separates insoluble solids from liquids using a filter.',
+      example:'Sand + Water → Filter paper removes sand, water passes through.',
+      mixtures:['Sand & Water','Muddy Water','Chalk & Water'],
+      steps:['Fold filter paper into a cone.','Place in a funnel over a beaker.','Pour mixture through slowly.','Solid stays on paper — filtrate is clear.'] },
+    { id:'evaporation', icon:'♨️', name:'Evaporation', desc:'Separates dissolved solids from solution by heating.',
+      example:'Salt Water → Heat evaporates water, salt crystals remain.',
+      mixtures:['Salt Water','Sugar Water','Copper Sulphate Solution'],
+      steps:['Pour solution into evaporating dish.','Heat gently over flame.','Water evaporates as steam.','Solid crystals left behind!'] },
+    { id:'sieving', icon:'🥣', name:'Sieving', desc:'Separates mixtures by particle size using a sieve.',
+      example:'Sand + Gravel → Large particles stay on sieve, small pass through.',
+      mixtures:['Sand & Gravel','Flour & Husk','Rice & Stones'],
+      steps:['Place sieve over bowl.','Pour mixture in.','Shake gently.','Larger particles remain, smaller fall through.'] },
+    { id:'magnetic', icon:'🧲', name:'Magnetic Separation', desc:'Uses a magnet to remove magnetic materials from a mixture.',
+      example:'Iron filings + Sand → Magnet attracts iron, leaves sand.',
+      mixtures:['Iron Filings & Sand','Iron Nails & Sawdust'],
+      steps:['Move magnet over mixture.','Iron filings cling to magnet.','Lift magnet away from the rest.','Shake off iron filings.'] },
+    { id:'decantation', icon:'🫗', name:'Decantation', desc:'Pours off liquid from settled sediment without disturbing it.',
+      example:'Sand + Water — let settle, then carefully pour water off.',
+      mixtures:['Sand & Water (settled)','Oil & Water'],
+      steps:['Allow mixture to settle completely.','Tilt container slowly.','Pour off the liquid carefully.','Sediment remains at bottom.'] },
+  ];
+
+  function render() {
+    c.innerHTML = '';
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;text-align:center';
+    title.textContent = '🔬 Separation Techniques Lab';
+    c.appendChild(title);
+
+    /* Method grid */
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px';
+    methods.forEach(function(m) {
+      var btn = document.createElement('button');
+      var active = method === m.id;
+      btn.style.cssText = 'padding:8px 4px;border-radius:10px;border:2px solid '+(active?'var(--sci)':'var(--border)')+';background:'+(active?'rgba(239,68,68,.12)':'var(--surface2)')+';cursor:pointer;font-family:Nunito,sans-serif;transition:all .15s';
+      btn.innerHTML = '<div style="font-size:20px">'+m.icon+'</div><div style="font-size:10px;font-weight:800;color:'+(active?'var(--sci)':'var(--muted)')+'">'+m.name+'</div>';
+      btn.addEventListener('click', function() { method=m.id; render(); });
+      grid.appendChild(btn);
+    });
+    c.appendChild(grid);
+
+    if (method) {
+      var m = methods.find(function(x){ return x.id===method; });
+      var panel = document.createElement('div');
+      panel.style.cssText = 'background:var(--surface2);border-radius:12px;padding:12px;border:1px solid var(--border)';
+      panel.innerHTML =
+        '<div style="font-size:13px;font-weight:900;color:var(--sci);margin-bottom:6px">'+m.icon+' '+m.name+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">'+m.desc+'</div>'+
+        '<div style="background:rgba(239,68,68,.08);border-radius:8px;padding:8px;margin-bottom:8px;font-size:11px;color:var(--text)">'+
+        '<b>Example:</b> '+m.example+'</div>'+
+        '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">STEPS:</div>'+
+        m.steps.map(function(s,i){ return '<div style="display:flex;gap:8px;margin-bottom:4px"><span style="color:var(--sci);font-weight:800;flex-shrink:0">'+(i+1)+'.</span><span style="font-size:11px;color:var(--text)">'+s+'</span></div>'; }).join('');
+      c.appendChild(panel);
+    } else {
+      var prompt = document.createElement('div');
+      prompt.style.cssText = 'text-align:center;color:var(--muted);font-size:12px;padding:12px';
+      prompt.textContent = '👆 Tap a technique above to explore it!';
+      c.appendChild(prompt);
+    }
+  }
+  render();
+};
+
+/* ── TYNDALL EFFECT (Class 9 Ch 1) ── */
+SIM_REGISTRY['tyndall-effect'] = function(c) {
+  var mixture = 'colloid', raf3;
+  var types = {
+    solution:  { label:'🧂 Solution (Salt Water)',  scatter:0,    col:'#dbeafe', desc:'True solution — particles too tiny to scatter light. Beam invisible.' },
+    colloid:   { label:'🥛 Colloid (Milk)',         scatter:0.7,  col:'#fef9c3', desc:'Colloid — medium particles scatter light. Beam visible. Tyndall Effect!' },
+    suspension:{ label:'🥤 Suspension (Muddy Water)',scatter:1.0, col:'#d4a96a', desc:'Suspension — large particles scatter strongly. Very visible beam. Settles on standing.' },
+  };
+  var t3 = 0;
+
+  function drawBeam() {
+    var _g = getCtx('tyndallCanvas'); if(!_g) return;
+    var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    var m = types[mixture];
+    t3 += 0.03;
+
+    /* Beaker */
+    ctx.fillStyle = m.col+'cc';
+    ctx.beginPath(); ctx.moveTo(W*0.25,20); ctx.lineTo(W*0.15,H-20); ctx.lineTo(W*0.75,H-20); ctx.lineTo(W*0.65,20); ctx.fill();
+    ctx.strokeStyle='rgba(100,150,200,0.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(W*0.25,20); ctx.lineTo(W*0.15,H-20); ctx.lineTo(W*0.75,H-20); ctx.lineTo(W*0.65,20); ctx.stroke();
+
+    /* Torch (left) */
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath(); ctx.arc(W*0.05, H/2, 12, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(251,191,36,0.3)';
+    ctx.beginPath(); ctx.arc(W*0.05, H/2, 22, 0, Math.PI*2); ctx.fill();
+
+    /* Light beam through beaker */
+    var scatter = m.scatter;
+    if (scatter > 0) {
+      /* Scattered beam — visible cone */
+      var grad = ctx.createLinearGradient(W*0.17,H/2,W*0.73,H/2);
+      grad.addColorStop(0,'rgba(255,250,200,'+(scatter*0.6)+')');
+      grad.addColorStop(0.5,'rgba(255,250,200,'+(scatter*0.4)+')');
+      grad.addColorStop(1,'rgba(255,250,200,'+(scatter*0.2)+')');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(W*0.17, H/2-4);
+      ctx.lineTo(W*0.73, H/2 - 6 - scatter*4);
+      ctx.lineTo(W*0.73, H/2 + 6 + scatter*4);
+      ctx.lineTo(W*0.17, H/2+4);
+      ctx.fill();
+      /* Scattered particles */
+      for(var p=0;p<Math.floor(scatter*15);p++) {
+        var px = W*(0.2+Math.random()*0.45), py = H/2 + (Math.random()-0.5)*20;
+        ctx.fillStyle='rgba(255,230,100,'+(Math.sin(t3*3+p)*0.3+0.4)+')';
+        ctx.beginPath(); ctx.arc(px,py,1.5,0,Math.PI*2); ctx.fill();
+      }
+    } else {
+      /* No scattering — faint invisible beam */
+      ctx.strokeStyle='rgba(255,255,200,0.08)'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(W*0.17,H/2); ctx.lineTo(W*0.73,H/2); ctx.stroke();
+    }
+
+    /* Labels */
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Torch', W*0.05, H/2+24);
+    var beamLabel = scatter>0.5?'Beam visible! ✓':scatter>0?'Faint beam':'No beam visible ✗';
+    ctx.fillStyle = scatter>0.3?'#16a34a':'#ef4444';
+    ctx.fillText(beamLabel, W/2, H-8);
+
+    raf3 = requestAnimationFrame(drawBeam);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px">Shine a torch through each mixture — can you see the beam?</div>'+
+      '<canvas id="tyndallCanvas" style="width:100%;height:160px;border-radius:10px;display:block;margin-bottom:10px"></canvas>'+
+      '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px">'+
+      Object.keys(types).map(function(k){
+        var active=mixture===k;
+        return '<button data-mix="'+k+'" onclick="tynMix(this.dataset.mix)" class="cbtn'+(active?' evs':'')+'" style="text-align:left;font-size:11px">'+types[k].label+'</button>';
+      }).join('')+'</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:8px;font-size:11px;color:var(--text)">'+types[mixture].desc+'</div>';
+
+    cancelAnimationFrame(raf3);
+    drawBeam();
+  }
+  window.tynMix = function(m){mixture=m; cancelAnimationFrame(raf3); render();};
+  window.simCleanup = function(){cancelAnimationFrame(raf3);};
+  render();
+};
+
+/* ── TEMPORARY SLIDE (Class 9 Ch 5) ── */
+SIM_REGISTRY['temp-slide'] = function(c) {
+  var step=0, stain=false;
+  var steps2 = [
+    {icon:'💧',title:'Place a drop of water',desc:'Put one small drop of water on the centre of a clean glass slide.',action:'Add Drop'},
+    {icon:'🌿',title:'Add specimen',desc:'Place a thin leaf peel or onion skin on the water drop. It should be almost transparent.',action:'Add Specimen'},
+    {icon:'🎨',title:'Add stain (optional)',desc:'Add a drop of safranin (red) or iodine (blue-black) to make cells more visible.',action:'Stain '+(stain?'✓':'')},
+    {icon:'🪟',title:'Place cover slip',desc:'Hold the cover slip at 45° and gently lower it to avoid air bubbles.',action:'Add Cover Slip'},
+    {icon:'🔬',title:'View under microscope',desc:'Start with low power (4×), find specimen, then switch to 40× for cell detail.',action:'Focus!'},
+  ];
+
+  function render() {
+    c.innerHTML = '';
+    /* Slide SVG visual */
+    var slide_svg = '<svg viewBox="0 0 280 80" width="100%" style="border-radius:8px;margin-bottom:10px;background:#1e293b">'+
+      '<rect x="10" y="25" width="260" height="30" rx="4" fill="rgba(186,230,253,0.3)" stroke="rgba(147,197,253,0.5)" stroke-width="1.5"/>'+
+      (step>=1?'<ellipse cx="140" cy="40" rx="6" ry="4" fill="rgba(56,189,248,0.6)"/>':'')+ /* water */
+      (step>=2?'<ellipse cx="140" cy="40" rx="22" ry="12" fill="rgba(134,239,172,0.4)" stroke="rgba(74,222,128,0.6)" stroke-width="1"/>':'')+ /* specimen */
+      (step>=3&&stain?'<ellipse cx="140" cy="40" rx="22" ry="12" fill="rgba(239,68,68,0.25)"/>':'')+ /* stain */
+      (step>=4?'<rect x="112" y="28" width="56" height="24" rx="2" fill="rgba(186,230,253,0.15)" stroke="rgba(147,197,253,0.4)" stroke-width="1"/>':'')+ /* coverslip */
+      (step>=5?'<circle cx="140" cy="40" r="18" fill="none" stroke="rgba(251,191,36,0.6)" stroke-width="2" stroke-dasharray="4,3"/>':'')+ /* microscope ring */
+      '<text x="140" y="70" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.4)" font-family="Nunito,sans-serif">Glass Slide</text>'+
+      '</svg>';
+    c.innerHTML += slide_svg;
+
+    /* Steps */
+    var stepsDiv = document.createElement('div');
+    stepsDiv.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+    steps2.forEach(function(s,i) {
+      var done = i < step, active = i === step;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:'+(active?'rgba(99,102,241,.12)':done?'rgba(34,197,94,.08)':'var(--surface2)')+';border:1px solid '+(active?'var(--acc)':done?'rgba(34,197,94,.3)':'var(--border)');
+      row.innerHTML =
+        '<span style="font-size:18px">'+s.icon+'</span>'+
+        '<div style="flex:1"><div style="font-size:11px;font-weight:800;color:'+(done?'#16a34a':active?'var(--acc)':'var(--muted)')+'">'+s.title+'</div>'+
+        (active?'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+s.desc+'</div>':'')+
+        '</div>'+
+        (done?'<span style="color:#22c55e;font-size:14px">✓</span>':'')+
+        (active?'<button class="cbtn" onclick="slideStep('+i+')" style="font-size:10px;white-space:nowrap">'+s.action+'</button>':'');
+      stepsDiv.appendChild(row);
+    });
+    c.appendChild(stepsDiv);
+
+    if (step >= steps2.length) {
+      var done2 = document.createElement('div');
+      done2.style.cssText = 'text-align:center;padding:12px;background:rgba(34,197,94,.1);border-radius:10px;margin-top:8px';
+      done2.innerHTML = '<div style="font-size:24px">🔬</div><div style="font-size:12px;font-weight:800;color:#16a34a">Slide ready! You can see plant cells with their cell walls and nucleus.</div>';
+      c.appendChild(done2);
+    }
+
+    var ctrl = document.createElement('div');
+    ctrl.className = 'ctrl-row'; ctrl.style.marginTop='8px';
+    var reset = document.createElement('button');
+    reset.className='cbtn'; reset.textContent='↺ Start over';
+    reset.onclick=function(){step=0;stain=false;render();};
+    ctrl.appendChild(reset);
+    c.appendChild(ctrl);
+  }
+
+  window.slideStep = function(i) {
+    if (i===2) stain=!stain;
+    step=i+1; render();
+  };
+  render();
+};
+
+/* ── REFRACTION THROUGH GLASS SLAB (Class 10 Ch 10) ── */
+SIM_REGISTRY['refraction-slab'] = function(c) {
+  var angle=30, n=1.5, raf4;
+  var materials = { glass:{n:1.5,col:'rgba(186,230,253,0.35)',label:'Glass (n=1.5)'}, water:{n:1.33,col:'rgba(56,189,248,0.25)',label:'Water (n=1.33)'}, diamond:{n:2.42,col:'rgba(199,125,255,0.25)',label:'Diamond (n=2.42)'} };
+  var material='glass';
+
+  function draw4() {
+    var _g=getCtx('refrCanvas'); if(!_g)return;
+    var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+
+    var slabTop=H*0.25, slabBot=H*0.75, slabL=W*0.25, slabR=W*0.75;
+    var mat=materials[material];
+
+    /* Slab */
+    ctx.fillStyle=mat.col; ctx.fillRect(slabL,slabTop,slabR-slabL,slabBot-slabTop);
+    ctx.strokeStyle='rgba(147,197,253,0.4)'; ctx.lineWidth=1.5;
+    ctx.strokeRect(slabL,slabTop,slabR-slabL,slabBot-slabTop);
+    ctx.fillStyle='rgba(147,197,253,0.5)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(mat.label, W/2, slabTop+14);
+
+    /* Normal line (dashed) */
+    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Incoming ray */
+    var r1 = angle*Math.PI/180;
+    var ix = W/2 - Math.sin(r1)*slabTop, iy = 0;
+    var ig = ctx.createLinearGradient(ix,iy,W/2,slabTop);
+    ig.addColorStop(0,'rgba(251,191,36,0)'); ig.addColorStop(1,'rgba(251,191,36,0.9)');
+    ctx.strokeStyle=ig; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(ix,iy); ctx.lineTo(W/2,slabTop); ctx.stroke();
+
+    /* Refracted ray inside slab — Snell's law */
+    var sinR = Math.sin(r1)/mat.n;
+    var r2 = Math.asin(Math.min(0.99,sinR));
+    var midX = W/2 + Math.sin(r2)*(slabBot-slabTop);
+    ctx.strokeStyle='rgba(99,255,99,0.8)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(W/2,slabTop); ctx.lineTo(midX,slabBot); ctx.stroke();
+
+    /* Emerging ray — parallel to incoming */
+    var ex = midX + Math.sin(r1)*(H-slabBot);
+    var eg2=ctx.createLinearGradient(midX,slabBot,ex,H);
+    eg2.addColorStop(0,'rgba(251,191,36,0.9)'); eg2.addColorStop(1,'rgba(251,191,36,0)');
+    ctx.strokeStyle=eg2; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(midX,slabBot); ctx.lineTo(ex,H); ctx.stroke();
+
+    /* Lateral displacement line */
+    ctx.setLineDash([3,4]); ctx.strokeStyle='rgba(239,68,68,0.5)'; ctx.lineWidth=1;
+    var projX=W/2+Math.sin(r1)*(slabBot-slabTop);
+    ctx.beginPath(); ctx.moveTo(projX,slabBot); ctx.lineTo(midX,slabBot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ef4444'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Lateral shift',  (projX+midX)/2, slabBot-6);
+
+    /* Angle labels */
+    ctx.fillStyle='rgba(251,191,36,0.8)'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('i='+angle+'°', W/2-46, slabTop+18);
+    ctx.fillStyle='rgba(99,255,99,0.8)';
+    ctx.fillText('r='+Math.round(r2*180/Math.PI)+'°', W/2+8, slabTop+18);
+
+    raf4=requestAnimationFrame(draw4);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="refrCanvas" style="width:100%;height:180px;border-radius:10px;display:block;margin-bottom:8px"></canvas>'+
+      '<div style="display:flex;gap:5px;margin-bottom:8px">'+
+      Object.keys(materials).map(function(k){
+        return '<button class="cbtn'+(material===k?' evs':'')+'" data-mat="'+k+'" onclick="refrMat(this.dataset.mat)" style="font-size:10px">'+materials[k].label+'</button>';
+      }).join('')+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:11px;color:var(--muted);white-space:nowrap">Angle (i):</span>'+
+      '<input type="range" class="slide" min="5" max="70" value="'+angle+'" oninput="refrAngle(this.value)" style="flex:1;--val:'+((angle-5)/65*100).toFixed(1)+'%">'+
+      '<span style="font-size:11px;font-weight:800;min-width:30px">'+angle+'°</span></div>';
+    cancelAnimationFrame(raf4); draw4();
+  }
+  window.refrMat=function(m){material=m;cancelAnimationFrame(raf4);render();};
+  window.refrAngle=function(v){angle=parseInt(v);document.querySelector('input[oninput*="refrAngle"]').style.setProperty('--val',((angle-5)/65*100).toFixed(1)+'%');};
+  window.simCleanup=function(){cancelAnimationFrame(raf4);};
+  render();
+};
+
+/* ── MAGNETIC FIELD MAP (Class 10 Ch 13) ── */
+SIM_REGISTRY['magnetic-field-map'] = function(c) {
+  var magType='bar', showField=true, raf5;
+  var t5=0;
+
+  function draw5() {
+    var _g=getCtx('magCanvas'); if(!_g) return;
+    var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+    t5+=0.02;
+    var cx5=W/2, cy5=H/2;
+
+    if(magType==='bar') {
+      /* Bar magnet */
+      ctx.fillStyle='#ef4444'; ctx.fillRect(cx5-50,cy5-10,50,20); /* N */
+      ctx.fillStyle='#3b82f6'; ctx.fillRect(cx5,cy5-10,50,20); /* S */
+      ctx.fillStyle='white'; ctx.font='bold 12px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('N',cx5-25,cy5+5); ctx.fillText('S',cx5+25,cy5+5);
+
+      if(showField) {
+        /* Field lines */
+        for(var fl=-3;fl<=3;fl++) {
+          ctx.strokeStyle='rgba(251,191,36,'+(0.15+Math.abs(fl)*0.08)+')';
+          ctx.lineWidth=1.2;
+          ctx.beginPath();
+          /* Approximate field line as ellipse arc */
+          var ry2=30+Math.abs(fl)*22;
+          ctx.ellipse(cx5,cy5,55+Math.abs(fl)*18,ry2,0,Math.PI,0);
+          ctx.stroke();
+          if(fl!==0) { ctx.beginPath(); ctx.ellipse(cx5,cy5,55+Math.abs(fl)*18,ry2,0,0,Math.PI); ctx.stroke(); }
+        }
+        /* Animated compass needles */
+        var needlePts=[[cx5-90,cy5],[cx5-70,cy5-50],[cx5+90,cy5],[cx5+70,cy5-50],[cx5,cy5-70],[cx5-40,cy5+60]];
+        needlePts.forEach(function(np,ni) {
+          /* Calculate field direction at this point */
+          var dx=np[0]-cx5, dy=np[1]-cy5;
+          var ang=Math.atan2(dy,dx)+Math.PI+Math.sin(t5+ni)*0.05;
+          ctx.save(); ctx.translate(np[0],np[1]); ctx.rotate(ang);
+          ctx.fillStyle='#ef4444'; ctx.fillRect(0,-2,8,4);
+          ctx.fillStyle='#94a3b8'; ctx.fillRect(-8,-2,8,4);
+          ctx.restore();
+        });
+      }
+    } else {
+      /* Current-carrying wire (cross section) */
+      ctx.fillStyle='#f59e0b'; ctx.beginPath(); ctx.arc(cx5,cy5,16,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#1e293b'; ctx.font='bold 14px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(magType==='wire-in'?'×':'•', cx5, cy5+5);
+      ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='10px Nunito,sans-serif';
+      ctx.fillText(magType==='wire-in'?'Current in':'Current out', cx5, cy5+32);
+      if(showField) {
+        for(var cr=30;cr<=100;cr+=20) {
+          var op=0.5-cr/250;
+          ctx.strokeStyle='rgba(251,191,36,'+op+')'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.arc(cx5,cy5,cr,0,Math.PI*2); ctx.stroke();
+          /* Arrow on ring */
+          var aang=(magType==='wire-in'?-1:1)*(Math.PI/2)+t5*0.5;
+          var ax5=cx5+Math.cos(aang)*cr, ay5=cy5+Math.sin(aang)*cr;
+          ctx.save(); ctx.translate(ax5,ay5); ctx.rotate(aang+(magType==='wire-in'?-Math.PI/2:Math.PI/2));
+          ctx.fillStyle='rgba(251,191,36,'+op+')';
+          ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(4,3); ctx.lineTo(-4,3); ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+    raf5=requestAnimationFrame(draw5);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="magCanvas" style="width:100%;height:200px;border-radius:10px;display:block;margin-bottom:8px;background:#0f172a"></canvas>'+
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+
+      ['bar','wire-in','wire-out'].map(function(t){
+        var labels={bar:'🧲 Bar Magnet','wire-in':'⊗ Wire (in)','wire-out':'⊙ Wire (out)'};
+        return '<button class="cbtn'+(magType===t?' evs':'')+'" data-mgt="'+t+'" onclick="magType2(this.dataset.mgt)" style="font-size:11px">'+labels[t]+'</button>';
+      }).join('')+'</div>'+
+      '<div class="ctrl-row"><button class="cbtn" onclick="magToggleField()" style="flex:1">'+(showField?'Hide':'Show')+' Field Lines</button></div>';
+    cancelAnimationFrame(raf5); draw5();
+  }
+  window.magType2=function(t){magType=t;cancelAnimationFrame(raf5);render();};
+  window.magToggleField=function(){showField=!showField;cancelAnimationFrame(raf5);render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf5);};
+  render();
+};
+
+/* ── LUNG CAPACITY (Class 7 Ch 10) ── */
+SIM_REGISTRY['lung-capacity'] = function(c) {
+  var breathState='rest', raf6, t6=0;
+  var stateData={
+    rest: {vol:2400,label:'Tidal Volume (rest)',desc:'Normal breathing — ~500mL in, ~500mL out. Total lung volume ~2400mL.'},
+    deep: {vol:4800,label:'Vital Capacity (deep)',desc:'Deepest possible breath — 4800mL. Includes tidal + inspiratory + expiratory reserve.'},
+    max:  {vol:6000,label:'Total Lung Capacity',desc:'Maximum possible — 6000mL. Includes 1200mL residual volume that never leaves.'},
+  };
+
+  function draw6() {
+    var _g=getCtx('lungCanvas'); if(!_g)return;
+    var cv=_g.cv,ctx=_g.ctx,W=_g.W,H=_g.H;
+    ctx.clearRect(0,0,W,H);
+    t6+=0.04;
+    var sd=stateData[breathState];
+    var breathScale=(breathState==='rest'?0.4:breathState==='deep'?0.8:1.0);
+    var breathAnim=breathScale+Math.sin(t6)*(breathState==='rest'?0.08:0.15);
+
+    /* Background */
+    ctx.fillStyle='#1e0020'; ctx.fillRect(0,0,W,H);
+
+    /* Lungs */
+    function drawLung(sx,dir) {
+      var lg2=ctx.createRadialGradient(sx,H/2,5,sx,H/2,55*breathAnim);
+      lg2.addColorStop(0,'rgba(239,68,68,0.9)');
+      lg2.addColorStop(0.6,'rgba(185,28,28,0.8)');
+      lg2.addColorStop(1,'rgba(127,29,29,0.4)');
+      ctx.fillStyle=lg2;
+      ctx.beginPath();
+      ctx.ellipse(sx,H/2,38*breathAnim,55*breathAnim,dir*0.15,0,Math.PI*2);
+      ctx.fill();
+      /* Bronchiole lines */
+      ctx.strokeStyle='rgba(255,150,150,0.4)'; ctx.lineWidth=1;
+      for(var b=0;b<4;b++) {
+        var ba=dir*(b-1.5)*0.3;
+        ctx.beginPath(); ctx.moveTo(W/2,H/2-10);
+        ctx.lineTo(sx+Math.sin(ba)*20*breathAnim, H/2+Math.cos(ba)*25*breathAnim); ctx.stroke();
+      }
+    }
+    drawLung(W/2-48, -1); drawLung(W/2+48, 1);
+
+    /* Trachea */
+    ctx.fillStyle='rgba(239,68,68,0.7)';
+    ctx.fillRect(W/2-5, 10, 10, H/2-15);
+    /* Diaphragm */
+    var diaY=H*0.72-breathAnim*15;
+    ctx.strokeStyle='rgba(251,191,36,0.6)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(W*0.1,diaY); ctx.quadraticCurveTo(W/2,diaY+20*breathAnim,W*0.9,diaY); ctx.stroke();
+
+    /* Volume indicator */
+    var vol=Math.round(sd.vol*(0.9+Math.sin(t6)*0.1));
+    ctx.fillStyle='rgba(251,191,36,0.9)'; ctx.font='bold 13px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(vol+'mL', W/2, H-12);
+
+    raf6=requestAnimationFrame(draw6);
+  }
+
+  function render() {
+    c.innerHTML =
+      '<canvas id="lungCanvas" style="width:100%;height:180px;border-radius:10px;display:block;margin-bottom:8px"></canvas>'+
+      '<div style="display:flex;gap:5px;margin-bottom:8px">'+
+      Object.keys(stateData).map(function(k){
+        var labels={rest:'😮‍💨 Normal',deep:'🫁 Deep Breath',max:'💨 Maximum'};
+        return '<button class="cbtn'+(breathState===k?' evs':'')+'" data-ls="'+k+'" onclick="lungState(this.dataset.ls)" style="font-size:11px">'+labels[k]+'</button>';
+      }).join('')+'</div>'+
+      '<div style="background:var(--surface2);border-radius:10px;padding:8px;font-size:11px;color:var(--text);line-height:1.6">'+
+      '<b style="color:var(--sci)">'+stateData[breathState].label+':</b> '+stateData[breathState].desc+'</div>';
+    cancelAnimationFrame(raf6); draw6();
+  }
+  window.lungState=function(s){breathState=s;cancelAnimationFrame(raf6);render();};
+  window.simCleanup=function(){cancelAnimationFrame(raf6);};
+  render();
+};
+
 SIM_REGISTRY['_default'] = function(c, e) {
   c.innerHTML = '<div style="font-size:52px;margin-bottom:8px">' + e.icon + '</div>' +
     '<div style="font-size:13px;color:var(--muted);text-align:center;max-width:320px;line-height:1.7">' + e.why + '</div>';
@@ -3188,7 +3859,7 @@ SIM_REGISTRY['plant-parts'] = function(c) {
       }
     }
 
-    return '<svg viewBox="0 0 120 180" width="100%" height="180" style="border-radius:10px;display:block">'+s+'</svg>';
+    return '<svg viewBox="0 0 120 180" width="120" height="180" style="border-radius:10px;display:block;max-width:100%">'+s+'</svg>';
   }
 
   function render() {
@@ -3197,7 +3868,7 @@ SIM_REGISTRY['plant-parts'] = function(c) {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🌻 Plant Growth Lab — Day '+day+'</div>'+
       '<div style="display:flex;gap:14px;align-items:stretch">'+
-      '<div style="flex:0 0 130px;min-height:180px">'+plantSVG()+'</div>'+
+      '<div style="flex:0 0 120px;width:120px;min-height:180px">'+plantSVG()+'</div>'+
       '<div style="flex:1;display:flex;flex-direction:column;gap:9px">'+
       '<div style="font-size:13px;font-weight:900;color:'+st.col+'">'+st.label+'</div>'+
       '<div style="font-size:10px;color:var(--muted)">Growth: <b style="color:var(--text)">'+Math.max(0,Math.round(growthPts))+'pts</b> · Tomorrow: <b style="color:'+(dg>=0?'var(--evs)':'var(--sci)')+'">'+( dg>=0?'+':'')+dg+'</b></div>'+
@@ -5254,7 +5925,7 @@ SIM_REGISTRY['five-senses'] = function(c) {
 
         var cv2 = document.createElement('canvas');
         cv2.width = 260; cv2.height = 120;
-        cv2.style.cssText = 'display:block;margin:0 auto 8px;border-radius:10px;cursor:crosshair;touch-action:none';
+        cv2.style.cssText = 'display:block;margin:0 auto 8px;width:100%;max-width:260px;border-radius:10px;cursor:crosshair;touch-action:none';
         box.appendChild(cv2);
         var ctx3 = cv2.getContext('2d');
 
@@ -5359,7 +6030,7 @@ SIM_REGISTRY['five-senses'] = function(c) {
         /* Tongue map — simplified */
         var cv3 = document.createElement('canvas');
         cv3.width = 260; cv3.height = 140;
-        cv3.style.cssText = 'display:block;margin:0 auto;border-radius:8px;background:#1a0510;cursor:pointer';
+        cv3.style.cssText = 'display:block;margin:0 auto;width:100%;max-width:260px;border-radius:8px;background:#1a0510;cursor:pointer';
         box.appendChild(cv3);
         var ctx4 = cv3.getContext('2d');
 
