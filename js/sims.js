@@ -5144,10 +5144,11 @@ SIM_REGISTRY['five-senses'] = function(c) {
         sliderLabel.textContent = '💧 Water:';
         var slider = document.createElement('input');
         slider.type='range'; slider.min=5; slider.max=90; slider.value=waterLevel;
-        slider.className='slide'; slider.style.cssText='flex:1;--val:'+waterLevel+'%';
+        slider.className='slide';
+        slider.style.cssText='flex:1;--val:'+((waterLevel-5)/85*100).toFixed(1)+'%';
         slider.oninput = function() {
           waterLevel = parseInt(this.value);
-          this.style.setProperty('--val', waterLevel+'%');
+          this.style.setProperty('--val', ((waterLevel-5)/85*100).toFixed(1)+'%');
           drawScene(false);
         };
         sliderRow.appendChild(sliderLabel); sliderRow.appendChild(slider);
