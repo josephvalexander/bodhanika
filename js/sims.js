@@ -305,101 +305,140 @@ SIM_REGISTRY['shadow-play'] = function(c) {
   };
 
   function drawHand(ctx, x, groundY) {
-    /* Realistic upright open hand — proper human skin tone */
+    /* Realistic hand — bezier fingers with joints, proper skin tones */
     var base = groundY;
-    var cx = x;
-    /* Skin palette */
-    var skin   = '#e8a87c';  /* medium warm skin */
-    var skinLt = '#f0bc94';  /* highlight */
-    var skinDk = '#c4784a';  /* shadow / separation */
-    var nailC  = 'rgba(255,235,215,0.85)';
-    var crease = 'rgba(160,80,30,0.22)';
+    var cx   = x;
+
+    /* Indian medium skin palette */
+    var S  = '#d4956a';   /* base skin */
+    var SL = '#e8b48a';   /* lit highlight */
+    var SD = '#b06840';   /* shadow/crease */
+    var SN = 'rgba(240,210,185,0.9)'; /* nail */
+    var CR = 'rgba(140,70,25,0.28)';  /* crease lines */
+
+    /* Helper: draw one finger using bezier for natural taper + joint bumps */
+    function finger(tipX, tipY, w, h, hl) {
+      /* hl = highlight side: -1=left, 1=right */
+      var bx = tipX, by = tipY + h;    /* base of finger at palm join */
+      var tw = w * 0.72;               /* finger tapers toward tip */
+      var j1y = tipY + h * 0.35;       /* first joint y */
+      var j2y = tipY + h * 0.65;       /* second joint y */
+
+      /* Side gradient — lit from left */
+      var fg = ctx.createLinearGradient(tipX - w/2, 0, tipX + w/2, 0);
+      fg.addColorStop(0,   hl < 0 ? SL : SD);
+      fg.addColorStop(0.4, S);
+      fg.addColorStop(1,   hl < 0 ? SD : SL);
+      ctx.fillStyle = fg;
+
+      /* Finger outline with slight taper */
+      ctx.beginPath();
+      ctx.moveTo(bx - w/2, by);
+      /* Left edge — curves slightly inward */
+      ctx.bezierCurveTo(bx - w/2, j2y, bx - tw/2, j1y, bx - tw/2 + 0.5, tipY + 3);
+      /* Rounded tip */
+      ctx.arc(bx, tipY + tw/2, tw/2, Math.PI, 0, false);
+      /* Right edge */
+      ctx.bezierCurveTo(bx + tw/2 - 0.5, j1y, bx + w/2, j2y, bx + w/2, by);
+      ctx.closePath();
+      ctx.fill();
+
+      /* Joint bumps */
+      ctx.strokeStyle = CR; ctx.lineWidth = 0.7;
+      [j1y, j2y].forEach(function(jy) {
+        ctx.beginPath();
+        ctx.moveTo(bx - w/2 + 1, jy);
+        ctx.quadraticCurveTo(bx, jy - 1, bx + w/2 - 1, jy);
+        ctx.stroke();
+      });
+
+      /* Nail — occupies top portion */
+      var nw = tw * 0.82, nh = Math.min(8, h * 0.26);
+      ctx.fillStyle = SN;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx - nw/2, tipY + 1, nw, nh, [nw/2, nw/2, 2, 2]);
+      else ctx.fillRect(bx - nw/2, tipY + 1, nw, nh);
+      ctx.fill();
+      /* Nail shine */
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fillRect(bx - nw/2 + 1, tipY + 2, nw * 0.45, nh * 0.45);
+    }
+
+    /* ── Wrist / sleeve cuff ── */
+    var wg = ctx.createLinearGradient(cx - 12, base, cx + 12, base + 8);
+    wg.addColorStop(0, SD); wg.addColorStop(0.5, S); wg.addColorStop(1, SL);
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx - 12, base, 24, 8, [0, 0, 4, 4]);
+    else ctx.fillRect(cx - 12, base, 24, 8);
+    ctx.fill();
 
     /* ── Palm ── */
-    var pg = ctx.createLinearGradient(cx - 12, base - 32, cx + 12, base);
-    pg.addColorStop(0, skinLt); pg.addColorStop(0.6, skin); pg.addColorStop(1, skinDk);
+    var pg = ctx.createLinearGradient(cx - 13, base - 35, cx + 13, base);
+    pg.addColorStop(0, SL); pg.addColorStop(0.55, S); pg.addColorStop(1, SD);
     ctx.fillStyle = pg;
     ctx.beginPath();
-    ctx.moveTo(cx - 12, base - 6);
-    ctx.quadraticCurveTo(cx - 13, base + 1, cx - 5, base + 1);
-    ctx.lineTo(cx + 5, base + 1);
-    ctx.quadraticCurveTo(cx + 13, base + 1, cx + 12, base - 6);
-    ctx.lineTo(cx + 12, base - 28);
-    ctx.quadraticCurveTo(cx + 12, base - 32, cx + 7, base - 32);
-    ctx.lineTo(cx - 7, base - 32);
-    ctx.quadraticCurveTo(cx - 12, base - 32, cx - 12, base - 28);
+    ctx.moveTo(cx - 12, base - 4);
+    ctx.quadraticCurveTo(cx - 14, base + 2, cx - 5, base + 2);
+    ctx.lineTo(cx + 5, base + 2);
+    ctx.quadraticCurveTo(cx + 14, base + 2, cx + 12, base - 4);
+    ctx.lineTo(cx + 12, base - 30);
+    ctx.quadraticCurveTo(cx + 12, base - 35, cx + 7, base - 35);
+    ctx.lineTo(cx - 7, base - 35);
+    ctx.quadraticCurveTo(cx - 12, base - 35, cx - 12, base - 30);
     ctx.closePath();
     ctx.fill();
 
-    /* Palm crease arcs */
-    ctx.strokeStyle = crease; ctx.lineWidth = 0.9;
-    ctx.beginPath(); ctx.moveTo(cx - 9, base - 12); ctx.quadraticCurveTo(cx, base - 10, cx + 9, base - 13); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - 8, base - 20); ctx.quadraticCurveTo(cx, base - 18, cx + 8, base - 21); ctx.stroke();
+    /* Palm crease lines */
+    ctx.strokeStyle = CR; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - 10, base - 13); ctx.quadraticCurveTo(cx + 1, base - 11, cx + 10, base - 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - 9, base - 22); ctx.quadraticCurveTo(cx,     base - 20, cx + 9,  base - 23); ctx.stroke();
 
-    /* ── Thumb ── */
+    /* ── Thumb (rotated outward left) ── */
     ctx.save();
-    ctx.translate(cx - 13, base - 22);
-    ctx.rotate(0.42);
-    var tg = ctx.createLinearGradient(-5, 0, 5, 0);
-    tg.addColorStop(0, skinDk); tg.addColorStop(0.5, skin); tg.addColorStop(1, skinLt);
+    ctx.translate(cx - 13, base - 20);
+    ctx.rotate(0.45);
+    var tw2 = 9, th = 20;
+    var tg = ctx.createLinearGradient(-tw2/2, 0, tw2/2, 0);
+    tg.addColorStop(0, SD); tg.addColorStop(0.5, S); tg.addColorStop(1, SL);
     ctx.fillStyle = tg;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-5, -18, 10, 22, [5,5,2,2]);
-    else ctx.fillRect(-5, -18, 10, 22);
+    ctx.moveTo(-tw2/2, th/2);
+    ctx.bezierCurveTo(-tw2/2, 0, -tw2*0.4, -th/2, 0, -th/2 - 1);
+    ctx.arc(0, -th/2 + tw2*0.4, tw2*0.4, Math.PI, 0);
+    ctx.bezierCurveTo(tw2*0.4, 0, tw2/2, th*0.3, tw2/2, th/2);
+    ctx.closePath();
     ctx.fill();
-    /* Nail */
-    ctx.fillStyle = nailC;
+    /* Thumb nail */
+    ctx.fillStyle = SN;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-3, -16, 6, 7, [3,3,0,0]);
-    else ctx.fillRect(-3, -16, 6, 7);
+    if (ctx.roundRect) ctx.roundRect(-3.5, -th/2 + 1, 7, 7, 3);
+    else ctx.fillRect(-3.5, -th/2 + 1, 7, 7);
     ctx.fill();
-    ctx.strokeStyle = crease; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(-4, -8); ctx.lineTo(4, -8); ctx.stroke();
+    /* Thumb joint */
+    ctx.strokeStyle = CR; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(-tw2/2 + 1, 2); ctx.lineTo(tw2/2 - 1, 2); ctx.stroke();
     ctx.restore();
 
     /* ── Four fingers ── */
+    /* [centerX offset from cx, finger height, width, highlight side] */
     var fDefs = [
-      { dx: -9.5, h: 25, w: 6.5 },
-      { dx: -2.5, h: 28, w: 6.5 },
-      { dx:  4.0, h: 26, w: 6.5 },
-      { dx: 10.5, h: 21, w: 5.5 },
+      { dx: -9,  h: 27, w: 7.5, hl: -1 },  /* index */
+      { dx: -1,  h: 30, w: 8,   hl: -1 },  /* middle — tallest */
+      { dx:  7,  h: 28, w: 7.5, hl:  1 },  /* ring */
+      { dx: 14,  h: 22, w: 6.5, hl:  1 },  /* pinky */
     ];
-    fDefs.forEach(function(f, i) {
-      var fx = cx + f.dx, fy = base - 32;
-      /* Per-finger gradient: lit from front-left */
-      var fg = ctx.createLinearGradient(fx, fy - f.h, fx + f.w, fy);
-      fg.addColorStop(0, skinLt); fg.addColorStop(0.45, skin); fg.addColorStop(1, skinDk);
-      ctx.fillStyle = fg;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(fx, fy - f.h, f.w, f.h + 3, [f.w/2, f.w/2, 2, 2]);
-      else ctx.fillRect(fx, fy - f.h, f.w, f.h + 3);
-      ctx.fill();
-
-      /* Separation gap */
-      if (i < 3) {
-        ctx.fillStyle = 'rgba(120,55,20,0.22)';
-        ctx.fillRect(fx + f.w - 0.8, fy - f.h + 3, 1.5, f.h - 3);
-      }
-      /* Two knuckle creases */
-      ctx.strokeStyle = crease; ctx.lineWidth = 0.75;
-      var kY1 = base - 33, kY2 = fy - f.h * 0.38;
-      ctx.beginPath(); ctx.moveTo(fx + 1, kY1); ctx.lineTo(fx + f.w - 1, kY1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(fx + 1, kY2); ctx.lineTo(fx + f.w - 1, kY2); ctx.stroke();
-      /* Fingernail */
-      ctx.fillStyle = nailC;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(fx + 0.8, fy - f.h + 1, f.w - 1.6, 7, [3,3,0,0]);
-      else ctx.fillRect(fx + 0.8, fy - f.h + 1, f.w - 1.6, 7);
-      ctx.fill();
-      /* Nail highlight */
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.fillRect(fx + 1.5, fy - f.h + 1.5, (f.w - 3) * 0.55, 3);
+    fDefs.forEach(function(f) {
+      var fx = cx + f.dx;
+      var tipY = base - 35 - f.h;
+      finger(fx, tipY, f.w, f.h, f.hl);
     });
 
-    /* Wrist */
-    var wg = ctx.createLinearGradient(cx - 9, base, cx + 9, base + 5);
-    wg.addColorStop(0, skinDk); wg.addColorStop(1, skin);
-    ctx.fillStyle = wg; ctx.fillRect(cx - 9, base, 18, 5);
+    /* Finger gap shadows between fingers */
+    ctx.fillStyle = 'rgba(100,45,15,0.2)';
+    [-4.5, 3.5, 10.5].forEach(function(gx) {
+      ctx.fillRect(cx + gx, base - 38, 1.5, 12);
+    });
   }
 
   function drawTree(ctx, x, groundY) {
@@ -864,7 +903,7 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
       desc: 'Mixing paints — Primary colours: Red, Yellow, Blue. Mixing absorbs light (subtractive).',
       primaries: [
         {name:'Red',    hex:'#ef4444', r:239,g:68,b:68},
-        {name:'Yellow', hex:'#eab308', r:234,g:179,b:8},
+        {name:'Yellow', hex:'#FFD600', r:255,g:214,b:0},
         {name:'Blue',   hex:'#3b82f6', r:59,g:130,b:246},
       ],
       mixes: {
@@ -883,10 +922,10 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
         {name:'Blue',  hex:'#3b82f6', r:0,g:0,b:255},
       ],
       mixes: {
-        'Green+Red':   {result:'Yellow',  hex:'#fbbf24', fact:'Red + Green light = Yellow! Light mixing is additive — you get brighter colours, not darker.'},
-        'Blue+Red':    {result:'Magenta', hex:'#d946ef', fact:'Red + Blue light = Magenta. Used in colour printing (CMYK) as a primary!'},
-        'Blue+Green':  {result:'Cyan',    hex:'#22d3ee', fact:'Green + Blue light = Cyan. Your phone screen mixes RGB to make every colour you see.'},
-        'Blue+Green+Red': {result:'White', hex:'#f1f5f9', fact:'All three light primaries = White! Newton proved sunlight contains all colours using a glass prism in 1666.'},
+        'Green+Red':   {result:'Yellow',  hex:'#FFFF00', fact:'Red + Green light = Yellow! Light mixing is additive — you get brighter colours, not darker.'},
+        'Blue+Red':    {result:'Magenta', hex:'#FF00FF', fact:'Red + Blue light = Magenta. Used in colour printing (CMYK) as a primary!'},
+        'Blue+Green':  {result:'Cyan',    hex:'#00FFFF', fact:'Green + Blue light = Cyan. Your phone screen mixes RGB to make every colour you see.'},
+        'Blue+Green+Red': {result:'White', hex:'#FFFFFF', fact:'All three light primaries = White! Newton proved sunlight contains all colours using a glass prism in 1666.'},
       }
     }
   };
@@ -899,6 +938,15 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
   function getMixedColour() {
     var m = modes[colourMode];
     if (!selected.length) return null;
+    /* If we have a known result, use its exact hex — much more accurate than RGB math */
+    var known = getMix();
+    if (known) return known.hex;
+    /* Single colour selected — show that primary's colour */
+    if (selected.length === 1) {
+      var p = m.primaries.find(function(p){ return p.name === selected[0]; });
+      return p ? p.hex : null;
+    }
+    /* Partial unknown mix — blend additively for light, darken for pigment */
     var tr=0,tg=0,tb=0;
     selected.forEach(function(n){
       var p=m.primaries.find(function(p){return p.name===n;});
@@ -907,8 +955,8 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     if (colourMode==='light') {
       return 'rgb('+Math.min(255,tr)+','+Math.min(255,tg)+','+Math.min(255,tb)+')';
     } else {
-      var n=selected.length, d=n>1?0.78:1;
-      return 'rgb('+Math.round(tr/n*d)+','+Math.round(tg/n*d)+','+Math.round(tb/n*d)+')';
+      var cnt=selected.length, d=cnt>1?0.75:1;
+      return 'rgb('+Math.round(tr/cnt*d)+','+Math.round(tg/cnt*d)+','+Math.round(tb/cnt*d)+')';
     }
   }
 
