@@ -4,7 +4,7 @@
    Changing VERSION forces all clients to refresh.
    ═══════════════════════════════════════════════ */
 
-const VERSION = 'v2026.04.04.1338';
+const VERSION = 'v1.0.0';
 const CACHE   = 'bodhanika-' + VERSION;
 
 /* Files to cache for offline use */
@@ -51,29 +51,26 @@ self.addEventListener('activate', function(e) {
   );
 });
 
-/* ── Fetch: serve from cache, fall back to network ── */
+/* ── Fetch: network-first for JS/CSS/HTML, cache fallback offline ── */
 self.addEventListener('fetch', function(e) {
-  /* Only cache same-origin GET requests */
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;
 
   e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(e.request).then(function(response) {
-        /* Cache successful responses */
-        if (response && response.status === 200) {
-          var clone = response.clone();
-          caches.open(CACHE).then(function(cache) {
-            cache.put(e.request, clone);
-          });
-        }
-        return response;
-      }).catch(function() {
-        /* Offline fallback for navigation requests */
-        if (e.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
+    fetch(e.request).then(function(response) {
+      /* Update cache with fresh response */
+      if (response && response.status === 200) {
+        var clone = response.clone();
+        caches.open(CACHE).then(function(cache) {
+          cache.put(e.request, clone);
+        });
+      }
+      return response;
+    }).catch(function() {
+      /* Network failed — serve from cache (offline support) */
+      return caches.match(e.request).then(function(cached) {
+        if (cached) return cached;
+        if (e.request.mode === 'navigate') return caches.match('/index.html');
       });
     })
   );
