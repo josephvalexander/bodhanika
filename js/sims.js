@@ -342,28 +342,200 @@ SIM_REGISTRY['shapes-hunt'] = function(c) {
 };
 
 SIM_REGISTRY['measurement-compare'] = function(c) {
-  /* Objects with real-world heights in cm */
+  /* Real-world objects with actual heights in cm */
+  /* Each has a draw(ctx, cx, baseY, pixH) function that draws a proper illustration */
   var objects = [
-    {name:'Eraser',    cm:4,   emoji:'🧹', col:'#ef4444'},
-    {name:'Pencil',    cm:19,  emoji:'✏️', col:'#f59e0b'},
-    {name:'Shoe',      cm:28,  emoji:'👟', col:'#ec4899'},
-    {name:'Bottle',    cm:30,  emoji:'🍶', col:'#22d3ee'},
-    {name:'Ruler',     cm:30,  emoji:'📏', col:'#f97316'},
-    {name:'Cat',       cm:25,  emoji:'🐱', col:'#a855f7'},
-    {name:'Schoolbag', cm:45,  emoji:'🎒', col:'#6366f1'},
-    {name:'Chair',     cm:80,  emoji:'🪑', col:'#0ea5e9'},
-    {name:'Table',     cm:75,  emoji:'🪑', col:'#d97706'},
-    {name:'Door',      cm:200, emoji:'🚪', col:'#78716c'},
-    {name:'Tree',      cm:300, emoji:'🌳', col:'#16a34a'},
-    {name:'Child',     cm:110, emoji:'🧒', col:'#f43f5e'},
+    {name:'Eraser',    cm:4,   col:'#ef4444', draw:function(ctx,cx,by,h){
+      /* Pink eraser block */
+      var w=Math.max(20,h*1.5);
+      ctx.fillStyle='#fecdd3'; ctx.fillRect(cx-w/2,by-h,w,h);
+      ctx.fillStyle='#ef4444'; ctx.fillRect(cx-w/2,by-h,w,h*0.3);
+      ctx.strokeStyle='#be123c'; ctx.lineWidth=1.5; ctx.strokeRect(cx-w/2,by-h,w,h);
+    }},
+    {name:'Pencil',    cm:19,  col:'#f59e0b', draw:function(ctx,cx,by,h){
+      var w=10;
+      /* Body */
+      ctx.fillStyle='#fef08a'; ctx.fillRect(cx-w/2,by-h*0.88,w,h*0.75);
+      /* Metal band */
+      ctx.fillStyle='#94a3b8'; ctx.fillRect(cx-w/2,by-h*0.13,w,h*0.08);
+      /* Eraser tip */
+      ctx.fillStyle='#fda4af'; ctx.fillRect(cx-w/2,by-h*0.05,w,h*0.05);
+      /* Sharpened tip */
+      ctx.fillStyle='#d97706';
+      ctx.beginPath(); ctx.moveTo(cx-w/2,by-h*0.88); ctx.lineTo(cx+w/2,by-h*0.88); ctx.lineTo(cx,by-h); ctx.fill();
+      /* Wood cone */
+      ctx.fillStyle='#fed7aa';
+      ctx.beginPath(); ctx.moveTo(cx-w/2,by-h*0.88); ctx.lineTo(cx+w/2,by-h*0.88); ctx.lineTo(cx,by-h*0.97); ctx.fill();
+      /* Graphite tip */
+      ctx.fillStyle='#374151'; ctx.beginPath(); ctx.arc(cx,by-h*0.98,2,0,Math.PI*2); ctx.fill();
+    }},
+    {name:'Shoe',      cm:28,  col:'#ec4899', draw:function(ctx,cx,by,h){
+      /* Sneaker side view */
+      var w=h*1.4;
+      ctx.fillStyle='#fce7f3';
+      ctx.beginPath();
+      ctx.moveTo(cx-w/2,by);
+      ctx.lineTo(cx+w/2,by);
+      ctx.lineTo(cx+w/2,by-h*0.35);
+      ctx.quadraticCurveTo(cx+w*0.3,by-h*0.5,cx,by-h*0.55);
+      ctx.quadraticCurveTo(cx-w*0.3,by-h*0.6,cx-w/2,by-h*0.4);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#ec4899'; ctx.lineWidth=2; ctx.stroke();
+      /* Sole */
+      ctx.fillStyle='#f9a8d4'; ctx.beginPath();
+      ctx.ellipse(cx,by-h*0.06,w/2,h*0.1,0,0,Math.PI*2); ctx.fill();
+      /* Laces */
+      ctx.strokeStyle='white'; ctx.lineWidth=1.5;
+      [-10,0,10].forEach(function(ox){ ctx.beginPath(); ctx.moveTo(cx+ox-8,by-h*0.42); ctx.lineTo(cx+ox+8,by-h*0.42); ctx.stroke(); });
+    }},
+    {name:'Bottle',    cm:30,  col:'#22d3ee', draw:function(ctx,cx,by,h){
+      var w=h*0.28;
+      /* Body */
+      ctx.fillStyle='rgba(186,230,253,0.8)';
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx-w,by-h*0.85,w*2,h*0.85,w*0.3) : ctx.rect(cx-w,by-h*0.85,w*2,h*0.85);
+      ctx.fill();
+      ctx.strokeStyle='#22d3ee'; ctx.lineWidth=2; ctx.stroke();
+      /* Neck */
+      ctx.fillStyle='rgba(186,230,253,0.9)'; ctx.fillRect(cx-w*0.55,by-h,w*1.1,h*0.18);
+      /* Cap */
+      ctx.fillStyle='#0891b2'; ctx.fillRect(cx-w*0.6,by-h,w*1.2,h*0.07);
+      /* Label */
+      ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fillRect(cx-w*0.8,by-h*0.65,w*1.6,h*0.25);
+      /* Water line */
+      ctx.strokeStyle='rgba(14,165,233,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(cx-w*0.8,by-h*0.3); ctx.lineTo(cx+w*0.8,by-h*0.3); ctx.stroke();
+      ctx.setLineDash([]);
+    }},
+    {name:'Cat',       cm:25,  col:'#a855f7', draw:function(ctx,cx,by,h){
+      /* Sitting cat */
+      var s=h/60;
+      /* Body */
+      ctx.fillStyle='#e9d5ff';
+      ctx.beginPath(); ctx.ellipse(cx,by-h*0.35,h*0.22,h*0.32,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#a855f7'; ctx.lineWidth=1.5; ctx.stroke();
+      /* Head */
+      ctx.fillStyle='#e9d5ff';
+      ctx.beginPath(); ctx.arc(cx,by-h*0.72,h*0.2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      /* Ears */
+      ctx.fillStyle='#c084fc';
+      ctx.beginPath(); ctx.moveTo(cx-h*0.14,by-h*0.88); ctx.lineTo(cx-h*0.22,by-h*1.02); ctx.lineTo(cx-h*0.06,by-h*0.9); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cx+h*0.14,by-h*0.88); ctx.lineTo(cx+h*0.22,by-h*1.02); ctx.lineTo(cx+h*0.06,by-h*0.9); ctx.fill();
+      /* Eyes */
+      ctx.fillStyle='#6d28d9';
+      ctx.beginPath(); ctx.ellipse(cx-h*0.07,by-h*0.74,h*0.04,h*0.06,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx+h*0.07,by-h*0.74,h*0.04,h*0.06,0,0,Math.PI*2); ctx.fill();
+      /* Nose */
+      ctx.fillStyle='#f9a8d4'; ctx.beginPath(); ctx.arc(cx,by-h*0.69,h*0.025,0,Math.PI*2); ctx.fill();
+      /* Tail */
+      ctx.strokeStyle='#c084fc'; ctx.lineWidth=3; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(cx+h*0.2,by-h*0.1); ctx.bezierCurveTo(cx+h*0.4,by-h*0.1,cx+h*0.45,by-h*0.35,cx+h*0.3,by-h*0.45); ctx.stroke();
+      /* Paws */
+      ctx.fillStyle='#e9d5ff'; ctx.strokeStyle='#a855f7'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.ellipse(cx-h*0.1,by,h*0.1,h*0.05,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(cx+h*0.1,by,h*0.1,h*0.05,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    }},
+    {name:'Chair',     cm:80,  col:'#0ea5e9', draw:function(ctx,cx,by,h){
+      var s=h/80;
+      /* Seat */
+      ctx.fillStyle='#bae6fd'; ctx.fillRect(cx-h*0.28,by-h*0.48,h*0.56,h*0.08);
+      ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=2; ctx.strokeRect(cx-h*0.28,by-h*0.48,h*0.56,h*0.08);
+      /* Back */
+      ctx.fillRect(cx-h*0.28,by-h,h*0.08,h*0.56);
+      ctx.strokeRect(cx-h*0.28,by-h,h*0.08,h*0.56);
+      /* Back rail */
+      ctx.fillRect(cx-h*0.28,by-h*0.82,h*0.56,h*0.05);
+      /* Legs */
+      ctx.strokeStyle='#0369a1'; ctx.lineWidth=3;
+      [[-h*0.2,0],[h*0.2,0],[h*0.2,1],[-h*0.2,1]].forEach(function(p,i){
+        ctx.beginPath(); ctx.moveTo(cx+p[0],by-h*0.4); ctx.lineTo(cx+p[0]+(i>1?h*0.03:-h*0.03),by); ctx.stroke();
+      });
+    }},
+    {name:'Table',     cm:75,  col:'#d97706', draw:function(ctx,cx,by,h){
+      /* Tabletop */
+      ctx.fillStyle='#fde68a'; ctx.fillRect(cx-h*0.38,by-h,h*0.76,h*0.1);
+      ctx.strokeStyle='#d97706'; ctx.lineWidth=2; ctx.strokeRect(cx-h*0.38,by-h,h*0.76,h*0.1);
+      /* Legs */
+      ctx.strokeStyle='#92400e'; ctx.lineWidth=4;
+      [[-h*0.28,-h*0.28],[h*0.28,h*0.28]].forEach(function(p){
+        ctx.beginPath(); ctx.moveTo(cx+p[0],by-h*0.9); ctx.lineTo(cx+p[0],by); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx+p[1],by-h*0.9); ctx.lineTo(cx+p[1],by); ctx.stroke();
+      });
+      /* Cross brace */
+      ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx-h*0.28,by-h*0.45); ctx.lineTo(cx+h*0.28,by-h*0.45); ctx.stroke();
+    }},
+    {name:'Door',      cm:200, col:'#78716c', draw:function(ctx,cx,by,h){
+      var w=h*0.45;
+      /* Frame */
+      ctx.fillStyle='#a78bfa';
+      ctx.fillRect(cx-w/2-4,by-h-4,w+8,h+4);
+      /* Door */
+      ctx.fillStyle='#d4a46a'; ctx.fillRect(cx-w/2,by-h,w,h);
+      ctx.strokeStyle='#78716c'; ctx.lineWidth=2; ctx.strokeRect(cx-w/2,by-h,w,h);
+      /* Panels */
+      ctx.strokeStyle='#92400e'; ctx.lineWidth=1;
+      ctx.strokeRect(cx-w/2+5,by-h+5,w/2-8,h/2-8);
+      ctx.strokeRect(cx+2,by-h+5,w/2-8,h/2-8);
+      ctx.strokeRect(cx-w/2+5,by-h/2,w/2-8,h/2-8);
+      ctx.strokeRect(cx+2,by-h/2,w/2-8,h/2-8);
+      /* Handle */
+      ctx.fillStyle='#fcd34d'; ctx.beginPath(); ctx.arc(cx+w*0.3,by-h*0.5,4,0,Math.PI*2); ctx.fill();
+    }},
+    {name:'Child',     cm:110, col:'#f43f5e', draw:function(ctx,cx,by,h){
+      var s=h/110;
+      /* Legs */
+      ctx.fillStyle='#3b82f6'; ctx.lineWidth=1;
+      ctx.fillRect(cx-h*0.12,by-h*0.42,h*0.1,h*0.42);
+      ctx.fillRect(cx+h*0.02,by-h*0.42,h*0.1,h*0.42);
+      /* Shoes */
+      ctx.fillStyle='#1e293b';
+      ctx.beginPath(); ctx.ellipse(cx-h*0.07,by,h*0.1,h*0.04,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(cx+h*0.07,by,h*0.1,h*0.04,0,0,Math.PI*2); ctx.fill();
+      /* Body/shirt */
+      ctx.fillStyle='#f87171'; ctx.fillRect(cx-h*0.16,by-h*0.68,h*0.32,h*0.28);
+      /* Arms */
+      ctx.strokeStyle='#fcd34d'; ctx.lineWidth=h*0.06; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(cx-h*0.14,by-h*0.65); ctx.lineTo(cx-h*0.25,by-h*0.48); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+h*0.14,by-h*0.65); ctx.lineTo(cx+h*0.25,by-h*0.48); ctx.stroke();
+      /* Head */
+      ctx.fillStyle='#fcd34d';
+      ctx.beginPath(); ctx.arc(cx,by-h*0.8,h*0.14,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1; ctx.stroke();
+      /* Eyes */
+      ctx.fillStyle='#1e293b';
+      ctx.beginPath(); ctx.arc(cx-h*0.05,by-h*0.82,h*0.025,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+h*0.05,by-h*0.82,h*0.025,0,Math.PI*2); ctx.fill();
+      /* Smile */
+      ctx.strokeStyle='#92400e'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(cx,by-h*0.79,h*0.05,0.2,Math.PI-0.2); ctx.stroke();
+      /* Hair */
+      ctx.fillStyle='#92400e';
+      ctx.beginPath(); ctx.ellipse(cx,by-h*0.9,h*0.13,h*0.06,0,Math.PI,0); ctx.fill();
+    }},
+    {name:'Tree',      cm:300, col:'#16a34a', draw:function(ctx,cx,by,h){
+      /* Trunk */
+      ctx.fillStyle='#92400e'; ctx.fillRect(cx-h*0.07,by-h*0.5,h*0.14,h*0.5);
+      /* Bark */
+      ctx.strokeStyle='#78350f'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(cx-h*0.02,by-h*0.45); ctx.lineTo(cx-h*0.01,by-h*0.2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+h*0.03,by-h*0.4); ctx.lineTo(cx+h*0.02,by-h*0.15); ctx.stroke();
+      /* Canopy layers */
+      ctx.fillStyle='#15803d'; ctx.beginPath(); ctx.arc(cx,by-h*0.65,h*0.25,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#16a34a'; ctx.beginPath(); ctx.arc(cx-h*0.12,by-h*0.76,h*0.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx+h*0.12,by-h*0.76,h*0.18,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#22c55e'; ctx.beginPath(); ctx.arc(cx,by-h*0.88,h*0.15,0,Math.PI*2); ctx.fill();
+      /* Highlight */
+      ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.arc(cx-h*0.08,by-h*0.88,h*0.07,0,Math.PI*2); ctx.fill();
+    }},
   ];
 
+  /* Fix unicode minus in table draw */
   var round=0, score=0, maxRounds=10, answered=false;
   var usedPairs=[], iA=0, iB=1;
   var questionType='taller';
 
   function pickPair() {
-    if(round>=maxRounds){render(iA,iB);return;}
+    if(round>=maxRounds){renderFinish();return;}
     answered=false;
     questionType=round%2===0?'taller':'shorter';
     var tries=0;
@@ -371,12 +543,24 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
       iA=Math.floor(Math.random()*objects.length);
       iB=Math.floor(Math.random()*objects.length);
       tries++;
-    } while((iA===iB||usedPairs.indexOf(Math.min(iA,iB)+'-'+Math.max(iA,iB))>=0)&&tries<50);
+    } while((iA===iB||usedPairs.indexOf(Math.min(iA,iB)+'-'+Math.max(iA,iB))>=0)&&tries<60);
     usedPairs.push(Math.min(iA,iB)+'-'+Math.max(iA,iB));
-    render(iA,iB);
+    render();
   }
 
-  function render(idxA, idxB) {
+  function renderFinish() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;padding:16px;box-sizing:border-box';
+    wrap.innerHTML='<div style="font-size:48px">🏆</div>'+
+      '<div style="font-size:18px;font-weight:900;color:var(--math)">Done! Score: '+score+'/'+maxRounds+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);text-align:center">You can compare heights without a ruler by looking at real objects!</div>';
+    var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Play again';
+    rb.onclick=function(){round=0;score=0;usedPairs=[];pickPair();};
+    wrap.appendChild(rb); c.appendChild(wrap);
+  }
+
+  function render() {
     c.innerHTML='';
     var wrap=document.createElement('div');
     wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
@@ -388,132 +572,101 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
       '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
     wrap.appendChild(top);
 
-    if(round>=maxRounds){
-      var fin=document.createElement('div');
-      fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
-      fin.innerHTML='<div style="font-size:40px">🏆</div><div style="font-size:16px;font-weight:900;color:var(--math)">Done! Score: '+score+'/'+maxRounds+'</div>';
-      var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Play again';
-      rb.onclick=function(){round=0;score=0;usedPairs=[];pickPair();};fin.appendChild(rb);
-      wrap.appendChild(fin);c.appendChild(wrap);return;
-    }
+    var a=objects[iA], b=objects[iB];
 
-    var a=objects[idxA], b=objects[idxB];
-    /* Scale so BOTH objects are visible — shorter gets min 40px, taller gets max 160px */
-    var maxCm=Math.max(a.cm, b.cm), minCm=Math.min(a.cm, b.cm);
-    var canvasH=220, baseY=canvasH-28;
-    /* Min bar height 40px ensures short objects are visible */
-    var minBarH=40, maxBarH=160;
-    /* Scale: taller object → maxBarH, shorter → proportional but at least minBarH */
+    /* Scale so both objects are clearly visible */
+    var maxCm=Math.max(a.cm,b.cm), minCm=Math.min(a.cm,b.cm);
+    var maxBarH=155, minBarH=45;
     var ratio=minCm/maxCm;
     var tallH=maxBarH;
     var shortH=Math.max(minBarH, Math.round(tallH*ratio));
-    var hA=a.cm>=b.cm ? tallH : shortH;
-    var hB=b.cm>=a.cm ? tallH : shortH;
+    var hA=a.cm>=b.cm?tallH:shortH;
+    var hB=b.cm>=a.cm?tallH:shortH;
 
     /* Canvas */
     var cv=document.createElement('canvas');
-    cv.width=280; cv.height=canvasH;
-    cv.style.cssText='width:100%;max-width:280px;height:'+canvasH+'px;display:block;border-radius:12px;background:var(--surface2);margin:0 auto';
+    var CW=300, CH=220;
+    cv.width=CW; cv.height=CH;
+    cv.style.cssText='width:100%;max-width:'+CW+'px;height:'+CH+'px;display:block;border-radius:12px;margin:0 auto';
     wrap.appendChild(cv);
     var ctx=cv.getContext('2d');
 
-    /* Sky */
-    ctx.fillStyle='#e0f2fe'; ctx.fillRect(0,0,280,baseY);
-    /* Ground */
-    ctx.fillStyle='#d4edbc'; ctx.fillRect(0,baseY,280,canvasH-baseY);
-    ctx.strokeStyle='#86a96a'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(0,baseY); ctx.lineTo(280,baseY); ctx.stroke();
+    /* Background: sky + ground */
+    var sky=ctx.createLinearGradient(0,0,0,CH*0.82);
+    sky.addColorStop(0,'#bae6fd'); sky.addColorStop(1,'#e0f2fe');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,CW,CH*0.82);
+    var gr=ctx.createLinearGradient(0,CH*0.82,0,CH);
+    gr.addColorStop(0,'#bbf7d0'); gr.addColorStop(1,'#86efac');
+    ctx.fillStyle=gr; ctx.fillRect(0,CH*0.82,CW,CH*0.18);
+    /* Grass line */
+    ctx.strokeStyle='#4ade80'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,CH*0.82); ctx.lineTo(CW,CH*0.82); ctx.stroke();
+    /* Sun */
+    ctx.fillStyle='#fde68a'; ctx.beginPath(); ctx.arc(260,28,18,0,Math.PI*2); ctx.fill();
 
-    /* Dashed height comparison line */
+    var baseY=Math.round(CH*0.82);
+
+    /* Dashed "same height" reference line at shorter object top */
     var shorterH=Math.min(hA,hB);
-    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(148,163,184,0.5)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(15,baseY-shorterH); ctx.lineTo(265,baseY-shorterH); ctx.stroke();
+    ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(100,100,100,0.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(20,baseY-shorterH); ctx.lineTo(CW-20,baseY-shorterH); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle='rgba(100,100,100,0.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='left';
-    ctx.fillText('←same height', 15, baseY-shorterH-3);
 
-    function drawObj(obj, bh, cx) {
-      /* Coloured bar */
-      ctx.fillStyle=obj.col+'55';
-      ctx.fillRect(cx-28, baseY-bh, 56, bh);
-      ctx.strokeStyle=obj.col; ctx.lineWidth=2.5;
-      ctx.strokeRect(cx-28, baseY-bh, 56, bh);
-      /* Emoji inside bar */
-      var emojiSize=Math.min(40, bh-8);
-      if(emojiSize>=14) {
-        ctx.font=emojiSize+'px serif';
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(obj.emoji, cx, baseY-bh/2);
-      }
-      /* Name below ground */
-      ctx.fillStyle=obj.col; ctx.font='bold 10px Nunito,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='top';
-      ctx.fillText(obj.name, cx, baseY+4);
-      /* Height label above bar */
-      ctx.fillStyle='#1e293b'; ctx.font='bold 10px Nunito,sans-serif';
-      ctx.textBaseline='bottom';
-      ctx.fillText(obj.cm+'cm', cx, baseY-bh-2);
-    }
+    /* Draw actual object illustrations */
+    a.draw(ctx, 75, baseY, hA);
+    b.draw(ctx, 220, baseY, hB);
 
-    drawObj(a, hA, 85);
-    drawObj(b, hB, 195);
-    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='9px Nunito,sans-serif';
-    ctx.textBaseline='top';
-    ctx.fillText(a.cm+'cm', 70, baseY+2);
+    /* Height labels */
+    ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle=a.col; ctx.fillText(a.cm+'cm', 75, baseY-hA-6);
+    ctx.fillStyle=b.col; ctx.fillText(b.cm+'cm', 220, baseY-hB-6);
 
-    /* Object B */
-    ctx.fillStyle=b.col+'44';
-    ctx.fillRect(175, baseY-hB, 60, hB);
-    ctx.strokeStyle=b.col;ctx.lineWidth=2;
-    ctx.strokeRect(175, baseY-hB, 60, hB);
-    ctx.font=Math.min(36, hB-4)+'px serif';
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    if(hB>20) ctx.fillText(b.emoji, 205, baseY-hB/2);
-    ctx.fillStyle=b.col;ctx.font='bold 10px Nunito,sans-serif';
-    ctx.textBaseline='bottom';
-    ctx.fillText(b.name, 205, baseY-hB-2);
-    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='9px Nunito,sans-serif';
-    ctx.textBaseline='top';
-    ctx.fillText(b.cm+'cm', 205, baseY+2);
+    /* Name labels on grass */
+    ctx.font='bold 11px Nunito,sans-serif'; ctx.textBaseline='top';
+    ctx.fillStyle=a.col; ctx.fillText(a.name, 75, baseY+4);
+    ctx.fillStyle=b.col; ctx.fillText(b.name, 220, baseY+4);
 
     /* Question */
     var q=document.createElement('div');
-    q.style.cssText='font-size:15px;font-weight:900;color:var(--text);text-align:center';
+    q.style.cssText='font-size:16px;font-weight:900;color:var(--text);text-align:center';
     q.innerHTML='Which is <b style="color:'+(questionType==='taller'?'#22c55e':'#f59e0b')+'">'+(questionType==='taller'?'TALLER':'SHORTER')+'</b>?';
     wrap.appendChild(q);
 
+    /* Real measurement hint */
     var info=document.createElement('div');
     info.style.cssText='font-size:11px;color:var(--muted);text-align:center';
-    info.textContent=a.name+' = '+a.cm+'cm · '+b.name+' = '+b.cm+'cm in real life';
+    info.textContent=a.name+' = '+a.cm+'cm  ·  '+b.name+' = '+b.cm+'cm in real life';
     wrap.appendChild(info);
 
     /* Answer buttons */
     var btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:10px;justify-content:center';
+    btnRow.style.cssText='display:flex;gap:12px;justify-content:center';
     [a,b].forEach(function(obj){
       var btn=document.createElement('button');
       btn.className='cbtn';
-      btn.innerHTML=obj.emoji+' '+obj.name;
-      btn.style.cssText='font-size:13px;padding:8px 18px';
+      btn.style.cssText='font-size:14px;font-weight:800;padding:10px 22px;border-color:'+obj.col;
+      btn.textContent=obj.name;
       btn.onclick=function(){
         if(answered)return; answered=true;
-        var correct= questionType==='taller'
-          ? obj.name===(a.cm>b.cm?a:b).name
-          : obj.name===(a.cm<b.cm?a:b).name;
         var answer=questionType==='taller'?(a.cm>b.cm?a:b):(a.cm<b.cm?a:b);
-        if(correct)score++;round++;
-        btn.style.background=correct?'#22c55e':'#ef4444';btn.style.color='white';
+        var correct=obj.name===answer.name;
+        if(correct)score++; round++;
+        btn.style.background=correct?'#22c55e':'#ef4444';
+        btn.style.color='white'; btn.style.borderColor=correct?'#22c55e':'#ef4444';
+        btnRow.querySelectorAll('button').forEach(function(bt){
+          bt.disabled=true;
+          if(bt.textContent===answer.name&&!correct){bt.style.background='#22c55e';bt.style.color='white';}
+        });
         var fb=document.createElement('div');
         fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
-        fb.textContent=correct?'Correct! '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)':'The '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)';
+        fb.textContent=correct?'✅ '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)':
+          '❌ '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)';
         wrap.appendChild(fb);
         if(round<maxRounds){
           var nx=document.createElement('button');nx.className='cbtn evs';nx.textContent='Next →';nx.style.marginTop='4px';
-          nx.onclick=pickPair;wrap.appendChild(nx);
+          nx.onclick=pickPair; wrap.appendChild(nx);
         } else {
-          fb.textContent+=' | Final: '+score+'/'+maxRounds+' ⭐';
-          var rx=document.createElement('button');rx.className='cbtn';rx.textContent='↺ Again';rx.style.marginTop='4px';
-          rx.onclick=function(){round=0;score=0;usedPairs=[];pickPair();};wrap.appendChild(rx);
+          setTimeout(renderFinish, 1200);
         }
       };
       btnRow.appendChild(btn);
