@@ -92,6 +92,20 @@
   }
 
   /* ── Desktop split layout ── */
+    /* Sims that use canvas as primary display — eligible for desktop split.
+     DOM-based sims (colour-mixing, plant-parts, five-senses etc.) are excluded. */
+  var CANVAS_SIMS = {
+    'shadow-play':true, 'circuit-sim':true, 'magnet-sim':true,
+    'sink-float':true, 'germination':true, 'pendulum':true,
+    'ohms-law':true, 'velocity-time':true, 'probability-exp':true,
+    'friction-sim':true, 'sound-vibration':true, 'sound-pitch':true,
+    'tyndall-effect':true, 'refraction-slab':true, 'magnetic-field-map':true,
+    'solar-system':true, 'states-matter':true, 'newtons-laws':true,
+    'reflection-sim':true, 'convection-sim':true, 'natural-selection':true,
+    'em-induction':true, 'projectile-sim':true, 'atomic-model':true,
+    'erosion-sim':true, 'terrarium-cycle':true,
+  };
+
   function buildDesktopLayout(modal, e) {
     var simContainer = document.getElementById('simContainer');
     if (!simContainer) return;
@@ -99,11 +113,18 @@
     /* Already split */
     if (modal.classList.contains('has-sim')) return;
 
+    /* Only apply desktop split to canvas-primary sims */
+    if (!e || !e.simId || !CANVAS_SIMS[e.simId]) return;
+
+    /* Must have a direct canvas child */
+    var canvas = simContainer.querySelector('canvas');
+    if (!canvas) return;
+
     /* Grab the existing structural nodes */
     var hdr    = modal.querySelector('.modal-hdr');
     var toggle = modal.querySelector('.mode-toggle');
     var body   = document.getElementById('modalBody');
-    var buddy  = body.querySelector('.buddy');
+    var buddy  = body ? body.querySelector('.buddy') : null;
 
     /* Build left panel: header + tabs + buddy */
     var left = document.createElement('div');
@@ -121,16 +142,14 @@
     var right = document.createElement('div');
     right.className = 'modal-right';
 
-    /* Move simContainer into right, make it fill height */
-    simContainer.style.cssText = 'flex:1;width:100%;display:flex;flex-direction:column;min-height:0;';
-    var canvas = simContainer.querySelector('canvas');
-    if (canvas) {
-      canvas.style.cssText = 'flex:1;width:100%!important;min-height:320px;border-radius:0!important;display:block;';
-      /* Reset hiDPI so it remeasures at new size */
-      if (canvas._hiDPIReady) canvas._hiDPIReady = false;
-    }
+    /* Only resize the PRIMARY canvas (direct child), not nested ones */
+    var primaryCanvas = simContainer.children[0] && simContainer.children[0].tagName === 'CANVAS'
+      ? simContainer.children[0]
+      : canvas;
+    primaryCanvas.style.cssText = 'flex:1;width:100%!important;min-height:320px;border-radius:0!important;display:block;';
+    if (primaryCanvas._hiDPIReady !== undefined) primaryCanvas._hiDPIReady = false;
 
-    /* Wrap sim + any controls below canvas */
+    simContainer.style.cssText = 'flex:1;width:100%;display:flex;flex-direction:column;min-height:0;';
     right.appendChild(simContainer);
 
     /* Clear modal and rebuild */

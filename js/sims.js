@@ -841,6 +841,8 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     var isLight = colourMode === 'light';
 
     c.innerHTML = '';
+    c.style.maxWidth = '400px';
+    c.style.margin = '0 auto';
 
     /* Mode toggle */
     var modeRow = document.createElement('div');
@@ -858,7 +860,8 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     /* Canvas mixing bowl */
     var canvas = document.createElement('canvas');
     var dpr = window.devicePixelRatio || 1;
-    var CW = Math.min(Math.max(c.offsetWidth || 300, 260), 380), CH = 105;
+    /* Use fixed width — avoids zoom-on-first-render from offsetWidth=0 race */
+    var CW = 340, CH = 105;
     canvas.width = CW * dpr; canvas.height = CH * dpr;
     canvas.style.cssText = 'width:100%;max-width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 8px;border-radius:12px;background:var(--surface2)';
     var ctx2 = canvas.getContext('2d');
@@ -3870,8 +3873,8 @@ SIM_REGISTRY['plant-parts'] = function(c) {
     c.innerHTML =
       '<div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;text-align:center">🌻 Plant Growth Lab — Day '+day+'</div>'+
       '<div style="display:flex;gap:14px;align-items:stretch">'+
-      '<div style="flex:0 0 120px;width:120px;min-height:180px">'+plantSVG()+'</div>'+
-      '<div style="flex:1;display:flex;flex-direction:column;gap:9px">'+
+      '<div style="flex:0 0 auto;width:120px;min-height:180px">'+plantSVG()+'</div>'+
+      '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:9px">'+
       '<div style="font-size:13px;font-weight:900;color:'+st.col+'">'+st.label+'</div>'+
       '<div style="font-size:10px;color:var(--muted)">Growth: <b style="color:var(--text)">'+Math.max(0,Math.round(growthPts))+'pts</b> · Tomorrow: <b style="color:'+(dg>=0?'var(--evs)':'var(--sci)')+'">'+( dg>=0?'+':'')+dg+'</b></div>'+
       (growthWarning()?'<div style="font-size:10px;color:#f59e0b;font-weight:700">'+growthWarning()+'</div>':'')+
