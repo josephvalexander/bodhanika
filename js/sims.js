@@ -858,9 +858,9 @@ SIM_REGISTRY['colour-mixing'] = function(c) {
     /* Canvas mixing bowl */
     var canvas = document.createElement('canvas');
     var dpr = window.devicePixelRatio || 1;
-    var CW = Math.min(c.offsetWidth || 300, 380), CH = 105;
+    var CW = Math.min(Math.max(c.offsetWidth || 300, 260), 380), CH = 105;
     canvas.width = CW * dpr; canvas.height = CH * dpr;
-    canvas.style.cssText = 'width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 8px;border-radius:12px;background:var(--surface2)';
+    canvas.style.cssText = 'width:100%;max-width:'+CW+'px;height:'+CH+'px;display:block;margin:0 auto 8px;border-radius:12px;background:var(--surface2)';
     var ctx2 = canvas.getContext('2d');
     ctx2.scale(dpr, dpr);
     c.appendChild(canvas);
@@ -3726,11 +3726,12 @@ SIM_REGISTRY['plant-parts'] = function(c) {
 
   function status() {
     var g = growthPts;
-    if (g <= 0)  return { label:'🥀 Wilting',   col:'#b45309' };
-    if (g < 18)  return { label:'🌱 Sprouting',  col:'#65a30d' };
-    if (g < 45)  return { label:'🌿 Growing',    col:'#16a34a' };
-    if (g < 78)  return { label:'🌳 Thriving!',  col:'#15803d' };
-    return             { label:'🌸 Blooming!',   col:'#db2777' };
+    if (day === 0)   return { label:'🌱 Ready to grow!', col:'#65a30d' };
+    if (g <= 0)      return { label:'🥀 Wilting',        col:'#b45309' };
+    if (g < 18)      return { label:'🌱 Sprouting',      col:'#65a30d' };
+    if (g < 45)      return { label:'🌿 Growing',        col:'#16a34a' };
+    if (g < 78)      return { label:'🌳 Thriving!',      col:'#15803d' };
+    return               { label:'🌸 Blooming!',         col:'#db2777' };
   }
 
   function plantSVG() {
@@ -3753,8 +3754,9 @@ SIM_REGISTRY['plant-parts'] = function(c) {
     var s = '';
 
     /* Sky */
-    s += '<defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+(isNight?'#020617':'#0c4a6e')+'"/><stop offset="100%" stop-color="'+skyCol+'"/></linearGradient></defs>';
-    s += '<rect width="120" height="'+gY+'" fill="url(#skyG)"/>';
+    /* Two-tone sky without defs — avoids gradient ID conflicts on re-render */
+    s += '<rect width="120" height="'+(gY/2)+'" fill="'+(isNight?'#020617':'#0c4a6e')+'"/>';
+    s += '<rect y="'+(gY/2)+'" width="120" height="'+(gY/2)+'" fill="'+skyCol+'"/>';
 
     /* Stars */
     if (isNight) {

@@ -154,7 +154,7 @@
       '<div class="modal-hdr">' +
         '<div class="m-icon" id="mIcon"></div>' +
         '<div class="m-titles"><div class="m-title" id="mTitle"></div><div class="m-tags" id="mTags"></div></div>' +
-        '<button class="m-close fs-modal-btn" id="fsBtnModal" title="Fullscreen (F)" onclick="toggleFS ? toggleFS() : null"></button>' +
+        '<button id="mShare" class="m-share" title="Share experiment">🔗 Share</button>' +
         '<div class="m-close" onclick="closeModal()">✕</div>' +
       '</div>' +
       '<div class="mode-toggle">' +

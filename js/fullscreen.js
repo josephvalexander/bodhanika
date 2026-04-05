@@ -43,7 +43,7 @@
   }
 
   /* ── Toggle fullscreen on the overlay (entire modal experience) ── */
-  function toggleFS() {
+  window.toggleFS = function toggleFS() {
     var overlay = document.getElementById('overlay');
     if (!overlay) return;
     if (isFS()) {
