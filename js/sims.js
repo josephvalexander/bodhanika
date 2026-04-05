@@ -868,6 +868,1232 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
   startRound();
 };
 
+/* ══════════════════════════════════════════════════════════════
+   CLASS 1 — EVS & LIFE SKILLS INTERACTIVE SIMS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── FAMILY TREE — drag names to tree slots ── */
+SIM_REGISTRY['family-tree'] = function(c) {
+  var members = [
+    {role:'Grandfather', emoji:'👴', side:'top',   colour:'#6366f1'},
+    {role:'Grandmother', emoji:'👵', side:'top',   colour:'#ec4899'},
+    {role:'Father',      emoji:'👨', side:'mid',   colour:'#3b82f6'},
+    {role:'Mother',      emoji:'👩', side:'mid',   colour:'#f43f5e'},
+    {role:'Me',          emoji:'🧒', side:'me',    colour:'#22c55e'},
+    {role:'Brother',     emoji:'👦', side:'me',    colour:'#f59e0b'},
+    {role:'Sister',      emoji:'👧', side:'me',    colour:'#a855f7'},
+    {role:'Uncle',       emoji:'🧔', side:'mid',   colour:'#0ea5e9'},
+  ];
+
+  var placed = {}; // slot → member index
+  var selected = null;
+  var activeSlots = ['Grandfather','Grandmother','Father','Mother','Me','Brother'];
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '👨‍👩‍👧‍👦 Build Your Family Tree!';
+    wrap.appendChild(title);
+
+    var instr = document.createElement('div');
+    instr.style.cssText = 'font-size:11px;color:var(--muted);text-align:center';
+    instr.textContent = selected!==null ? 'Now tap a tree slot to place them!' : 'Tap a family member, then tap their slot on the tree.';
+    wrap.appendChild(instr);
+
+    /* Tree canvas */
+    var cv = document.createElement('canvas');
+    cv.width = 300; cv.height = 220;
+    cv.style.cssText = 'width:100%;max-width:300px;height:220px;display:block;border-radius:12px;background:#f0fdf4;border:1.5px solid #bbf7d0';
+    wrap.appendChild(cv);
+    var ctx = cv.getContext('2d');
+
+    /* Tree trunk and branches */
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 4;
+    /* Main trunk */
+    ctx.beginPath(); ctx.moveTo(150,210); ctx.lineTo(150,160); ctx.stroke();
+    /* Parents branch */
+    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(80,130); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(220,130); ctx.stroke();
+    /* Grandparents branches */
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(40,100); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(120,100); ctx.stroke();
+    /* Me + siblings branch */
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(150,185); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(110,195); ctx.lineTo(190,195); ctx.stroke();
+
+    /* Tree canopy */
+    ctx.fillStyle = 'rgba(34,197,94,0.15)';
+    ctx.beginPath(); ctx.ellipse(150,90,130,70,0,0,Math.PI*2); ctx.fill();
+
+    /* Define slot positions */
+    var slotPos = {
+      'Grandfather': {x:40,  y:75},
+      'Grandmother': {x:120, y:75},
+      'Father':      {x:75,  y:118},
+      'Mother':      {x:220, y:118},
+      'Me':          {x:120, y:195},
+      'Brother':     {x:160, y:195},
+    };
+
+    /* Draw slots */
+    Object.keys(slotPos).forEach(function(role) {
+      var pos = slotPos[role];
+      var placedIdx = placed[role] !== undefined ? placed[role] : -1;
+      var mem = placedIdx >= 0 ? members[placedIdx] : null;
+
+      ctx.save();
+      /* Slot circle */
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, 22, 0, Math.PI*2);
+      if(mem) {
+        ctx.fillStyle = mem.colour + '33';
+        ctx.fill();
+        ctx.strokeStyle = mem.colour; ctx.lineWidth = 2.5;
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+        ctx.setLineDash([4,3]);
+      }
+      ctx.stroke(); ctx.setLineDash([]);
+      /* Label */
+      if(mem) {
+        ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(mem.emoji, pos.x, pos.y-3);
+        ctx.fillStyle = mem.colour; ctx.font = 'bold 8px Nunito,sans-serif';
+        ctx.textBaseline = 'top'; ctx.fillText(role, pos.x, pos.y+16);
+      } else {
+        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 8px Nunito,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(role, pos.x, pos.y);
+      }
+      ctx.restore();
+    });
+
+    /* Click handler for slots */
+    cv.onclick = function(e) {
+      if(selected === null) return;
+      var rect = cv.getBoundingClientRect();
+      var mx = (e.clientX-rect.left)*(300/rect.width);
+      var my = (e.clientY-rect.top)*(220/rect.height);
+      Object.keys(slotPos).forEach(function(role) {
+        var pos = slotPos[role];
+        var dx = mx-pos.x, dy = my-pos.y;
+        if(dx*dx+dy*dy < 22*22) {
+          placed[role] = selected;
+          selected = null;
+          checkComplete();
+          render();
+        }
+      });
+    };
+
+    /* Member picker */
+    var pickerLabel = document.createElement('div');
+    pickerLabel.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted);text-align:center';
+    pickerLabel.textContent = 'Family members:';
+    wrap.appendChild(pickerLabel);
+
+    var picker = document.createElement('div');
+    picker.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center';
+    members.slice(0,6).forEach(function(mem, i) {
+      var btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:10px;cursor:pointer;border:2px solid '+(selected===i?mem.colour:'var(--border)')+';background:'+(selected===i?mem.colour+'22':'var(--surface2)');
+      btn.innerHTML = '<span style="font-size:24px">'+mem.emoji+'</span><span style="font-size:9px;font-weight:800;color:'+mem.colour+'">'+mem.role+'</span>';
+      btn.onclick = function() { selected = (selected===i)?null:i; render(); };
+      picker.appendChild(btn);
+    });
+    wrap.appendChild(picker);
+
+    /* Reset */
+    var resetBtn = document.createElement('button');
+    resetBtn.className = 'cbtn'; resetBtn.textContent = '↺ Reset tree';
+    resetBtn.onclick = function() { placed={}; selected=null; render(); };
+    wrap.appendChild(resetBtn);
+    c.appendChild(wrap);
+  }
+
+  function checkComplete() {
+    var placedCount = Object.keys(placed).length;
+    if(placedCount >= 6) {
+      setTimeout(function() {
+        var msg = document.createElement('div');
+        msg.style.cssText = 'text-align:center;padding:10px;font-size:14px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.1);border-radius:10px;margin-top:8px';
+        msg.textContent = '🎉 Family tree complete! A family is a group of people who love and care for each other.';
+        c.firstChild.appendChild(msg);
+      }, 100);
+    }
+  }
+  render();
+};
+
+/* ── WEATHER DIARY — interactive daily weather observation ── */
+SIM_REGISTRY['weather-diary'] = function(c) {
+  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var weather = ['☀️ Sunny','🌤 Partly Cloudy','☁️ Cloudy','🌧 Rainy','⛈ Stormy','❄️ Cold','🌫 Foggy'];
+  var recorded = {}; // day → weather index
+  var activeDay = 0;
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '🌦 My Weather Diary — Pick today\'s weather!';
+    wrap.appendChild(title);
+
+    /* Day selector tabs */
+    var tabs = document.createElement('div');
+    tabs.style.cssText = 'display:flex;gap:4px;justify-content:center;flex-wrap:wrap';
+    days.forEach(function(day, i) {
+      var tab = document.createElement('button');
+      var rec = recorded[i];
+      tab.style.cssText = 'padding:5px 9px;border-radius:8px;border:2px solid '+(i===activeDay?'var(--sci)':'var(--border)')+
+        ';background:'+(i===activeDay?'var(--sci-dim)':rec!==undefined?'var(--surface2)':'transparent')+
+        ';font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;min-width:38px;text-align:center';
+      tab.innerHTML = '<div>'+day+'</div>'+(rec!==undefined?'<div style="font-size:14px">'+weather[rec].split(' ')[0]+'</div>':'<div style="color:var(--border)">—</div>');
+      tab.onclick = function() { activeDay=i; render(); };
+      tabs.appendChild(tab);
+    });
+    wrap.appendChild(tabs);
+
+    /* Weather picker for active day */
+    var dayLabel = document.createElement('div');
+    dayLabel.style.cssText = 'font-size:12px;font-weight:800;color:var(--muted);text-align:center';
+    dayLabel.textContent = 'What is the weather on '+days[activeDay]+'?';
+    wrap.appendChild(dayLabel);
+
+    var wGrid = document.createElement('div');
+    wGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+    weather.forEach(function(w, i) {
+      var parts = w.split(' ');
+      var emoji = parts[0], label = parts.slice(1).join(' ');
+      var btn = document.createElement('button');
+      var isSelected = recorded[activeDay] === i;
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border-radius:10px;cursor:pointer;'+
+        'border:2px solid '+(isSelected?'var(--sci)':'var(--border)')+
+        ';background:'+(isSelected?'var(--sci-dim)':'var(--surface2)');
+      btn.innerHTML = '<span style="font-size:28px">'+emoji+'</span><span style="font-size:10px;font-weight:700;color:var(--muted)">'+label+'</span>';
+      btn.onclick = function() { recorded[activeDay]=i; render(); };
+      wGrid.appendChild(btn);
+    });
+    wrap.appendChild(wGrid);
+
+    /* Weekly summary */
+    var recordedCount = Object.keys(recorded).length;
+    if(recordedCount >= 3) {
+      var summary = document.createElement('div');
+      summary.style.cssText = 'background:var(--surface2);border-radius:12px;padding:10px;border:1px solid var(--border)';
+      /* Count weather types */
+      var counts = {};
+      Object.values(recorded).forEach(function(wi) {
+        var wname = weather[wi]; counts[wname] = (counts[wname]||0)+1;
+      });
+      var most = Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];})[0];
+      summary.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">📊 This week so far ('+recordedCount+'/7 days):</div>'+
+        Object.keys(counts).map(function(w){
+          var parts=w.split(' '); var e=parts[0],n=parts.slice(1).join(' ');
+          return '<div style="font-size:12px;display:flex;gap:6px;align-items:center"><span>'+e+'</span><span style="color:var(--text);font-weight:700">'+n+'</span><span style="color:var(--muted)">× '+counts[w]+'</span></div>';
+        }).join('')+
+        (recordedCount>=5?'<div style="margin-top:6px;font-size:12px;color:var(--sci);font-weight:800">Most common: '+most+'</div>':'');
+      wrap.appendChild(summary);
+    }
+
+    /* Pattern insight */
+    if(recordedCount >= 7) {
+      var insight = document.createElement('div');
+      insight.style.cssText = 'text-align:center;font-size:12px;font-weight:800;color:#22c55e;padding:8px;background:rgba(34,197,94,0.1);border-radius:10px';
+      insight.textContent = '🎉 Full week recorded! Weather follows patterns — scientists who study this are called Meteorologists!';
+      wrap.appendChild(insight);
+    }
+
+    var reset = document.createElement('button');
+    reset.className = 'cbtn'; reset.textContent = '↺ New week';
+    reset.onclick = function() { recorded={}; activeDay=0; render(); };
+    wrap.appendChild(reset);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── LIVING OR NON-LIVING SORT ── */
+SIM_REGISTRY['living-sort'] = function(c) {
+  var items = [
+    {name:'Dog',      emoji:'🐕', living:true,  reason:'Breathes, eats, grows, has babies'},
+    {name:'Rock',     emoji:'🪨', living:false, reason:'Does not breathe, eat, grow, or reproduce'},
+    {name:'Tree',     emoji:'🌳', living:true,  reason:'Makes food, grows, reproduces — plants are living!'},
+    {name:'Car',      emoji:'🚗', living:false, reason:'Made by humans, does not grow or breathe'},
+    {name:'Butterfly',emoji:'🦋', living:true,  reason:'Breathes, eats, grows, lays eggs'},
+    {name:'Cloud',    emoji:'☁️', living:false, reason:'Made of water droplets — not alive'},
+    {name:'Mushroom', emoji:'🍄', living:true,  reason:'Grows, reproduces — fungi are living things!'},
+    {name:'Chair',    emoji:'🪑', living:false, reason:'Made from wood (once living) but the chair itself is not'},
+    {name:'Fish',     emoji:'🐟', living:true,  reason:'Breathes through gills, swims, lays eggs'},
+    {name:'Candle',   emoji:'🕯️', living:false, reason:'Flame burns but does not grow, breathe or reproduce'},
+    {name:'Flower',   emoji:'🌸', living:true,  reason:'Grows toward sunlight, reproduces through seeds'},
+    {name:'Water',    emoji:'💧', living:false, reason:'Essential for life but water itself is not alive'},
+  ];
+
+  var current = 0, score = 0, answered = false;
+  var shuffled = items.slice().sort(function(){return Math.random()-0.5;});
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Item '+(current+1)+' of '+items.length+'</span>'+
+      '<span style="font-size:11px;color:var(--sci);font-weight:800">Score: '+score+'/'+current+'</span>';
+    wrap.appendChild(top);
+
+    if(current>=items.length){
+      wrap.innerHTML+='<div style="text-align:center;padding:16px;font-size:40px">🏆</div>'+
+        '<div style="text-align:center;font-weight:900;font-size:16px;color:var(--sci)">All sorted! Score: '+score+'/'+items.length+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);text-align:center;padding:0 10px">Living things breathe, eat, grow, respond to surroundings, and can reproduce. Non-living things do not do all of these.</div>';
+      var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Play again';
+      rb.onclick=function(){current=0;score=0;answered=false;shuffled=items.slice().sort(function(){return Math.random()-0.5;});render();};
+      wrap.appendChild(rb);c.appendChild(wrap);return;
+    }
+
+    var item=shuffled[current];
+
+    /* Big emoji display */
+    var emoji=document.createElement('div');
+    emoji.style.cssText='font-size:80px;text-align:center;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.2))';
+    emoji.textContent=item.emoji;
+    wrap.appendChild(emoji);
+
+    var name=document.createElement('div');
+    name.style.cssText='font-size:20px;font-weight:900;color:var(--text);text-align:center';
+    name.textContent=item.name;
+    wrap.appendChild(name);
+
+    /* Sort buttons */
+    var q=document.createElement('div');
+    q.style.cssText='font-size:13px;font-weight:800;color:var(--muted);text-align:center';
+    q.textContent='Is this LIVING or NON-LIVING?';
+    wrap.appendChild(q);
+
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:12px;justify-content:center';
+    [{label:'🌱 Living',val:true,col:'#22c55e'},{label:'🪨 Non-Living',val:false,col:'#94a3b8'}].forEach(function(opt){
+      var btn=document.createElement('button');
+      btn.style.cssText='font-size:14px;font-weight:800;padding:12px 22px;border-radius:12px;border:2px solid '+opt.col+';background:'+opt.col+'22;color:'+opt.col+';cursor:pointer;font-family:Nunito,sans-serif;min-width:130px';
+      btn.textContent=opt.label;
+      btn.onclick=function(){
+        if(answered)return; answered=true;
+        var correct=opt.val===item.living;
+        if(correct)score++;
+        btn.style.background=correct?'#22c55e':'#ef4444';
+        btn.style.color='white'; btn.style.borderColor=correct?'#22c55e':'#ef4444';
+        /* Show the other button's correct state */
+        btnRow.querySelectorAll('button').forEach(function(b,bi){
+          if(bi===0&&item.living){b.style.background='#22c55e';b.style.color='white';}
+          if(bi===1&&!item.living){b.style.background='#94a3b8';b.style.color='white';}
+        });
+        var fb=document.createElement('div');
+        fb.style.cssText='text-align:center;font-size:12px;font-weight:700;padding:8px;background:var(--surface2);border-radius:10px;color:var(--text);line-height:1.5';
+        fb.textContent=(correct?'✅ ':'❌ ')+item.name+' is '+(item.living?'LIVING':'NON-LIVING')+'! '+item.reason;
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');
+        nx.className='cbtn evs';
+        nx.textContent=current+1<items.length?'Next →':'See results!';
+        nx.style.marginTop='4px';
+        nx.onclick=function(){answered=false;current++;render();};
+        wrap.appendChild(nx);
+      };
+      btnRow.appendChild(btn);
+    });
+    wrap.appendChild(btnRow);
+
+    /* Living things criteria reminder */
+    var criteria=document.createElement('div');
+    criteria.style.cssText='font-size:10px;color:var(--muted);text-align:center;padding:4px';
+    criteria.textContent='Living things: breathe · eat · grow · respond · reproduce';
+    wrap.appendChild(criteria);
+
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── WATER FILTER — interactive filtration sim ── */
+SIM_REGISTRY['water-filter'] = function(c) {
+  var layers=['Grass/Leaves','Sand','Fine Sand','Gravel','Charcoal'];
+  var layerColors=['#86efac','#fde68a','#fef3c7','#d1d5db','#1c1917'];
+  var layerEmoji=['🌿','🟡','⬜','⚫','⬛'];
+  var added=[]; /* which filter layers have been added */
+  var filtered=false;
+  var mudLevel=100; /* 0=clean 100=muddy */
+
+  function getCleanness() {
+    /* Each layer reduces dirtiness by a different amount */
+    var reductions={0:15,1:25,2:20,3:20,4:30};
+    var total=0;
+    added.forEach(function(i){ total+=reductions[i]||0; });
+    return Math.min(100,total);
+  }
+
+  function waterColor(cleanPct) {
+    /* Interpolate from muddy brown to clear blue */
+    var r=Math.round(139+(0-139)*cleanPct/100);
+    var g=Math.round(90+(191-90)*cleanPct/100);
+    var b=Math.round(43+(255-43)*cleanPct/100);
+    return 'rgba('+r+','+g+','+b+',0.7)';
+  }
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title=document.createElement('div');
+    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent='💧 Water Filtration Lab';
+    wrap.appendChild(title);
+
+    /* Canvas — filter diagram */
+    var cv=document.createElement('canvas');
+    cv.width=280; cv.height=220;
+    cv.style.cssText='width:100%;max-width:280px;height:220px;display:block;border-radius:12px;background:#0f172a;margin:0 auto';
+    wrap.appendChild(cv);
+    var ctx=cv.getContext('2d');
+
+    var cleanPct=getCleanness();
+    /* Muddy water input */
+    var mudColor=waterColor(0);
+    ctx.fillStyle=mudColor;
+    ctx.fillRect(20,10,90,30);
+    ctx.fillStyle='white'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Muddy water',65,30);
+    /* Arrow down */
+    ctx.fillStyle='#94a3b8'; ctx.font='14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('↓',65,55);
+
+    /* Filter container */
+    ctx.strokeStyle='#475569'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.rect(20,60,90,120); ctx.stroke();
+    /* Filter layers */
+    var layH=added.length>0?Math.floor(110/Math.max(added.length,1)):0;
+    added.forEach(function(li,i){
+      ctx.fillStyle=layerColors[li];
+      ctx.fillRect(22,62+i*layH,86,layH);
+      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(layerEmoji[li]+' '+layers[li].split('/')[0],65,62+i*layH+layH/2+4);
+    });
+
+    /* Output water */
+    ctx.fillStyle=waterColor(cleanPct);
+    ctx.fillRect(20,185,90,25);
+    ctx.fillStyle='white'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(cleanPct>80?'Clean! ✅':cleanPct>40?'Better...':'Still dirty',65,202);
+
+    /* Cleanliness meter */
+    ctx.fillStyle='#1e293b'; ctx.fillRect(140,60,30,150);
+    ctx.fillStyle=waterColor(cleanPct);
+    var barH=Math.round(150*cleanPct/100);
+    ctx.fillRect(140,60+(150-barH),30,barH);
+    ctx.strokeStyle='#475569'; ctx.lineWidth=1; ctx.strokeRect(140,60,30,150);
+    ctx.fillStyle='white'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(Math.round(cleanPct)+'%',155,55);
+    ctx.fillText('Clean',155,225);
+
+    /* Before/after bottles */
+    ctx.font='28px serif'; ctx.textAlign='center';
+    ctx.fillText('🧴',225,100); ctx.fillStyle=waterColor(0); ctx.fillRect(213,108,24,30);
+    ctx.fillText('🧴',225,170); ctx.fillStyle=waterColor(cleanPct); ctx.fillRect(213,178,24,30);
+    ctx.fillStyle='white'; ctx.font='bold 8px Nunito,sans-serif';
+    ctx.fillText('Before',225,148); ctx.fillText('After',225,218);
+
+    /* Layer picker */
+    var layerLabel=document.createElement('div');
+    layerLabel.style.cssText='font-size:12px;font-weight:800;color:var(--muted);text-align:center';
+    layerLabel.textContent='Add filter layers (tap to add, tap again to remove):';
+    wrap.appendChild(layerLabel);
+
+    var layerRow=document.createElement('div');
+    layerRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+    layers.forEach(function(lay,i){
+      var isAdded=added.indexOf(i)>=0;
+      var btn=document.createElement('button');
+      btn.style.cssText='font-size:11px;font-weight:800;padding:6px 10px;border-radius:8px;cursor:pointer;'+
+        'border:2px solid '+(isAdded?'var(--sci)':'var(--border)')+
+        ';background:'+(isAdded?'var(--sci-dim)':'var(--surface2)')+
+        ';color:'+(isAdded?'var(--sci)':'var(--muted)');
+      btn.textContent=layerEmoji[i]+' '+lay;
+      btn.onclick=function(){
+        var idx=added.indexOf(i);
+        if(idx>=0) added.splice(idx,1); else added.push(i);
+        render();
+      };
+      layerRow.appendChild(btn);
+    });
+    wrap.appendChild(layerRow);
+
+    /* Insight */
+    var cleanness=getCleanness();
+    var msg=cleanness===0?'Add filter layers to clean the water!':
+      cleanness<40?'Getting better! Add more layers.':
+      cleanness<80?'Good progress! More layers = cleaner water.':
+      '✅ Very clean! Real water treatment plants use all these layers!';
+    var insight=document.createElement('div');
+    insight.style.cssText='font-size:11px;font-weight:700;text-align:center;color:'+(cleanness>=80?'#22c55e':'var(--muted)');
+    insight.textContent=msg;
+    wrap.appendChild(insight);
+
+    var reset=document.createElement('button');
+    reset.className='cbtn';reset.textContent='↺ Reset';
+    reset.onclick=function(){added=[];filtered=false;render();};
+    wrap.appendChild(reset);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── SOIL TYPES EXPLORER ── */
+SIM_REGISTRY['soil-types'] = function(c) {
+  var soils=[
+    {name:'Sandy Soil', emoji:'🏖️', colour:'#fde68a', dark:'#d97706',
+     texture:'Rough and gritty', water:'Drains fast', plants:'Cactus, carrots',
+     feel:'Doesn\'t hold together — falls apart',
+     test:{drain:95,hold:10,plants:30}},
+    {name:'Clay Soil', emoji:'🏺', colour:'#f87171', dark:'#dc2626',
+     texture:'Smooth and sticky', water:'Holds too much', plants:'Rice, lotus',
+     feel:'Sticks together — can be moulded',
+     test:{drain:10,hold:95,plants:50}},
+    {name:'Loamy Soil', emoji:'🌱', colour:'#86efac', dark:'#16a34a',
+     texture:'Crumbly and soft', water:'Perfect balance', plants:'Most vegetables',
+     feel:'Best mix — sticks a little but crumbles',
+     test:{drain:70,hold:75,plants:95}},
+    {name:'Rocky Soil', emoji:'🪨', colour:'#d1d5db', dark:'#6b7280',
+     texture:'Hard with stones', water:'Drains very fast', plants:'Moss, lichen',
+     feel:'Very hard — difficult to dig',
+     test:{drain:90,hold:5,plants:15}},
+  ];
+
+  var selected=0;
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title=document.createElement('div');
+    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent='🌍 Soil Types Lab — Touch and Compare!';
+    wrap.appendChild(title);
+
+    /* Soil type selector */
+    var selector=document.createElement('div');
+    selector.style.cssText='display:flex;gap:6px;justify-content:center;flex-wrap:wrap';
+    soils.forEach(function(soil,i){
+      var btn=document.createElement('button');
+      btn.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:10px;cursor:pointer;'+
+        'border:2px solid '+(i===selected?soil.dark:'var(--border)')+
+        ';background:'+(i===selected?soil.colour+'33':'var(--surface2)');
+      btn.innerHTML='<span style="font-size:24px">'+soil.emoji+'</span><span style="font-size:10px;font-weight:800;color:'+soil.dark+'">'+soil.name.split(' ')[0]+'</span>';
+      btn.onclick=function(){selected=i;render();};
+      selector.appendChild(btn);
+    });
+    wrap.appendChild(selector);
+
+    var soil=soils[selected];
+
+    /* Canvas — soil cross section + water test */
+    var cv=document.createElement('canvas');
+    cv.width=280; cv.height=160;
+    cv.style.cssText='width:100%;max-width:280px;height:160px;display:block;border-radius:12px;background:var(--surface2);margin:0 auto';
+    wrap.appendChild(cv);
+    var ctx=cv.getContext('2d');
+
+    /* Soil profile */
+    ctx.fillStyle=soil.colour; ctx.fillRect(0,40,280,80);
+    ctx.fillStyle=soil.dark; ctx.fillRect(0,120,280,40);
+    /* Texture particles */
+    if(soil.name==='Sandy Soil'){
+      for(var i=0;i<60;i++){ctx.fillStyle='rgba(217,119,6,0.5)';ctx.beginPath();ctx.arc(10+Math.random()*260,45+Math.random()*70,2+Math.random()*2,0,Math.PI*2);ctx.fill();}
+    } else if(soil.name==='Clay Soil'){
+      ctx.fillStyle='rgba(220,38,38,0.2)';
+      for(var ci=0;ci<8;ci++){ctx.fillRect(10+ci*32,45,28,70);}
+    } else if(soil.name==='Rocky Soil'){
+      for(var ri=0;ri<12;ri++){ctx.fillStyle='rgba(107,114,128,0.6)';ctx.beginPath();ctx.arc(20+Math.random()*240,50+Math.random()*60,5+Math.random()*8,0,Math.PI*2);ctx.fill();}
+    }
+    /* Water droplets draining */
+    ctx.fillStyle='rgba(96,165,250,0.7)';
+    var drainSpots=Math.round(soil.test.drain/20);
+    for(var di=0;di<drainSpots;di++){ctx.fillText('💧',20+di*48,130);}
+    ctx.font='12px serif';
+    /* Sky/surface */
+    ctx.fillStyle='#bae6fd'; ctx.fillRect(0,0,280,40);
+    ctx.fillStyle='#1e293b'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(soil.name,140,25);
+
+    /* Stat bars */
+    var statsBox=document.createElement('div');
+    statsBox.style.cssText='background:var(--surface2);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px';
+    [
+      {label:'💧 Water drainage',val:soil.test.drain,col:'#3b82f6'},
+      {label:'🤏 Holds together',val:soil.test.hold,col:'#92400e'},
+      {label:'🌱 Plant growth',val:soil.test.plants,col:'#22c55e'},
+    ].forEach(function(stat){
+      var row=document.createElement('div');
+      row.innerHTML='<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:800;color:var(--muted);margin-bottom:2px">'+
+        '<span>'+stat.label+'</span><span>'+stat.val+'%</span></div>'+
+        '<div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden">'+
+        '<div style="height:100%;width:'+stat.val+'%;background:'+stat.col+';border-radius:4px;transition:width .5s"></div></div>';
+      statsBox.appendChild(row);
+    });
+    wrap.appendChild(statsBox);
+
+    /* Facts */
+    var facts=document.createElement('div');
+    facts.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
+    [{label:'Feel',val:soil.feel},{label:'Best for',val:soil.plants},{label:'Texture',val:soil.texture},{label:'Water',val:soil.water}].forEach(function(f){
+      var div=document.createElement('div');
+      div.style.cssText='background:var(--surface2);border-radius:8px;padding:6px 8px';
+      div.innerHTML='<div style="font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase">'+f.label+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text)">'+f.val+'</div>';
+      facts.appendChild(div);
+    });
+    wrap.appendChild(facts);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── DAILY ROUTINE — drag activities to time slots ── */
+SIM_REGISTRY['daily-routine'] = function(c) {
+  var activities=[
+    {name:'Wake up',    emoji:'⏰', time:'6 AM',  slot:0},
+    {name:'Brush teeth',emoji:'🪥', time:'6:15',  slot:1},
+    {name:'Bath',       emoji:'🛁', time:'6:30',  slot:2},
+    {name:'Breakfast',  emoji:'🥣', time:'7 AM',  slot:3},
+    {name:'School',     emoji:'🏫', time:'8 AM',  slot:4},
+    {name:'Lunch',      emoji:'🍱', time:'1 PM',  slot:5},
+    {name:'Homework',   emoji:'📚', time:'4 PM',  slot:6},
+    {name:'Play',       emoji:'⚽', time:'5 PM',  slot:7},
+    {name:'Dinner',     emoji:'🍛', time:'7 PM',  slot:8},
+    {name:'Sleep',      emoji:'😴', time:'9 PM',  slot:9},
+  ];
+
+  var slots=['6 AM','6:15','6:30','7 AM','8 AM','1 PM','4 PM','5 PM','7 PM','9 PM'];
+  /* Shuffle activities and let student sort them */
+  var shuffled=activities.slice().sort(function(){return Math.random()-0.5;});
+  var placed={}; /* slotIndex → activityIndex in shuffled */
+  var selected=null;
+  var checked=false;
+
+  function render(){
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:8px;width:100%';
+
+    var title=document.createElement('div');
+    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent='⏰ Build the Perfect Daily Routine!';
+    wrap.appendChild(title);
+
+    var instr=document.createElement('div');
+    instr.style.cssText='font-size:11px;color:var(--muted);text-align:center';
+    instr.textContent=selected!==null?'Now tap a time slot to place it!':'Tap an activity, then tap its correct time slot.';
+    wrap.appendChild(instr);
+
+    /* Time slots */
+    var grid=document.createElement('div');
+    grid.style.cssText='display:flex;flex-direction:column;gap:4px';
+    slots.forEach(function(time,si){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;gap:6px;align-items:center';
+      var timeLabel=document.createElement('div');
+      timeLabel.style.cssText='font-size:10px;font-weight:800;color:var(--muted);width:36px;text-align:right;flex-shrink:0';
+      timeLabel.textContent=time;
+      row.appendChild(timeLabel);
+
+      var slot=document.createElement('div');
+      var placedIdx=placed[si];
+      var act=placedIdx!==undefined?shuffled[placedIdx]:null;
+      var isCorrect=act&&act.slot===si;
+      slot.style.cssText='flex:1;height:36px;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 10px;cursor:pointer;'+
+        'border:2px solid '+(act?(checked?(isCorrect?'#22c55e':'#ef4444'):'var(--sci)'):'var(--border)')+
+        ';background:'+(act?(checked?(isCorrect?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'):'var(--sci-dim)'):'var(--surface2)');
+      if(act){
+        slot.innerHTML='<span style="font-size:20px">'+act.emoji+'</span><span style="font-size:12px;font-weight:700;color:var(--text)">'+act.name+'</span>';
+        if(checked&&!isCorrect){
+          /* Show correct */
+          var correctAct=activities.find(function(a){return a.slot===si;});
+          slot.innerHTML+='<span style="font-size:11px;color:#f59e0b;margin-left:auto">→'+correctAct.emoji+'</span>';
+        }
+      } else {
+        slot.innerHTML='<span style="font-size:11px;color:var(--muted)">tap to place...</span>';
+      }
+      slot.onclick=function(){
+        if(selected!==null){placed[si]=selected;selected=null;render();}
+        else if(act){selected=placedIdx;delete placed[si];render();}
+      };
+      row.appendChild(slot);
+      grid.appendChild(row);
+    });
+    wrap.appendChild(grid);
+
+    /* Activity picker */
+    var pickerLabel=document.createElement('div');
+    pickerLabel.style.cssText='font-size:11px;font-weight:800;color:var(--muted)';
+    pickerLabel.textContent='Tap to pick:';
+    wrap.appendChild(pickerLabel);
+    var picker=document.createElement('div');
+    picker.style.cssText='display:flex;flex-wrap:wrap;gap:5px';
+    shuffled.forEach(function(act,i){
+      var isPlaced=Object.values(placed).indexOf(i)>=0;
+      if(isPlaced) return;
+      var btn=document.createElement('button');
+      btn.style.cssText='font-size:12px;padding:4px 8px;border-radius:8px;cursor:pointer;'+
+        'border:2px solid '+(selected===i?'var(--sci)':'var(--border)')+
+        ';background:'+(selected===i?'var(--sci-dim)':'var(--surface2)');
+      btn.innerHTML=act.emoji+' '+act.name;
+      btn.onclick=function(){selected=(selected===i)?null:i;render();};
+      picker.appendChild(btn);
+    });
+    wrap.appendChild(picker);
+
+    /* Check button */
+    var placedCount=Object.keys(placed).length;
+    if(placedCount>=10&&!checked){
+      var checkBtn=document.createElement('button');
+      checkBtn.className='cbtn evs';checkBtn.textContent='Check my routine! ✅';
+      checkBtn.onclick=function(){checked=true;render();};
+      wrap.appendChild(checkBtn);
+    }
+    if(checked){
+      var correct=Object.keys(placed).filter(function(si){return shuffled[placed[si]].slot===parseInt(si);}).length;
+      var fb=document.createElement('div');
+      fb.style.cssText='text-align:center;font-size:13px;font-weight:800;color:'+(correct>=8?'#22c55e':'#f59e0b')+';padding:8px;background:var(--surface2);border-radius:10px';
+      fb.textContent=correct+'/10 correct! '+(correct>=8?'Great routine! 🌟':'A good routine helps your body and mind stay healthy.');
+      wrap.appendChild(fb);
+      var reset=document.createElement('button');
+      reset.className='cbtn';reset.textContent='↺ Try again';
+      reset.onclick=function(){placed={};selected=null;checked=false;shuffled=activities.slice().sort(function(){return Math.random()-0.5;});render();};
+      wrap.appendChild(reset);
+    }
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── SAYING SORRY RIGHT — scenario-based ── */
+SIM_REGISTRY['apology-sim'] = function(c) {
+  var scenarios=[
+    {
+      situation:'You accidentally broke your friend\'s favourite pencil.',
+      emoji:'✏️',
+      options:[
+        {text:'Run away and pretend it didn\'t happen.', correct:false, feedback:'Running away makes things worse. Your friend will feel hurt and confused.'},
+        {text:'Say "I\'m sorry I broke your pencil. I didn\'t mean to. Can I buy you a new one?"', correct:true, feedback:'✅ Perfect! A good apology: admits what happened, shows you\'re sorry, and offers to make it right.'},
+        {text:'Say "It\'s not my fault, it was old anyway!"', correct:false, feedback:'Making excuses is not an apology. It makes your friend feel their feelings don\'t matter.'},
+        {text:'Just say "Sorry" quickly and walk away.', correct:false, feedback:'A quick sorry without meaning it doesn\'t really help. A real apology needs eye contact and means it.'},
+      ]
+    },
+    {
+      situation:'You called your sister a bad name when you were angry.',
+      emoji:'😤',
+      options:[
+        {text:'"I was angry but I shouldn\'t have said that. I\'m sorry it hurt your feelings."', correct:true, feedback:'✅ Excellent! You explained why it happened but still took responsibility. That\'s emotional maturity!'},
+        {text:'"Sorry... but you made me angry first!"', correct:false, feedback:'Adding "but" cancels the apology. It sounds like you\'re blaming them.'},
+        {text:'Give her a hug without saying anything.', correct:false, feedback:'Hugs are nice but words matter too — she needs to know you understand you hurt her.'},
+        {text:'"I\'m sorry you felt bad."', correct:false, feedback:'This sounds like you\'re sorry for HER feelings, not for what YOU did. Take responsibility!'},
+      ]
+    },
+    {
+      situation:'You forgot to return your friend\'s book for two weeks.',
+      emoji:'📚',
+      options:[
+        {text:'"Here\'s your book. I\'m really sorry I kept it so long — I should have returned it sooner."', correct:true, feedback:'✅ Great! You returned it, apologised, and took responsibility. That\'s all three parts of a good apology!'},
+        {text:'Just give the book back without saying anything.', correct:false, feedback:'Giving it back is good but your friend deserves to hear that you know you were wrong.'},
+        {text:'"Sorry, I was really busy."', correct:false, feedback:'An excuse weakens an apology. Your friend\'s time matters too.'},
+        {text:'Ask another friend to return it for you.', correct:false, feedback:'You should face it yourself. It shows more respect to apologise in person.'},
+      ]
+    }
+  ];
+
+  var round=0, score=0, answered=false;
+
+  function render(){
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Scenario '+(round+1)+' of '+scenarios.length+'</span>'+
+      '<span style="font-size:11px;color:var(--life);font-weight:800">Score: '+score+'/'+round+'</span>';
+    wrap.appendChild(top);
+
+    if(round>=scenarios.length){
+      var fin=document.createElement('div');
+      fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
+      fin.innerHTML='<div style="font-size:48px">🤝</div>'+
+        '<div style="font-size:16px;font-weight:900;color:var(--life)">Apology Champion! '+score+'/'+scenarios.length+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);padding:0 10px">A good apology has 3 parts: Say what you did wrong · Show you mean it · Offer to make it better</div>';
+      var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Practice again';
+      rb.onclick=function(){round=0;score=0;answered=false;render();};fin.appendChild(rb);
+      wrap.appendChild(fin);c.appendChild(wrap);return;
+    }
+
+    var sc=scenarios[round];
+    var situation=document.createElement('div');
+    situation.style.cssText='background:var(--acc-dim);border-radius:12px;padding:12px;border:1px solid var(--border)';
+    situation.innerHTML='<div style="font-size:28px;text-align:center;margin-bottom:6px">'+sc.emoji+'</div>'+
+      '<div style="font-size:13px;font-weight:700;color:var(--text);text-align:center">'+sc.situation+'</div>';
+    wrap.appendChild(situation);
+
+    var q=document.createElement('div');
+    q.style.cssText='font-size:12px;font-weight:800;color:var(--muted);text-align:center';
+    q.textContent='What is the BEST thing to do?';
+    wrap.appendChild(q);
+
+    var opts=document.createElement('div');
+    opts.style.cssText='display:flex;flex-direction:column;gap:6px';
+    var shuffledOpts=sc.options.slice().sort(function(){return Math.random()-0.5;});
+    shuffledOpts.forEach(function(opt){
+      var btn=document.createElement('button');
+      btn.style.cssText='text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);line-height:1.5;width:100%';
+      btn.textContent=opt.text;
+      btn.onclick=function(){
+        if(answered)return; answered=true;
+        if(opt.correct)score++;  round++;
+        btn.style.background=opt.correct?'#22c55e22':'#ef444422';
+        btn.style.borderColor=opt.correct?'#22c55e':'#ef4444';
+        opts.querySelectorAll('button').forEach(function(b,bi){
+          b.disabled=true;
+          if(shuffledOpts[bi].correct){b.style.background='#22c55e22';b.style.borderColor='#22c55e';}
+        });
+        var fb=document.createElement('div');
+        fb.style.cssText='padding:10px;background:var(--surface2);border-radius:10px;font-size:12px;font-weight:700;color:var(--text);line-height:1.5;border-left:3px solid '+(opt.correct?'#22c55e':'#f59e0b');
+        fb.textContent=opt.feedback;
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');
+        nx.className='cbtn evs'; nx.textContent=round<scenarios.length?'Next scenario →':'See results!';
+        nx.style.marginTop='4px';
+        nx.onclick=function(){answered=false;render();};
+        wrap.appendChild(nx);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── HAND WASH — step-by-step animated guide with quiz ── */
+SIM_REGISTRY['hand-wash'] = function(c) {
+  var steps=[
+    {emoji:'💧', title:'Wet your hands', desc:'Turn on the tap. Wet both hands completely with clean water.', time:5},
+    {emoji:'🧴', title:'Apply soap',     desc:'Put enough soap to cover all surfaces. About the size of a coin.', time:3},
+    {emoji:'🤲', title:'Lather palms',   desc:'Rub palms together vigorously to create foam. 20 seconds!', time:20},
+    {emoji:'🙌', title:'Clean the back', desc:'Rub the back of each hand with the other palm. Don\'t miss any spots!', time:10},
+    {emoji:'🤞', title:'Between fingers',desc:'Interlace fingers and rub between them. Germs hide here!', time:10},
+    {emoji:'👍', title:'Clean thumbs',   desc:'Clasp each thumb and rotate. Thumbs touch everything!', time:5},
+    {emoji:'💦', title:'Rinse well',     desc:'Rinse all soap off under clean running water. Point fingers down.', time:10},
+    {emoji:'🧻', title:'Dry thoroughly', desc:'Pat dry with a clean towel or paper. Wet hands spread germs more!', time:5},
+  ];
+
+  var currentStep=0, mode='learn', quizAnswered=false;
+  var timerVal=0, timerRunning=false, timerInterval=null;
+
+  function render(){
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    /* Progress bar */
+    var progress=document.createElement('div');
+    progress.style.cssText='width:100%;height:6px;border-radius:4px;background:var(--surface2)';
+    var fill=document.createElement('div');
+    fill.style.cssText='height:100%;border-radius:4px;background:var(--life);transition:width .3s;width:'+
+      (mode==='quiz'?100:(currentStep/steps.length*100))+'%';
+    progress.appendChild(fill); wrap.appendChild(progress);
+
+    if(mode==='learn'){
+      var st=steps[currentStep];
+
+      /* Step dots */
+      var dots=document.createElement('div');
+      dots.style.cssText='display:flex;gap:5px;justify-content:center';
+      steps.forEach(function(s,i){
+        var dot=document.createElement('div');
+        dot.style.cssText='width:'+(i===currentStep?'20px':'8px')+';height:8px;border-radius:4px;background:'+(i<currentStep?'var(--life)':i===currentStep?'var(--life)':'var(--border)')+';transition:all .3s';
+        dots.appendChild(dot);
+      });
+      wrap.appendChild(dots);
+
+      /* Big emoji */
+      var bigEmoji=document.createElement('div');
+      bigEmoji.style.cssText='font-size:72px;text-align:center;line-height:1';
+      bigEmoji.textContent=st.emoji;
+      wrap.appendChild(bigEmoji);
+
+      var stepTitle=document.createElement('div');
+      stepTitle.style.cssText='font-size:16px;font-weight:900;color:var(--text);text-align:center';
+      stepTitle.textContent='Step '+(currentStep+1)+': '+st.title;
+      wrap.appendChild(stepTitle);
+
+      var stepDesc=document.createElement('div');
+      stepDesc.style.cssText='font-size:12px;color:var(--muted);text-align:center;padding:8px 12px;background:var(--surface2);border-radius:10px;line-height:1.6';
+      stepDesc.textContent=st.desc;
+      wrap.appendChild(stepDesc);
+
+      /* Timer */
+      var timerRow=document.createElement('div');
+      timerRow.style.cssText='display:flex;align-items:center;gap:10px;justify-content:center';
+      var timerDisplay=document.createElement('div');
+      timerDisplay.style.cssText='font-size:32px;font-weight:900;color:var(--life);min-width:60px;text-align:center';
+      timerDisplay.textContent=timerRunning?(timerVal+'s'):(st.time+'s');
+      timerRow.appendChild(timerDisplay);
+      var timerBtn=document.createElement('button');
+      timerBtn.className='cbtn evs'; timerBtn.textContent=timerRunning?'⏸ Pause':'▶ Start timer';
+      timerBtn.onclick=function(){
+        if(timerRunning){clearInterval(timerInterval);timerRunning=false;timerVal=0;render();}
+        else{
+          timerRunning=true; timerVal=st.time;
+          timerDisplay.textContent=timerVal+'s';
+          timerInterval=setInterval(function(){
+            timerVal--;
+            timerDisplay.textContent=timerVal+'s';
+            if(timerVal<=0){clearInterval(timerInterval);timerRunning=false;
+              timerDisplay.textContent='✅ Done!';
+              timerDisplay.style.color='#22c55e';}
+          },1000);
+        }
+      };
+      timerRow.appendChild(timerBtn);
+      wrap.appendChild(timerRow);
+
+      /* Navigation */
+      var nav=document.createElement('div');
+      nav.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap';
+      if(currentStep>0){
+        var prev=document.createElement('button');
+        prev.className='cbtn'; prev.textContent='← Back';
+        prev.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;currentStep--;render();};
+        nav.appendChild(prev);
+      }
+      if(currentStep<steps.length-1){
+        var next=document.createElement('button');
+        next.className='cbtn evs'; next.textContent='Next step →';
+        next.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;currentStep++;render();};
+        nav.appendChild(next);
+      } else {
+        var quiz=document.createElement('button');
+        quiz.className='cbtn evs'; quiz.textContent='Take the quiz! ✏️';
+        quiz.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;mode='quiz';currentStep=0;render();};
+        nav.appendChild(quiz);
+      }
+      wrap.appendChild(nav);
+
+    } else {
+      /* Quiz mode */
+      var questions=[
+        {q:'How long should you rub your hands with soap?',opts:['5 seconds','20 seconds','2 minutes','1 second'],ans:1},
+        {q:'Which part of the hands hides the most germs?',opts:['The palm','Fingertips','Between the fingers','The wrist'],ans:2},
+        {q:'Why do you dry your hands after washing?',opts:['So they look nice','Wet hands spread germs more easily','To use the towel','It feels good'],ans:1},
+        {q:'What should you do to your thumbs specially?',opts:['Ignore them','Clasp and rotate each thumb','Only rinse them','Wash them last'],ans:1},
+      ];
+      var q=questions[currentStep%questions.length];
+      var qDisplay=document.createElement('div');
+      qDisplay.style.cssText='font-size:14px;font-weight:800;color:var(--text);text-align:center;padding:8px';
+      qDisplay.textContent='Quiz '+(currentStep+1)+'/'+questions.length+': '+q.q;
+      wrap.appendChild(qDisplay);
+
+      var optDiv=document.createElement('div');
+      optDiv.style.cssText='display:flex;flex-direction:column;gap:6px;width:100%';
+      q.opts.forEach(function(opt,i){
+        var btn=document.createElement('button');
+        btn.style.cssText='padding:10px 12px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
+        btn.textContent=opt;
+        btn.onclick=function(){
+          if(quizAnswered)return; quizAnswered=true;
+          var correct=i===q.ans;
+          btn.style.background=correct?'#22c55e22':'#ef444422';
+          btn.style.borderColor=correct?'#22c55e':'#ef4444';
+          optDiv.querySelectorAll('button').forEach(function(b,bi){
+            b.disabled=true;
+            if(bi===q.ans){b.style.background='#22c55e22';b.style.borderColor='#22c55e';}
+          });
+          var nx=document.createElement('button');
+          nx.className='cbtn evs';
+          nx.textContent=currentStep+1<questions.length?'Next question →':'Finish! 🎉';
+          nx.style.marginTop='6px';
+          nx.onclick=function(){
+            quizAnswered=false;
+            if(currentStep+1<questions.length){currentStep++;render();}
+            else{mode='learn';currentStep=0;render();}
+          };
+          wrap.appendChild(nx);
+        };
+        optDiv.appendChild(btn);
+      });
+      wrap.appendChild(optDiv);
+    }
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── STRANGER SAFETY — scenario choices ── */
+SIM_REGISTRY['safety-sim'] = function(c) {
+  var scenarios=[
+    {
+      emoji:'🚗', bg:'#fef9c3',
+      situation:'A stranger in a car stops and says "Your mum asked me to pick you up from school today."',
+      options:[
+        {text:'Get in the car — maybe mum really sent them.',        correct:false, why:'Never get in a stranger\'s car, even if they mention your family. Real trusted adults will have the SECRET WORD.'},
+        {text:'Say "No" firmly. Run to a trusted adult. Tell them.',   correct:true,  why:'✅ Correct! Your body belongs to you. A loud "NO" and running to safety is always right. Tell a trusted adult immediately.'},
+        {text:'Walk away slowly without saying anything.',             correct:false, why:'Walking away is okay but speaking firmly and finding a trusted adult is better — tell someone what happened!'},
+        {text:'Ask them to prove your mum sent them.',                 correct:false, why:'Don\'t engage or negotiate with strangers. Get away first, ask questions later.'},
+      ]
+    },
+    {
+      emoji:'🏠', bg:'#f0fdf4',
+      situation:'Someone knocks on the door when you are home alone. They say "I\'m here to fix the tap."',
+      options:[
+        {text:'Open the door and let them in.',   correct:false, why:'Never open the door to strangers when home alone — even if they have a reason.'},
+        {text:'Don\'t open the door. Call a trusted adult immediately.', correct:true, why:'✅ Perfect! Keep the door closed. Call your parent, relative, or neighbour right away.'},
+        {text:'Shout through the door that you\'ll call your parents.', correct:true, why:'✅ Good! Talking through a closed door and calling a trusted adult is safe.'},
+        {text:'Open the door but block it with your foot.',            correct:false, why:'Even a little opening is unsafe. Keep the door fully closed.'},
+      ]
+    },
+    {
+      emoji:'😰', bg:'#fef2f2',
+      situation:'An adult you don\'t know well touches you in a way that makes you feel uncomfortable.',
+      options:[
+        {text:'Stay quiet — you don\'t want to be rude.',   correct:false, why:'Your safety is always more important than politeness. You have the right to say NO to any touch that feels wrong.'},
+        {text:'Say "STOP, I don\'t like that" loudly and tell a trusted adult.', correct:true, why:'✅ Brave and correct! Your body belongs to you. Always tell a trusted adult, even if the person says it\'s a secret.'},
+        {text:'Tell the person\'s secret to keep everyone happy.',    correct:false, why:'Secrets about body safety should ALWAYS be told to a trusted adult. Keeping unsafe secrets is not your job.'},
+        {text:'Run to a trusted adult and tell them what happened.',   correct:true, why:'✅ Yes! Getting to safety and telling a trusted adult is always the right thing to do.'},
+      ]
+    }
+  ];
+
+  var round=0, score=0, answered=false;
+
+  /* Trusted adults reminder */
+  var trustedAdults=['Parent','Teacher','Doctor','Police officer','Relative you know well'];
+
+  function render(){
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+
+    /* Trusted adults badge */
+    var badge=document.createElement('div');
+    badge.style.cssText='background:rgba(34,197,94,0.1);border:1px solid #86efac;border-radius:10px;padding:6px 10px;text-align:center';
+    badge.innerHTML='<span style="font-size:10px;font-weight:800;color:#15803d">YOUR TRUSTED ADULTS: </span>'+
+      '<span style="font-size:10px;color:#15803d">'+trustedAdults.join(' · ')+'</span>';
+    wrap.appendChild(badge);
+
+    if(round>=scenarios.length){
+      var fin=document.createElement('div');
+      fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
+      fin.innerHTML='<div style="font-size:48px">🛡️</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#15803d">Safety Champion!</div>'+
+        '<div style="font-size:12px;color:var(--muted);padding:0 10px;line-height:1.6">Remember: Your body belongs to YOU. Say NO. Get away. Tell a trusted adult. You will NEVER be in trouble for keeping yourself safe.</div>';
+      var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Practice again';
+      rb.onclick=function(){round=0;score=0;answered=false;render();};fin.appendChild(rb);
+      wrap.appendChild(fin);c.appendChild(wrap);return;
+    }
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Scenario '+(round+1)+' of '+scenarios.length+'</span>';
+    wrap.appendChild(top);
+
+    var sc=scenarios[round];
+    var sitBox=document.createElement('div');
+    sitBox.style.cssText='background:'+sc.bg+';border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,0.08)';
+    sitBox.innerHTML='<div style="font-size:36px;margin-bottom:6px">'+sc.emoji+'</div>'+
+      '<div style="font-size:13px;font-weight:700;color:#1e293b;line-height:1.5">'+sc.situation+'</div>';
+    wrap.appendChild(sitBox);
+
+    var q=document.createElement('div');
+    q.style.cssText='font-size:12px;font-weight:800;color:var(--muted);text-align:center';
+    q.textContent='What is the SAFEST thing to do?';
+    wrap.appendChild(q);
+
+    var opts=document.createElement('div');
+    opts.style.cssText='display:flex;flex-direction:column;gap:6px';
+    sc.options.forEach(function(opt){
+      var btn=document.createElement('button');
+      btn.style.cssText='text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);line-height:1.4;width:100%';
+      btn.textContent=opt.text;
+      btn.onclick=function(){
+        if(answered)return; answered=true;
+        if(opt.correct)score++;
+        btn.style.background=opt.correct?'#22c55e22':'#ef444422';
+        btn.style.borderColor=opt.correct?'#22c55e':'#ef4444';
+        opts.querySelectorAll('button').forEach(function(b,bi){
+          b.disabled=true;
+          if(sc.options[bi].correct){b.style.background='#22c55e22';b.style.borderColor='#22c55e';}
+        });
+        var fb=document.createElement('div');
+        fb.style.cssText='padding:8px 10px;background:var(--surface2);border-radius:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.5;border-left:3px solid '+(opt.correct?'#22c55e':'#f59e0b');
+        fb.textContent=opt.why;
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');nx.className='cbtn evs';
+        nx.textContent=round<scenarios.length?'Next →':'Finish!';nx.style.marginTop='4px';
+        nx.onclick=function(){answered=false;round++;render();};
+        wrap.appendChild(nx);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── FEELINGS WHEEL — identify & explore emotions ── */
+SIM_REGISTRY['feelings-wheel'] = function(c) {
+  var feelings=[
+    {name:'Happy',    emoji:'😊', colour:'#fbbf24', bg:'#fef3c7',
+     desc:'Happy is a warm feeling inside. Your heart feels light.',
+     causes:['Getting a gift','Playing with friends','Eating favourite food','Sunny day'],
+     body:'You might smile, laugh, or jump around!',
+     healthy:'Share your happiness! Tell someone why you\'re happy.',
+     scenarios:['You got full marks in a test','Your best friend came to play','You got a new toy']},
+    {name:'Sad',      emoji:'😢', colour:'#60a5fa', bg:'#eff6ff',
+     desc:'Sadness is when something hurts your heart. It\'s okay to feel sad.',
+     causes:['Losing something','Missing someone','Being left out','Something going wrong'],
+     body:'You might cry, feel heavy, or want to be alone.',
+     healthy:'It\'s okay to cry. Talk to someone you trust. It will get better.',
+     scenarios:['Your pet got sick','Your friend moved away','You couldn\'t go to a party']},
+    {name:'Angry',    emoji:'😠', colour:'#ef4444', bg:'#fef2f2',
+     desc:'Anger is a strong hot feeling. It\'s telling you something feels unfair.',
+     causes:['Being treated unfairly','Losing a game','Someone taking your things'],
+     body:'Your face goes red, fists clench, heart beats fast.',
+     healthy:'Take deep breaths. Count to 10. Walk away to cool down.',
+     scenarios:['Someone pushed you','Your turn was skipped','Someone broke your toy']},
+    {name:'Scared',   emoji:'😨', colour:'#8b5cf6', bg:'#f5f3ff',
+     desc:'Fear keeps you safe — it\'s your body warning you.',
+     causes:['Loud noises','Darkness','Something new and unknown','Being in danger'],
+     body:'Heart races, tummy has butterflies, you want to hide.',
+     healthy:'Tell a trusted adult. Face small fears with support. Brave is not not-scared; it\'s scared but doing it anyway.',
+     scenarios:['Thunder outside at night','New school day','A big dog running toward you']},
+    {name:'Excited',  emoji:'🤩', colour:'#f97316', bg:'#fff7ed',
+     desc:'Excitement is like happiness with energy — you can\'t wait for something!',
+     causes:['Birthday coming up','Going on a trip','Watching your favourite show'],
+     body:'You talk fast, can\'t sit still, smile a lot.',
+     healthy:'Use that energy to help get ready. Share your excitement with others.',
+     scenarios:['Your birthday is tomorrow','A school trip was announced','A friend is visiting']},
+    {name:'Surprised',emoji:'😲', colour:'#10b981', bg:'#f0fdf4',
+     desc:'Surprise can be good or not-so-good depending on what happened.',
+     causes:['Unexpected news','Someone shows up you didn\'t expect','Finding something'],
+     body:'Wide eyes, open mouth, fast heartbeat for a second.',
+     healthy:'Take a breath. Decide if it\'s a good or not-good surprise, then respond.',
+     scenarios:['A surprise party for you','Unexpected test at school','Finding money in an old pocket']},
+  ];
+
+  var selected=null, scenario=null;
+
+  function render(){
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    var title=document.createElement('div');
+    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent='🎡 Feelings Wheel — How do you feel?';
+    wrap.appendChild(title);
+
+    /* Feelings wheel */
+    var wheelRow=document.createElement('div');
+    wheelRow.style.cssText='display:flex;flex-wrap:wrap;gap:8px;justify-content:center';
+    feelings.forEach(function(f,i){
+      var btn=document.createElement('button');
+      var isSel=selected===i;
+      btn.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 12px;border-radius:12px;cursor:pointer;'+
+        'border:2px solid '+(isSel?f.colour:'transparent')+
+        ';background:'+(isSel?f.bg:'var(--surface2)')+
+        ';transition:all .15s;min-width:80px';
+      btn.innerHTML='<span style="font-size:32px">'+f.emoji+'</span>'+
+        '<span style="font-size:11px;font-weight:800;color:'+(isSel?f.colour:'var(--muted)')+'">'+f.name+'</span>';
+      btn.onclick=function(){
+        selected=i; scenario=null;
+        render();
+      };
+      wheelRow.appendChild(btn);
+    });
+    wrap.appendChild(wheelRow);
+
+    if(selected!==null){
+      var f=feelings[selected];
+      var panel=document.createElement('div');
+      panel.style.cssText='background:'+f.bg+';border-radius:14px;padding:12px;border:2px solid '+f.colour+'44;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:8px';
+
+      panel.innerHTML='<div style="font-size:48px;text-align:center">'+f.emoji+'</div>'+
+        '<div style="font-size:15px;font-weight:900;color:'+f.colour+';text-align:center">'+f.name+'</div>'+
+        '<div style="font-size:12px;color:#1e293b;text-align:center;font-style:italic">'+f.desc+'</div>';
+
+      /* Body sensations */
+      var bodyRow=document.createElement('div');
+      bodyRow.style.cssText='background:rgba(255,255,255,0.6);border-radius:10px;padding:8px';
+      bodyRow.innerHTML='<div style="font-size:10px;font-weight:800;color:'+f.colour+';text-transform:uppercase;margin-bottom:4px">🫀 In your body</div>'+
+        '<div style="font-size:12px;color:#1e293b">'+f.body+'</div>';
+      panel.appendChild(bodyRow);
+
+      /* What to do */
+      var doRow=document.createElement('div');
+      doRow.style.cssText='background:rgba(255,255,255,0.6);border-radius:10px;padding:8px';
+      doRow.innerHTML='<div style="font-size:10px;font-weight:800;color:'+f.colour+';text-transform:uppercase;margin-bottom:4px">✅ What to do</div>'+
+        '<div style="font-size:12px;color:#1e293b">'+f.healthy+'</div>';
+      panel.appendChild(doRow);
+
+      /* Scenario quiz */
+      var scLabel=document.createElement('div');
+      scLabel.style.cssText='font-size:11px;font-weight:800;color:'+f.colour+';text-align:center';
+      scLabel.textContent='When would YOU feel '+f.name.toLowerCase()+'?';
+      panel.appendChild(scLabel);
+
+      var scRow=document.createElement('div');
+      scRow.style.cssText='display:flex;flex-direction:column;gap:4px';
+      f.scenarios.forEach(function(sc){
+        var btn=document.createElement('button');
+        var isSc=scenario===sc;
+        btn.style.cssText='padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif;text-align:left;'+
+          'border:1.5px solid '+(isSc?f.colour:'var(--border)')+
+          ';background:'+(isSc?f.colour+'22':'white')+';color:#1e293b';
+        btn.textContent=sc;
+        btn.onclick=function(){scenario=sc;render();};
+        scRow.appendChild(btn);
+      });
+      panel.appendChild(scRow);
+
+      if(scenario){
+        var validation=document.createElement('div');
+        validation.style.cssText='background:'+f.colour+'22;border-radius:8px;padding:8px;text-align:center;font-size:12px;font-weight:800;color:'+f.colour;
+        validation.textContent='✅ Yes! "'+scenario+'" is a great reason to feel '+f.name.toLowerCase()+'! All your feelings are valid. 💙';
+        panel.appendChild(validation);
+      }
+
+      wrap.appendChild(panel);
+    }
+
+    var hint=document.createElement('div');
+    hint.style.cssText='font-size:11px;color:var(--muted);text-align:center';
+    hint.textContent='Tap any feeling to explore it. All feelings are normal and okay!';
+    wrap.appendChild(hint);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
     { name:'Leaf',   floats:true,  color:'#22c55e', fact:'Waxy surface traps air — density < water!' },
