@@ -67,10 +67,14 @@ SIM_REGISTRY['count-objects'] = function(c) {
   function shuffle(a){ for(var i=a.length-1;i>0;i--){var j=rnd(i+1);var t=a[i];a[i]=a[j];a[j]=t;} return a; }
 
   function startQuiz() {
-    phase = 'quiz'; quizTarget = count; quizAnswered = false;
+    phase = 'quiz';
+    /* Count only items matching the currently selected emoji */
+    var selectedEmoji = objects[objIdx];
+    quizTarget = items.filter(function(it){ return it.e === selectedEmoji; }).length;
+    quizAnswered = false;
     var opts = [quizTarget];
     while(opts.length < 4) {
-      var v = Math.max(1, quizTarget + rnd(6) - 3);
+      var v = Math.max(0, quizTarget + rnd(6) - 3);
       if(opts.indexOf(v) < 0) opts.push(v);
     }
     quizOptions = shuffle(opts);
@@ -160,7 +164,9 @@ SIM_REGISTRY['count-objects'] = function(c) {
     if(phase === 'quiz') {
       var qLabel = document.createElement('div');
       qLabel.style.cssText = 'width:100%;text-align:center;font-size:13px;font-weight:800;color:var(--text)';
-      qLabel.textContent = 'How many '+objects[objIdx]+'s did you count?';
+      /* Show all placed emojis on canvas so student can count the specific one */
+      var selectedEmoji = objects[objIdx];
+      qLabel.textContent = 'How many '+selectedEmoji+' did you place?';
       act.appendChild(qLabel);
       quizOptions.forEach(function(opt) {
         var ob = document.createElement('button');
@@ -175,7 +181,8 @@ SIM_REGISTRY['count-objects'] = function(c) {
           ob.style.color = 'white';
           var fb = document.createElement('div');
           fb.style.cssText = 'width:100%;text-align:center;font-weight:800;font-size:13px;color:'+(opt===quizTarget?'#22c55e':'#f59e0b');
-          fb.textContent = opt===quizTarget ? 'Correct! '+quizTarget+' objects!' : 'It was '+quizTarget+'!';
+          var sel = objects[objIdx];
+          fb.textContent = opt===quizTarget ? 'Correct! '+quizTarget+' '+sel+'!' : 'There were '+quizTarget+' '+sel+'!';
           act.appendChild(fb);
           if(rounds < 5) {
             var nx = document.createElement('button');
@@ -336,13 +343,20 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
     {name:'Phone',     h:110, emoji:'📱', colour:'#8b5cf6'},
     {name:'Eraser',    h:35,  emoji:'🧹', colour:'#ef4444'},
   ];
-  var round=0, score=0;
+  var round=0, score=0, maxRounds=10;
   var objA=0, objB=1, answered=false;
+  var usedPairs=[];
 
   function pick() {
+    if(round >= maxRounds) { render(); return; }
     answered=false;
-    objA=Math.floor(Math.random()*objects.length);
-    do { objB=Math.floor(Math.random()*objects.length); } while(objB===objA);
+    var tries=0;
+    do {
+      objA=Math.floor(Math.random()*objects.length);
+      objB=Math.floor(Math.random()*objects.length);
+      tries++;
+    } while((objA===objB || usedPairs.indexOf(Math.min(objA,objB)+'-'+Math.max(objA,objB))>=0) && tries<30);
+    usedPairs.push(Math.min(objA,objB)+'-'+Math.max(objA,objB));
     render();
   }
 
@@ -353,7 +367,7 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
 
     var top=document.createElement('div');
     top.style.cssText='display:flex;justify-content:space-between;width:100%';
-    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'</span>'+
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+' of '+maxRounds+'</span>'+
       '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
     wrap.appendChild(top);
 
@@ -424,10 +438,18 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
         fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
         fb.textContent=correct?'Correct! '+taller.name+' is taller!':'The '+taller.name+' is taller!';
         wrap.appendChild(fb);
-        var nx=document.createElement('button');
-        nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
-        nx.onclick=pick;
-        wrap.appendChild(nx);
+        if(round < maxRounds) {
+          var nx=document.createElement('button');
+          nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
+          nx.onclick=pick;
+          wrap.appendChild(nx);
+        } else {
+          fb.textContent += ' | Final score: '+score+'/'+maxRounds+' ⭐';
+          var restart=document.createElement('button');
+          restart.className='cbtn'; restart.textContent='↺ Play again'; restart.style.marginTop='4px';
+          restart.onclick=function(){round=0;score=0;usedPairs=[];pick();};
+          wrap.appendChild(restart);
+        }
       };
       btnRow.appendChild(btn);
     });
@@ -445,12 +467,13 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
 
 /* ── MORE OR LESS ── */
 SIM_REGISTRY['more-less'] = function(c) {
-  var round=0, score=0;
+  var round=0, score=0, maxRounds=10;
   var numA=0, numB=0, answered=false;
   var emojis=['🍎','🐝','⭐','🐸','🌸','🦋','🎈','🍌'];
   var emojiIdx=0;
 
   function pick() {
+    if(round >= maxRounds) { render(); return; }
     answered=false;
     numA=1+Math.floor(Math.random()*9);
     do { numB=1+Math.floor(Math.random()*9); } while(numB===numA);
@@ -465,7 +488,7 @@ SIM_REGISTRY['more-less'] = function(c) {
 
     var top=document.createElement('div');
     top.style.cssText='display:flex;justify-content:space-between;width:100%';
-    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'</span>'+
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+' of '+maxRounds+'</span>'+
       '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
     wrap.appendChild(top);
 
@@ -534,10 +557,18 @@ SIM_REGISTRY['more-less'] = function(c) {
         fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
         fb.textContent=correct?'Correct! '+more+' has more!':more+' has more! '+numA+(numA>numB?'>':'<')+numB;
         wrap.appendChild(fb);
-        var nx=document.createElement('button');
-        nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
-        nx.onclick=pick;
-        wrap.appendChild(nx);
+        if(round < maxRounds) {
+          var nx=document.createElement('button');
+          nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
+          nx.onclick=pick;
+          wrap.appendChild(nx);
+        } else {
+          fb.textContent += ' | Final: '+score+'/'+maxRounds+' ⭐';
+          var restart=document.createElement('button');
+          restart.className='cbtn'; restart.textContent='↺ Play again'; restart.style.marginTop='4px';
+          restart.onclick=function(){round=0;score=0;pick();};
+          wrap.appendChild(restart);
+        }
       };
       btnRow.appendChild(btn);
     });
@@ -562,27 +593,26 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
   var mode='build'; /* build | complete */
   var quiz=null; /* {pattern,gapIdx} */
 
+  /* Each entry: [displayed symbols..., correctAnswer] — no ❓ in the data */
   var quizPatterns=[
-    ['🔴','🔵','🔴','🔵','🔴','❓'],
-    ['🟡','🟡','🔵','🟡','🟡','❓'],
-    ['🔴','🟡','🟢','🔴','🟡','❓'],
-    ['⭐','⭐','🌙','⭐','⭐','❓'],
-    ['🐱','🐶','🐱','🐶','🐱','❓'],
-    ['🍎','🍌','🍌','🍎','🍌','❓'],
+    {seq:['🔴','🔵','🔴','🔵','🔴'], ans:'🔵'},
+    {seq:['🟡','🟡','🔵','🟡','🟡'], ans:'🔵'},
+    {seq:['🔴','🟡','🟢','🔴','🟡'], ans:'🟢'},
+    {seq:['⭐','⭐','🌙','⭐','⭐'],   ans:'🌙'},
+    {seq:['🐱','🐶','🐱','🐶','🐱'], ans:'🐶'},
+    {seq:['🍎','🍌','🍌','🍎','🍌'], ans:'🍌'},
+    {seq:['🔵','🔴','🔴','🔵','🔴'], ans:'🔴'},
+    {seq:['🟢','🟣','🟢','🟣','🟢'], ans:'🟣'},
   ];
 
   function startQuiz() {
     mode='complete';
     var q=quizPatterns[round%quizPatterns.length];
-    quiz={pattern:q.slice(0,-1), answer:null};
-    /* Figure out the answer */
-    /* Simple: if AB pattern, next is A if last shown is B */
-    var shown=q.slice(0,-1);
-    /* Derive by continuing the repeating unit */
-    quiz.answer=q[q.length-1]; /* pre-defined */
-    /* Replace ❓ with blank */
-    quiz.displayPattern=q.slice();
-    quiz.displayPattern[quiz.displayPattern.length-1]='❓';
+    quiz={
+      seq: q.seq.slice(),       /* symbols shown */
+      answer: q.ans,            /* correct next symbol */
+      displayPattern: q.seq.slice().concat(['❓']) /* shown + ❓ placeholder */
+    };
     render();
   }
 
@@ -690,18 +720,19 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
       });
       wrap.appendChild(patBox);
 
-      /* Unique symbols as answer options */
-      var uniq=[];
-      quiz.displayPattern.forEach(function(s){if(s!=='❓'&&uniq.indexOf(s)<0)uniq.push(s);});
-      /* Add a distractor */
-      var all=['🔴','🔵','🟡','🟢','🟣','⭐','🌙','🐱'];
-      var distractor=all.find(function(s){return uniq.indexOf(s)<0;})||'❌';
-      var options=[quiz.answer,distractor].filter(function(s,i,a){return a.indexOf(s)===i;});
-      while(options.length<Math.min(4,uniq.length+1)){
-        var ex=all.find(function(s){return options.indexOf(s)<0;});
-        if(ex) options.push(ex);
-      }
-      /* shuffle options */
+      /* Build answer options: correct answer + distractors, never include ❓ */
+      var allSymbols=['🔴','🔵','🟡','🟢','🟣','⭐','🌙','🐱','🐶','🍎','🍌','🟤'];
+      var options=[quiz.answer];
+      /* Add symbols from the sequence as plausible distractors */
+      quiz.seq.forEach(function(s){
+        if(options.indexOf(s)<0) options.push(s);
+      });
+      /* Pad with other symbols if needed */
+      allSymbols.forEach(function(s){
+        if(options.indexOf(s)<0 && options.length<4) options.push(s);
+      });
+      options=options.slice(0,4);
+      /* Shuffle */
       for(var oi=options.length-1;oi>0;oi--){var oj=Math.floor(Math.random()*(oi+1));var ot=options[oi];options[oi]=options[oj];options[oj]=ot;}
 
       var optRow=document.createElement('div');
@@ -716,17 +747,18 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
           round++;
           btn.style.background=correct?'#22c55e':'#ef4444';
           /* Show correct answer */
-          quiz.displayPattern[quiz.displayPattern.length-1]=quiz.answer;
+          /* Reveal: replace the ❓ span with the correct answer */
           patBox.lastChild.textContent=quiz.answer;
           patBox.lastChild.style.background='rgba(34,197,94,0.2)';
           patBox.lastChild.style.borderRadius='6px';
+          patBox.lastChild.style.padding='2px 6px';
           var fb=document.createElement('div');
           fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
           fb.textContent=correct?'Correct! Great pattern thinking!':'The answer was '+quiz.answer+'!';
           wrap.appendChild(fb);
           var nx=document.createElement('button');
           nx.className='cbtn evs'; nx.textContent='Next pattern →'; nx.style.marginTop='4px';
-          nx.onclick=function(){mode='build';pattern=[];startQuiz();};
+          nx.onclick=function(){startQuiz();};
           wrap.appendChild(nx);
           optRow.querySelectorAll('button').forEach(function(b){b.disabled=true;});
         };
