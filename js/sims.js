@@ -893,255 +893,476 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
 
 /* ── FAMILY TREE — drag names to tree slots ── */
 SIM_REGISTRY['family-tree'] = function(c) {
-  var members = [
-    {role:'Grandfather', emoji:'👴', side:'top',   colour:'#6366f1'},
-    {role:'Grandmother', emoji:'👵', side:'top',   colour:'#ec4899'},
-    {role:'Father',      emoji:'👨', side:'mid',   colour:'#3b82f6'},
-    {role:'Mother',      emoji:'👩', side:'mid',   colour:'#f43f5e'},
-    {role:'Me',          emoji:'🧒', side:'me',    colour:'#22c55e'},
-    {role:'Brother',     emoji:'👦', side:'me',    colour:'#f59e0b'},
-    {role:'Sister',      emoji:'👧', side:'me',    colour:'#a855f7'},
-    {role:'Uncle',       emoji:'🧔', side:'mid',   colour:'#0ea5e9'},
+  var phase='explore'; /* explore | quiz */
+  var quizIdx=0, score=0, quizAnswered=false;
+
+  /* Family relationships explained visually */
+  var members=[
+    {role:'Grandmother', emoji:'👵', relation:'Mother\'s or Father\'s mother', colour:'#ec4899',
+     fact:'Your grandmother is your parent\'s mother. She is your mother\'s or father\'s mum!',
+     riddle:'I am your father\'s mother. Who am I?', answer:'Grandmother',
+     options:['Sister','Grandmother','Aunt','Mother']},
+    {role:'Grandfather', emoji:'👴', relation:'Mother\'s or Father\'s father', colour:'#6366f1',
+     fact:'Your grandfather is your parent\'s father. You call your mum\'s dad "grandfather" too!',
+     riddle:'I am your mother\'s father. Who am I?', answer:'Grandfather',
+     options:['Uncle','Brother','Grandfather','Father']},
+    {role:'Mother',      emoji:'👩', relation:'She takes care of you at home', colour:'#f43f5e',
+     fact:'Your mother gave birth to you. She and your father are your parents.',
+     riddle:'She is my parent. I call her...?', answer:'Mother',
+     options:['Aunt','Sister','Grandmother','Mother']},
+    {role:'Father',      emoji:'👨', relation:'He is your other parent', colour:'#3b82f6',
+     fact:'Your father and mother together make your family. He is your parent too!',
+     riddle:'He is my parent. I call him...?', answer:'Father',
+     options:['Uncle','Father','Brother','Grandfather']},
+    {role:'Brother',     emoji:'👦', relation:'A boy born from the same parents', colour:'#f59e0b',
+     fact:'Your brother has the same parents as you. A sibling is a brother or sister.',
+     riddle:'My parents\' son who is not me is my...?', answer:'Brother',
+     options:['Father','Cousin','Friend','Brother']},
+    {role:'Sister',      emoji:'👧', relation:'A girl born from the same parents', colour:'#a855f7',
+     fact:'Your sister has the same parents as you. Brothers and sisters are called siblings!',
+     riddle:'My parents\' daughter who is not me is my...?', answer:'Sister',
+     options:['Sister','Aunt','Cousin','Mother']},
+    {role:'Uncle',       emoji:'🧔', relation:'Your parent\'s brother', colour:'#0ea5e9',
+     fact:'Your uncle is your mother\'s or father\'s brother. His children are your cousins!',
+     riddle:'My father\'s brother is my...?', answer:'Uncle',
+     options:['Father','Grandfather','Uncle','Brother']},
+    {role:'Aunt',        emoji:'👩‍🦰', relation:'Your parent\'s sister', colour:'#10b981',
+     fact:'Your aunt is your parent\'s sister. She is like a second mother figure!',
+     riddle:'My mother\'s sister is my...?', answer:'Aunt',
+     options:['Grandmother','Mother','Sister','Aunt']},
   ];
 
-  var placed = {}; // slot → member index
-  var selected = null;
-  var activeSlots = ['Grandfather','Grandmother','Father','Mother','Me','Brother'];
+  function renderExplore() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
 
-  function render() {
-    c.innerHTML = '';
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
-
-    var title = document.createElement('div');
-    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
-    title.textContent = '👨‍👩‍👧‍👦 Build Your Family Tree!';
+    var title=document.createElement('div');
+    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent='👨‍👩‍👧‍👦 Who is in my family?';
     wrap.appendChild(title);
 
-    var instr = document.createElement('div');
-    instr.style.cssText = 'font-size:11px;color:var(--muted);text-align:center';
-    instr.textContent = selected!==null ? 'Now tap a tree slot to place them!' : 'Tap a family member, then tap their slot on the tree.';
-    wrap.appendChild(instr);
-
-    /* Tree canvas */
-    var cv = document.createElement('canvas');
-    cv.width = 300; cv.height = 220;
-    cv.style.cssText = 'width:100%;max-width:300px;height:220px;display:block;border-radius:12px;background:#f0fdf4;border:1.5px solid #bbf7d0';
+    /* Family tree visual on canvas */
+    var cv=document.createElement('canvas');
+    cv.width=300; cv.height=190;
+    cv.style.cssText='width:100%;max-width:300px;height:190px;display:block;border-radius:12px;background:linear-gradient(180deg,#f0fdf4,#dcfce7);margin:0 auto';
     wrap.appendChild(cv);
-    var ctx = cv.getContext('2d');
+    var ctx=cv.getContext('2d');
 
-    /* Tree trunk and branches */
-    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 4;
-    /* Main trunk */
-    ctx.beginPath(); ctx.moveTo(150,210); ctx.lineTo(150,160); ctx.stroke();
-    /* Parents branch */
-    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(80,130); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(220,130); ctx.stroke();
-    /* Grandparents branches */
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(40,100); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(120,100); ctx.stroke();
-    /* Me + siblings branch */
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(150,160); ctx.lineTo(150,185); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(110,195); ctx.lineTo(190,195); ctx.stroke();
+    /* Draw tree structure */
+    ctx.strokeStyle='#92400e'; ctx.lineWidth=2.5; ctx.lineCap='round';
+    /* Trunk */
+    ctx.beginPath(); ctx.moveTo(150,185); ctx.lineTo(150,155); ctx.stroke();
+    /* Parent branches */
+    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(80,130); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(220,130); ctx.stroke();
+    /* Grandparent branches */
+    ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(45,100); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(115,100); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(220,130); ctx.lineTo(185,100); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(220,130); ctx.lineTo(255,100); ctx.stroke();
+    /* Siblings branch */
+    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(150,175); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(115,183); ctx.lineTo(185,183); ctx.stroke();
 
-    /* Tree canopy */
-    ctx.fillStyle = 'rgba(34,197,94,0.15)';
-    ctx.beginPath(); ctx.ellipse(150,90,130,70,0,0,Math.PI*2); ctx.fill();
+    /* Person bubbles */
+    function bubble(x,y,emoji,label,col){
+      ctx.fillStyle=col+'33'; ctx.strokeStyle=col; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.font='16px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(emoji,x,y-1);
+      ctx.fillStyle='#1e293b'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textBaseline='top';
+      ctx.fillText(label,x,y+20);
+    }
 
-    /* Define slot positions */
-    var slotPos = {
-      'Grandfather': {x:40,  y:75},
-      'Grandmother': {x:120, y:75},
-      'Father':      {x:75,  y:118},
-      'Mother':      {x:220, y:118},
-      'Me':          {x:120, y:195},
-      'Brother':     {x:160, y:195},
-    };
+    bubble(45,  82, '👴','Grandpa','#6366f1');
+    bubble(115, 82, '👵','Grandma','#ec4899');
+    bubble(80,  115,'👨','Father', '#3b82f6');
+    bubble(185, 82, '👴','Grandpa','#6366f1');
+    bubble(255, 82, '👵','Grandma','#ec4899');
+    bubble(220, 115,'👩','Mother', '#f43f5e');
+    bubble(115, 178,'👦','Brother','#f59e0b');
+    bubble(150, 160,'🧒','Me!',    '#22c55e');
+    bubble(185, 178,'👧','Sister', '#a855f7');
 
-    /* Draw slots */
-    Object.keys(slotPos).forEach(function(role) {
-      var pos = slotPos[role];
-      var placedIdx = placed[role] !== undefined ? placed[role] : -1;
-      var mem = placedIdx >= 0 ? members[placedIdx] : null;
-
-      ctx.save();
-      /* Slot circle */
-      ctx.beginPath(); ctx.arc(pos.x, pos.y, 22, 0, Math.PI*2);
-      if(mem) {
-        ctx.fillStyle = mem.colour + '33';
-        ctx.fill();
-        ctx.strokeStyle = mem.colour; ctx.lineWidth = 2.5;
-      } else {
-        ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fill();
-        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
-        ctx.setLineDash([4,3]);
-      }
-      ctx.stroke(); ctx.setLineDash([]);
-      /* Label */
-      if(mem) {
-        ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(mem.emoji, pos.x, pos.y-3);
-        ctx.fillStyle = mem.colour; ctx.font = 'bold 8px Nunito,sans-serif';
-        ctx.textBaseline = 'top'; ctx.fillText(role, pos.x, pos.y+16);
-      } else {
-        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 8px Nunito,sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(role, pos.x, pos.y);
-      }
-      ctx.restore();
+    /* Family cards — tap to learn */
+    var grid=document.createElement('div');
+    grid.style.cssText='display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+    members.forEach(function(mem){
+      var card=document.createElement('button');
+      card.style.cssText='display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:10px;cursor:pointer;'+
+        'border:2px solid '+mem.colour+'44;background:'+mem.colour+'11;min-width:70px';
+      card.innerHTML='<span style="font-size:22px">'+mem.emoji+'</span>'+
+        '<span style="font-size:10px;font-weight:800;color:'+mem.colour+'">'+mem.role+'</span>'+
+        '<span style="font-size:9px;color:var(--muted);line-height:1.2;text-align:center">'+mem.relation+'</span>';
+      card.onclick=function(){ showMember(mem); };
+      grid.appendChild(card);
     });
+    wrap.appendChild(grid);
 
-    /* Click handler for slots */
-    cv.onclick = function(e) {
-      if(selected === null) return;
-      var rect = cv.getBoundingClientRect();
-      var mx = (e.clientX-rect.left)*(300/rect.width);
-      var my = (e.clientY-rect.top)*(220/rect.height);
-      Object.keys(slotPos).forEach(function(role) {
-        var pos = slotPos[role];
-        var dx = mx-pos.x, dy = my-pos.y;
-        if(dx*dx+dy*dy < 22*22) {
-          placed[role] = selected;
-          selected = null;
-          checkComplete();
-          render();
-        }
-      });
-    };
-
-    /* Member picker */
-    var pickerLabel = document.createElement('div');
-    pickerLabel.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted);text-align:center';
-    pickerLabel.textContent = 'Family members:';
-    wrap.appendChild(pickerLabel);
-
-    var picker = document.createElement('div');
-    picker.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center';
-    members.slice(0,6).forEach(function(mem, i) {
-      var btn = document.createElement('button');
-      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:10px;cursor:pointer;border:2px solid '+(selected===i?mem.colour:'var(--border)')+';background:'+(selected===i?mem.colour+'22':'var(--surface2)');
-      btn.innerHTML = '<span style="font-size:24px">'+mem.emoji+'</span><span style="font-size:9px;font-weight:800;color:'+mem.colour+'">'+mem.role+'</span>';
-      btn.onclick = function() { selected = (selected===i)?null:i; render(); };
-      picker.appendChild(btn);
-    });
-    wrap.appendChild(picker);
-
-    /* Reset */
-    var resetBtn = document.createElement('button');
-    resetBtn.className = 'cbtn'; resetBtn.textContent = '↺ Reset tree';
-    resetBtn.onclick = function() { placed={}; selected=null; render(); };
-    wrap.appendChild(resetBtn);
+    var quizBtn=document.createElement('button');
+    quizBtn.className='cbtn evs'; quizBtn.textContent='Take the quiz! ✏️';
+    quizBtn.onclick=function(){ phase='quiz'; quizIdx=0; score=0; quizAnswered=false; renderQuiz(); };
+    wrap.appendChild(quizBtn);
     c.appendChild(wrap);
   }
 
-  function checkComplete() {
-    var placedCount = Object.keys(placed).length;
-    if(placedCount >= 6) {
-      setTimeout(function() {
-        var msg = document.createElement('div');
-        msg.style.cssText = 'text-align:center;padding:10px;font-size:14px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.1);border-radius:10px;margin-top:8px';
-        msg.textContent = '🎉 Family tree complete! A family is a group of people who love and care for each other.';
-        c.firstChild.appendChild(msg);
-      }, 100);
-    }
+  function showMember(mem) {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+
+    var backBtn=document.createElement('button');
+    backBtn.className='cbtn'; backBtn.textContent='← Back to family';
+    backBtn.onclick=renderExplore;
+    wrap.appendChild(backBtn);
+
+    var panel=document.createElement('div');
+    panel.style.cssText='background:'+mem.colour+'11;border:2px solid '+mem.colour+'44;border-radius:14px;padding:16px;width:100%;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center';
+
+    panel.innerHTML='<div style="font-size:64px;line-height:1">'+mem.emoji+'</div>'+
+      '<div style="font-size:20px;font-weight:900;color:'+mem.colour+'">'+mem.role+'</div>'+
+      '<div style="font-size:13px;color:var(--muted)">'+mem.relation+'</div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--text);background:rgba(255,255,255,0.6);border-radius:10px;padding:10px;line-height:1.6">'+mem.fact+'</div>';
+
+    /* Riddle */
+    var riddle=document.createElement('div');
+    riddle.style.cssText='background:'+mem.colour+'22;border-radius:10px;padding:10px;font-size:13px;font-weight:800;color:'+mem.colour+';text-align:center;font-style:italic';
+    riddle.textContent='"'+mem.riddle+'"';
+    panel.appendChild(riddle);
+
+    wrap.appendChild(panel);
+    c.appendChild(wrap);
   }
-  render();
+
+  function renderQuiz() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Question '+(quizIdx+1)+' of '+members.length+'</span>'+
+      '<span style="font-size:11px;color:var(--life);font-weight:800">Score: '+score+'/'+quizIdx+'</span>';
+    wrap.appendChild(top);
+
+    if(quizIdx>=members.length){
+      var fin=document.createElement('div');
+      fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
+      fin.innerHTML='<div style="font-size:48px">🎉</div>'+
+        '<div style="font-size:16px;font-weight:900;color:var(--evs)">Family Expert! '+score+'/'+members.length+'</div>'+
+        '<div style="font-size:12px;color:var(--muted)">You know all your family relationships! Families love and support each other. 💛</div>';
+      var rb=document.createElement('button');rb.className='cbtn';rb.textContent='← Explore again';
+      rb.onclick=function(){phase='explore';renderExplore();};fin.appendChild(rb);
+      var rq=document.createElement('button');rq.className='cbtn evs';rq.textContent='↺ Quiz again';
+      rq.onclick=function(){quizIdx=0;score=0;quizAnswered=false;renderQuiz();};fin.appendChild(rq);
+      wrap.appendChild(fin);c.appendChild(wrap);return;
+    }
+
+    var mem=members[quizIdx];
+
+    /* Big emoji */
+    var emojiBox=document.createElement('div');
+    emojiBox.style.cssText='text-align:center;font-size:72px;line-height:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.15))';
+    emojiBox.textContent=mem.emoji;
+    wrap.appendChild(emojiBox);
+
+    /* Riddle */
+    var riddle=document.createElement('div');
+    riddle.style.cssText='background:var(--surface2);border-radius:12px;padding:12px;font-size:14px;font-weight:800;color:var(--text);text-align:center;line-height:1.5;border:1px solid var(--border)';
+    riddle.textContent=mem.riddle;
+    wrap.appendChild(riddle);
+
+    /* Options */
+    var opts=document.createElement('div');
+    opts.style.cssText='display:flex;flex-direction:column;gap:6px';
+    /* Shuffle options */
+    var shuffled=mem.options.slice().sort(function(){return Math.random()-0.5;});
+    shuffled.forEach(function(opt){
+      var btn=document.createElement('button');
+      btn.style.cssText='padding:11px 14px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
+      btn.textContent=opt;
+      btn.onclick=function(){
+        if(quizAnswered)return; quizAnswered=true;
+        var correct=opt===mem.answer;
+        if(correct) score++;
+        quizIdx++;
+        btn.style.background=correct?'#22c55e33':'#ef444433';
+        btn.style.borderColor=correct?'#22c55e':'#ef4444';
+        opts.querySelectorAll('button').forEach(function(b){
+          b.disabled=true;
+          if(b.textContent===mem.answer){b.style.background='#22c55e33';b.style.borderColor='#22c55e';}
+        });
+        var fb=document.createElement('div');
+        fb.style.cssText='padding:8px 10px;border-radius:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.5;background:var(--surface2);border-left:3px solid '+(correct?'#22c55e':'#f59e0b');
+        fb.textContent=(correct?'✅ ':'❌ ')+mem.fact;
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');
+        nx.className='cbtn evs';
+        nx.textContent=quizIdx<members.length?'Next →':'See results!';
+        nx.style.marginTop='4px';
+        nx.onclick=function(){quizAnswered=false;renderQuiz();};
+        wrap.appendChild(nx);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+
+  renderExplore();
 };
 
-/* ── WEATHER DIARY — interactive daily weather observation ── */
 SIM_REGISTRY['weather-diary'] = function(c) {
-  var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  var weather = ['☀️ Sunny','🌤 Partly Cloudy','☁️ Cloudy','🌧 Rainy','⛈ Stormy','❄️ Cold','🌫 Foggy'];
-  var recorded = {}; // day → weather index
-  var activeDay = 0;
+  var raf = null;
+  var t = 0;
+
+  /* Scene state */
+  var state = {
+    sun:   true,
+    cloud: false,
+    rain:  false,
+    wind:  false,
+    night: false,
+  };
+
+  /* Particles: rain drops */
+  var drops = [];
+  function makeDrops() {
+    drops = [];
+    for(var i=0;i<40;i++) drops.push({x:Math.random()*300, y:Math.random()*160, speed:4+Math.random()*3});
+  }
+
+  /* Leaves for wind */
+  var leaves = [];
+  function makeLeaves() {
+    leaves = [];
+    for(var i=0;i<8;i++) leaves.push({x:Math.random()*300, y:60+Math.random()*80, vx:1+Math.random()*2, vy:-0.5+Math.random(), rot:Math.random()*Math.PI*2});
+  }
+
+  function weatherLabel() {
+    if(state.night && state.rain) return {label:'Rainy Night 🌧🌙', fact:'Rain happens when clouds get too heavy with water droplets!'};
+    if(state.night)               return {label:'Clear Night 🌙⭐', fact:'At night the sun is on the other side of Earth. We see stars!'};
+    if(state.rain && state.wind)  return {label:'Stormy! ⛈', fact:'Storms have rain, wind, and sometimes thunder and lightning!'};
+    if(state.rain)                return {label:'Rainy Day 🌧', fact:'Rain fills rivers, lakes, and helps plants grow!'};
+    if(state.wind && state.cloud) return {label:'Windy & Cloudy 🌬☁️', fact:'Wind moves clouds across the sky. Clouds are made of tiny water droplets!'};
+    if(state.wind)                return {label:'Windy Day 🌬', fact:'Wind is moving air. It can be gentle or very strong!'};
+    if(state.cloud)               return {label:'Cloudy Day ☁️', fact:'Clouds form when warm moist air rises and cools down!'};
+    if(state.sun)                 return {label:'Sunny Day ☀️', fact:'The sun gives us light and warmth. It makes plants grow!'};
+    return                               {label:'Choose weather below!', fact:''};
+  }
+
+  function draw(cv) {
+    var ctx = cv.getContext('2d');
+    var W = cv.width, H = cv.height;
+    t += 0.02;
+    ctx.clearRect(0,0,W,H);
+
+    /* Sky */
+    var skyTop = state.night ? '#0f172a' : state.cloud ? '#cbd5e1' : '#bae6fd';
+    var skyBot = state.night ? '#1e293b' : state.cloud ? '#e2e8f0' : '#e0f2fe';
+    var skyG = ctx.createLinearGradient(0,0,0,H*0.65);
+    skyG.addColorStop(0, skyTop); skyG.addColorStop(1, skyBot);
+    ctx.fillStyle = skyG; ctx.fillRect(0,0,W,H*0.65);
+
+    /* Ground */
+    var grassG = ctx.createLinearGradient(0,H*0.65,0,H);
+    grassG.addColorStop(0, state.rain ? '#86a96a' : '#a8d8a8');
+    grassG.addColorStop(1, '#6b9e5e');
+    ctx.fillStyle = grassG; ctx.fillRect(0,H*0.65,W,H*0.35);
+
+    /* Stars at night */
+    if(state.night) {
+      ctx.fillStyle = 'white';
+      [[30,20],[80,15],[140,25],[200,12],[250,20],[60,40],[170,35],[230,45]].forEach(function(p) {
+        var twinkle = 0.5 + 0.5*Math.sin(t*3+p[0]);
+        ctx.globalAlpha = twinkle;
+        ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, Math.PI*2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      /* Moon */
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath(); ctx.arc(240, 35, 18, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = skyTop;
+      ctx.beginPath(); ctx.arc(250, 30, 15, 0, Math.PI*2); ctx.fill();
+    }
+
+    /* Sun */
+    if(state.sun && !state.night) {
+      var sunX=60, sunY=40, sunR=22;
+      /* Rays */
+      ctx.strokeStyle='#fcd34d'; ctx.lineWidth=2;
+      for(var ri=0;ri<8;ri++){
+        var ra=ri/8*Math.PI*2+t*0.5;
+        ctx.beginPath();
+        ctx.moveTo(sunX+Math.cos(ra)*(sunR+5), sunY+Math.sin(ra)*(sunR+5));
+        ctx.lineTo(sunX+Math.cos(ra)*(sunR+12), sunY+Math.sin(ra)*(sunR+12));
+        ctx.stroke();
+      }
+      var sunG=ctx.createRadialGradient(sunX-5,sunY-5,2,sunX,sunY,sunR);
+      sunG.addColorStop(0,'#fff7ed'); sunG.addColorStop(0.5,'#fcd34d'); sunG.addColorStop(1,'#f59e0b');
+      ctx.fillStyle=sunG; ctx.beginPath(); ctx.arc(sunX,sunY,sunR,0,Math.PI*2); ctx.fill();
+    }
+
+    /* Clouds */
+    if(state.cloud || state.rain) {
+      var cloudX = state.wind ? 80+Math.sin(t)*8 : 100;
+      function cloud(cx,cy,sc) {
+        ctx.fillStyle = state.rain ? '#94a3b8' : '#e2e8f0';
+        [[0,0,22],[20,-8,18],[40,0,20],[-15,5,16],[55,5,16]].forEach(function(p){
+          ctx.beginPath(); ctx.arc(cx+p[0]*sc, cy+p[1]*sc, p[2]*sc, 0, Math.PI*2); ctx.fill();
+        });
+      }
+      cloud(cloudX, 35, 1);
+      cloud(cloudX+120, 45, 0.8);
+      if(state.wind) cloud(cloudX-60+Math.sin(t*0.7)*5, 55, 0.7);
+    }
+
+    /* Rain */
+    if(state.rain) {
+      ctx.strokeStyle = 'rgba(96,165,250,0.6)'; ctx.lineWidth = 1.5;
+      var windShift = state.wind ? 2 : 0;
+      drops.forEach(function(d){
+        d.y += d.speed;
+        d.x += windShift;
+        if(d.y > H*0.65) { d.y = -10; d.x = Math.random()*W; }
+        if(d.x > W) d.x = 0;
+        ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x+windShift*2, d.y+8); ctx.stroke();
+      });
+      /* Puddle splashes on ground */
+      ctx.strokeStyle='rgba(96,165,250,0.3)'; ctx.lineWidth=1;
+      [50,120,200,260].forEach(function(px){
+        var r=3+2*Math.sin(t*4+px);
+        ctx.beginPath(); ctx.ellipse(px,H*0.66,r,r*0.4,0,0,Math.PI*2); ctx.stroke();
+      });
+    }
+
+    /* Wind leaves */
+    if(state.wind) {
+      ctx.fillStyle='#86efac'; ctx.font='14px serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      leaves.forEach(function(l){
+        l.x += l.vx + Math.sin(t*2)*0.5;
+        l.y += l.vy + Math.sin(t*3+l.x*0.1)*0.5;
+        l.rot += 0.05;
+        if(l.x > W+20) { l.x=-10; l.y=60+Math.random()*80; }
+        ctx.save();
+        ctx.translate(l.x, l.y);
+        ctx.rotate(l.rot);
+        ctx.fillText('🍃',0,0);
+        ctx.restore();
+      });
+      /* Wind lines */
+      ctx.strokeStyle='rgba(148,163,184,0.3)'; ctx.lineWidth=1; ctx.setLineDash([5,8]);
+      [30,60,90].forEach(function(y,i){
+        var ox=Math.sin(t*2+i)*20;
+        ctx.beginPath(); ctx.moveTo(ox,y); ctx.lineTo(ox+100,y+5); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    }
+
+    /* Tree */
+    ctx.strokeStyle='#92400e'; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.moveTo(230,H*0.65); ctx.lineTo(230,H*0.45);
+    if(state.wind) {
+      ctx.bezierCurveTo(230,H*0.4,245+Math.sin(t*2)*5,H*0.35,240+Math.sin(t*2)*8,H*0.3);
+    } else {
+      ctx.lineTo(230,H*0.3);
+    }
+    ctx.stroke();
+    ctx.fillStyle = state.rain ? '#4d7c0f' : state.night ? '#166534' : '#22c55e';
+    ctx.beginPath(); ctx.arc(230+(state.wind?Math.sin(t*2)*6:0), H*0.32, 22, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#16a34a';
+    ctx.beginPath(); ctx.arc(218+(state.wind?Math.sin(t*2)*4:0), H*0.37, 16, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(242+(state.wind?Math.sin(t*2)*8:0), H*0.36, 15, 0, Math.PI*2); ctx.fill();
+
+    /* Flower */
+    if(state.sun && !state.rain && !state.night) {
+      var fx=170, fy=H*0.65-20;
+      ctx.fillStyle='#fbbf24'; ctx.font='20px serif'; ctx.textAlign='center';
+      ctx.fillText('🌸', fx, fy);
+    }
+    /* Rainbow after rain + sun */
+    if(state.rain && state.sun && !state.night) {
+      var cols=['rgba(239,68,68,0.3)','rgba(249,115,22,0.3)','rgba(234,179,8,0.3)','rgba(34,197,94,0.3)','rgba(59,130,246,0.3)','rgba(147,51,234,0.3)'];
+      cols.forEach(function(col,i){
+        ctx.strokeStyle=col; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.arc(150,H*0.65,60+i*8,Math.PI,0); ctx.stroke();
+      });
+    }
+  }
 
   function render() {
-    c.innerHTML = '';
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
 
-    var title = document.createElement('div');
-    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
-    title.textContent = '🌦 My Weather Diary — Pick today\'s weather!';
+    var wl=weatherLabel();
+    var title=document.createElement('div');
+    title.style.cssText='font-size:14px;font-weight:900;color:var(--text);text-align:center';
+    title.textContent=wl.label;
     wrap.appendChild(title);
 
-    /* Day selector tabs */
-    var tabs = document.createElement('div');
-    tabs.style.cssText = 'display:flex;gap:4px;justify-content:center;flex-wrap:wrap';
-    days.forEach(function(day, i) {
-      var tab = document.createElement('button');
-      var rec = recorded[i];
-      tab.style.cssText = 'padding:5px 9px;border-radius:8px;border:2px solid '+(i===activeDay?'var(--sci)':'var(--border)')+
-        ';background:'+(i===activeDay?'var(--sci-dim)':rec!==undefined?'var(--surface2)':'transparent')+
-        ';font-family:Nunito,sans-serif;font-size:11px;font-weight:800;cursor:pointer;min-width:38px;text-align:center';
-      tab.innerHTML = '<div>'+day+'</div>'+(rec!==undefined?'<div style="font-size:14px">'+weather[rec].split(' ')[0]+'</div>':'<div style="color:var(--border)">—</div>');
-      tab.onclick = function() { activeDay=i; render(); };
-      tabs.appendChild(tab);
+    /* Live canvas */
+    var cv=document.createElement('canvas');
+    cv.width=300; cv.height=160;
+    cv.style.cssText='width:100%;max-width:300px;height:160px;display:block;border-radius:12px;margin:0 auto';
+    wrap.appendChild(cv);
+    makeDrops(); makeLeaves();
+    if(raf) cancelAnimationFrame(raf);
+    function loop(){ raf=requestAnimationFrame(loop); draw(cv); }
+    loop();
+
+    /* Toggle controls */
+    var controls=document.createElement('div');
+    controls.style.cssText='display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+    var toggles=[
+      {key:'sun',   label:'☀️ Sun',   on:'#fcd34d', off:'var(--surface2)'},
+      {key:'cloud', label:'☁️ Cloud',  on:'#94a3b8', off:'var(--surface2)'},
+      {key:'rain',  label:'🌧 Rain',   on:'#60a5fa', off:'var(--surface2)'},
+      {key:'wind',  label:'🌬 Wind',   on:'#a5f3fc', off:'var(--surface2)'},
+      {key:'night', label:'🌙 Night',  on:'#6366f1', off:'var(--surface2)'},
+    ];
+    toggles.forEach(function(tg){
+      var btn=document.createElement('button');
+      var on=state[tg.key];
+      btn.style.cssText='padding:7px 13px;border-radius:10px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;cursor:pointer;border:2px solid '+(on?tg.on:'var(--border)')+';background:'+(on?tg.on+'44':'var(--surface2)')+';transition:all .15s';
+      btn.textContent=tg.label+(on?' ✓':'');
+      btn.onclick=function(){
+        /* Rain needs cloud */
+        state[tg.key]=!state[tg.key];
+        if(tg.key==='rain'&&state.rain) state.cloud=true;
+        if(tg.key==='night'&&state.night) state.sun=false;
+        if(tg.key==='sun'&&state.sun) state.night=false;
+        render();
+      };
+      controls.appendChild(btn);
     });
-    wrap.appendChild(tabs);
+    wrap.appendChild(controls);
 
-    /* Weather picker for active day */
-    var dayLabel = document.createElement('div');
-    dayLabel.style.cssText = 'font-size:12px;font-weight:800;color:var(--muted);text-align:center';
-    dayLabel.textContent = 'What is the weather on '+days[activeDay]+'?';
-    wrap.appendChild(dayLabel);
-
-    var wGrid = document.createElement('div');
-    wGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
-    weather.forEach(function(w, i) {
-      var parts = w.split(' ');
-      var emoji = parts[0], label = parts.slice(1).join(' ');
-      var btn = document.createElement('button');
-      var isSelected = recorded[activeDay] === i;
-      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border-radius:10px;cursor:pointer;'+
-        'border:2px solid '+(isSelected?'var(--sci)':'var(--border)')+
-        ';background:'+(isSelected?'var(--sci-dim)':'var(--surface2)');
-      btn.innerHTML = '<span style="font-size:28px">'+emoji+'</span><span style="font-size:10px;font-weight:700;color:var(--muted)">'+label+'</span>';
-      btn.onclick = function() { recorded[activeDay]=i; render(); };
-      wGrid.appendChild(btn);
-    });
-    wrap.appendChild(wGrid);
-
-    /* Weekly summary */
-    var recordedCount = Object.keys(recorded).length;
-    if(recordedCount >= 3) {
-      var summary = document.createElement('div');
-      summary.style.cssText = 'background:var(--surface2);border-radius:12px;padding:10px;border:1px solid var(--border)';
-      /* Count weather types */
-      var counts = {};
-      Object.values(recorded).forEach(function(wi) {
-        var wname = weather[wi]; counts[wname] = (counts[wname]||0)+1;
-      });
-      var most = Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];})[0];
-      summary.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px">📊 This week so far ('+recordedCount+'/7 days):</div>'+
-        Object.keys(counts).map(function(w){
-          var parts=w.split(' '); var e=parts[0],n=parts.slice(1).join(' ');
-          return '<div style="font-size:12px;display:flex;gap:6px;align-items:center"><span>'+e+'</span><span style="color:var(--text);font-weight:700">'+n+'</span><span style="color:var(--muted)">× '+counts[w]+'</span></div>';
-        }).join('')+
-        (recordedCount>=5?'<div style="margin-top:6px;font-size:12px;color:var(--sci);font-weight:800">Most common: '+most+'</div>':'');
-      wrap.appendChild(summary);
+    /* Fact */
+    if(wl.fact) {
+      var fact=document.createElement('div');
+      fact.style.cssText='font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:6px 10px;background:var(--surface2);border-radius:8px;line-height:1.5';
+      fact.textContent='💡 '+wl.fact;
+      wrap.appendChild(fact);
     }
 
-    /* Pattern insight */
-    if(recordedCount >= 7) {
-      var insight = document.createElement('div');
-      insight.style.cssText = 'text-align:center;font-size:12px;font-weight:800;color:#22c55e;padding:8px;background:rgba(34,197,94,0.1);border-radius:10px';
-      insight.textContent = '🎉 Full week recorded! Weather follows patterns — scientists who study this are called Meteorologists!';
-      wrap.appendChild(insight);
-    }
+    /* Combinations prompt */
+    var combos=document.createElement('div');
+    combos.style.cssText='font-size:10px;color:var(--muted);text-align:center';
+    combos.textContent='Try Sun+Rain = 🌈 Rainbow!  Wind+Leaves=🍃  Night+Stars=🌙';
+    wrap.appendChild(combos);
 
-    var reset = document.createElement('button');
-    reset.className = 'cbtn'; reset.textContent = '↺ New week';
-    reset.onclick = function() { recorded={}; activeDay=0; render(); };
-    wrap.appendChild(reset);
+    window.simCleanup=function(){ if(raf) cancelAnimationFrame(raf); };
     c.appendChild(wrap);
   }
   render();
 };
 
-/* ── LIVING OR NON-LIVING SORT ── */
+/* ── MY FAMILY TREE — interactive role-based quiz ── */
+
 SIM_REGISTRY['living-sort'] = function(c) {
   var items = [
     {name:'Dog',      emoji:'🐕', living:true,  reason:'Breathes, eats, grows, has babies'},
