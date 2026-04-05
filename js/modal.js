@@ -66,10 +66,13 @@
   function renderVirtual(e) {
     if (window.simCleanup) { window.simCleanup(); window.simCleanup = null; }
     var modal = document.getElementById('modal');
-    var body  = document.getElementById('modalBody');
 
-    /* Tear down any previous desktop split */
+    /* Tear down any previous desktop split FIRST — it rebuilds modal.innerHTML */
     collapseDesktopLayout(modal);
+
+    /* Get body AFTER collapse — collapse may have recreated the element */
+    var body = document.getElementById('modalBody');
+    if (!body) return; /* safety guard */
 
     var simFn = window.SIM_REGISTRY && window.SIM_REGISTRY[e.simId];
 
