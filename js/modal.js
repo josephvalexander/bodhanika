@@ -30,6 +30,7 @@
       shareBtn.onclick = function() { shareExperiment(id, e.title); };
     }
 
+    defCurrent = 0; /* reset step index on every new modal open */
     renderVirtual(e);
     document.getElementById('overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -59,7 +60,7 @@
     document.getElementById('bHome').classList.toggle('active', mode === 'h');
     var e = window.EXP_MAP[currentId];
     if (!e) return;
-    if (mode === 'v') renderVirtual(e); else renderHome(e);
+    if (mode === 'v') { defCurrent = 0; renderVirtual(e); } else renderHome(e);
   };
 
   /* ── Virtual mode ── */

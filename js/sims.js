@@ -52,6 +52,695 @@ function getCtx(id) {
    ══════════════════════════════════════ */
 
 /* ── SINK OR FLOAT (canvas, physics animation) ── */
+/* ══════════════════════════════════════════════════════════════
+   CLASS 1 MATHS — INTERACTIVE SIMS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── COUNTING WITH OBJECTS ── */
+SIM_REGISTRY['count-objects'] = function(c) {
+  var count = 0, maxN = 20, objIdx = 0, items = [];
+  var rounds = 0, score = 0, phase = 'place';
+  var quizTarget = 0, quizOptions = [], quizAnswered = false;
+  var objects = ['🍎','🌟','🔵','🍌','🐝','🌸','🎈','🐸'];
+
+  function rnd(n) { return Math.floor(Math.random()*n); }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){var j=rnd(i+1);var t=a[i];a[i]=a[j];a[j]=t;} return a; }
+
+  function startQuiz() {
+    phase = 'quiz'; quizTarget = count; quizAnswered = false;
+    var opts = [quizTarget];
+    while(opts.length < 4) {
+      var v = Math.max(1, quizTarget + rnd(6) - 3);
+      if(opts.indexOf(v) < 0) opts.push(v);
+    }
+    quizOptions = shuffle(opts);
+    render();
+  }
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var topRow = document.createElement('div');
+    topRow.style.cssText = 'display:flex;justify-content:space-between';
+    topRow.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(rounds+1)+' of 5</span>'+
+      '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+rounds+'</span>';
+    wrap.appendChild(topRow);
+
+    /* Object picker */
+    var picker = document.createElement('div');
+    picker.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap';
+    objects.forEach(function(obj,i) {
+      var btn = document.createElement('button');
+      btn.textContent = obj;
+      btn.style.cssText = 'font-size:20px;border-radius:8px;padding:3px 7px;cursor:pointer;border:2px solid '+(i===objIdx?'var(--math)':'transparent')+';background:'+(i===objIdx?'var(--math-dim)':'var(--surface2)');
+      btn.onclick = function(){ objIdx=i; render(); };
+      picker.appendChild(btn);
+    });
+    wrap.appendChild(picker);
+
+    /* Canvas */
+    var cv = document.createElement('canvas');
+    cv.width = 300; cv.height = 170;
+    cv.style.cssText = 'width:100%;max-width:300px;height:170px;display:block;border-radius:12px;background:var(--surface2);border:2px dashed var(--border);cursor:pointer;margin:0 auto';
+    wrap.appendChild(cv);
+    var ctx = cv.getContext('2d');
+
+    function draw() {
+      ctx.clearRect(0,0,300,170);
+      ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      items.forEach(function(it){ ctx.fillText(it.e, it.x, it.y); });
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.font = 'bold 12px Nunito,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('Count: '+count, 6, 4);
+    }
+    draw();
+
+    cv.addEventListener('click', function(e) {
+      if(phase !== 'place' || count >= maxN) return;
+      var r2 = cv.getBoundingClientRect();
+      var x = (e.clientX-r2.left)*(300/r2.width), y = (e.clientY-r2.top)*(170/r2.height);
+      items.push({x:x,y:y,e:objects[objIdx]}); count++;
+      draw(); numDisp.textContent = count;
+    });
+    cv.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      if(phase !== 'place' || count===0) return;
+      items.pop(); count--; draw(); numDisp.textContent = count;
+    });
+
+    /* Number display + +/- */
+    var numRow = document.createElement('div');
+    numRow.style.cssText = 'display:flex;align-items:center;gap:12px;justify-content:center';
+    var numDisp = document.createElement('div');
+    numDisp.style.cssText = 'font-size:52px;font-weight:900;color:var(--math);min-width:64px;text-align:center;line-height:1';
+    numDisp.textContent = count;
+    numRow.appendChild(numDisp);
+    var minusBtn = document.createElement('button');
+    minusBtn.className = 'cbtn'; minusBtn.textContent = '−'; minusBtn.style.cssText = 'font-size:20px;padding:4px 14px';
+    minusBtn.onclick = function(){ if(count>0){items.pop();count--;draw();numDisp.textContent=count;} };
+    var plusBtn = document.createElement('button');
+    plusBtn.className = 'cbtn'; plusBtn.textContent = '+'; plusBtn.style.cssText = 'font-size:20px;padding:4px 14px';
+    plusBtn.onclick = function(){ if(count<maxN){items.push({x:20+rnd(260),y:15+rnd(140),e:objects[objIdx]});count++;draw();numDisp.textContent=count;} };
+    numRow.appendChild(minusBtn); numRow.appendChild(plusBtn);
+    wrap.appendChild(numRow);
+
+    /* Action row */
+    var act = document.createElement('div');
+    act.style.cssText = 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap';
+
+    if(phase === 'place' && count > 0) {
+      var qBtn = document.createElement('button');
+      qBtn.className = 'cbtn evs'; qBtn.textContent = 'Quiz me! ✏️';
+      qBtn.onclick = startQuiz;
+      act.appendChild(qBtn);
+    }
+
+    if(phase === 'quiz') {
+      var qLabel = document.createElement('div');
+      qLabel.style.cssText = 'width:100%;text-align:center;font-size:13px;font-weight:800;color:var(--text)';
+      qLabel.textContent = 'How many '+objects[objIdx]+'s did you count?';
+      act.appendChild(qLabel);
+      quizOptions.forEach(function(opt) {
+        var ob = document.createElement('button');
+        ob.className = 'cbtn'; ob.textContent = opt;
+        ob.style.cssText = 'font-size:20px;font-weight:900;padding:6px 18px';
+        ob.onclick = function() {
+          if(quizAnswered) return;
+          quizAnswered = true;
+          if(opt===quizTarget) score++;
+          rounds++;
+          ob.style.background = opt===quizTarget ? '#22c55e' : '#ef4444';
+          ob.style.color = 'white';
+          var fb = document.createElement('div');
+          fb.style.cssText = 'width:100%;text-align:center;font-weight:800;font-size:13px;color:'+(opt===quizTarget?'#22c55e':'#f59e0b');
+          fb.textContent = opt===quizTarget ? 'Correct! '+quizTarget+' objects!' : 'It was '+quizTarget+'!';
+          act.appendChild(fb);
+          if(rounds < 5) {
+            var nx = document.createElement('button');
+            nx.className = 'cbtn evs'; nx.textContent = 'Next →'; nx.style.marginTop='4px';
+            nx.onclick = function(){ count=0;items=[];phase='place';render(); };
+            act.appendChild(nx);
+          } else {
+            fb.textContent += ' Final: '+score+'/5 ⭐';
+          }
+        };
+        act.appendChild(ob);
+      });
+    }
+
+    var clrBtn = document.createElement('button');
+    clrBtn.className = 'cbtn'; clrBtn.textContent = '↺ Clear';
+    clrBtn.onclick = function(){ count=0;items=[];phase='place';render(); };
+    act.appendChild(clrBtn);
+    wrap.appendChild(act);
+
+    var hint = document.createElement('div');
+    hint.style.cssText = 'font-size:11px;color:var(--muted);text-align:center';
+    hint.textContent = phase==='place' ? '👆 Tap box to drop objects · Right-click removes' : 'Count the objects and pick the number!';
+    wrap.appendChild(hint);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── SHAPES HUNT ── */
+SIM_REGISTRY['shapes-hunt'] = function(c) {
+  var shapes = ['Circle','Square','Triangle','Rectangle','Oval','Pentagon'];
+  var shapeEmoji = {Circle:'⚪',Square:'🟦',Triangle:'🔺',Rectangle:'🟩',Oval:'🥚',Pentagon:'⬠'};
+  var shapeProps = {
+    Circle:    {sides:0, corners:0, fact:'No corners, no sides — perfectly round!'},
+    Square:    {sides:4, corners:4, fact:'4 equal sides and 4 equal corners!'},
+    Triangle:  {sides:3, corners:3, fact:'The fewest sides a shape can have!'},
+    Rectangle: {sides:4, corners:4, fact:'4 sides — opposite sides are equal length'},
+    Oval:      {sides:0, corners:0, fact:'Like a stretched circle — an ellipse'},
+    Pentagon:  {sides:5, corners:5, fact:'5 sides — like the Pentagon building!'},
+  };
+  var round = 0, score = 0, answered = false;
+  var order = [];
+  var current = 0;
+
+  function shuffle(a){ var b=a.slice(); for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=b[i];b[i]=b[j];b[j]=t;} return b; }
+
+  function newRound() {
+    answered = false;
+    order = shuffle(shapes);
+    current = Math.floor(Math.random()*shapes.length);
+    render();
+  }
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+
+    /* Score */
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;justify-content:space-between;width:100%';
+    top.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'/'+shapes.length+'</span>'+
+      '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
+    wrap.appendChild(top);
+
+    /* Draw shape on canvas */
+    var cv = document.createElement('canvas');
+    cv.width = 200; cv.height = 160;
+    cv.style.cssText = 'width:200px;height:160px;display:block;border-radius:12px;background:var(--surface2)';
+    wrap.appendChild(cv);
+    var ctx = cv.getContext('2d');
+    var name = shapes[current];
+    ctx.fillStyle = '#6366f1'; ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    if(name==='Circle') ctx.arc(100,80,55,0,Math.PI*2);
+    else if(name==='Square') { ctx.moveTo(50,35); ctx.lineTo(150,35); ctx.lineTo(150,125); ctx.lineTo(50,125); ctx.closePath(); }
+    else if(name==='Triangle') { ctx.moveTo(100,20); ctx.lineTo(170,140); ctx.lineTo(30,140); ctx.closePath(); }
+    else if(name==='Rectangle') { ctx.moveTo(20,50); ctx.lineTo(180,50); ctx.lineTo(180,110); ctx.lineTo(20,110); ctx.closePath(); }
+    else if(name==='Oval') ctx.ellipse(100,80,75,45,0,0,Math.PI*2);
+    else if(name==='Pentagon') {
+      for(var i=0;i<5;i++){
+        var a=-Math.PI/2+i/5*Math.PI*2;
+        if(i===0)ctx.moveTo(100+65*Math.cos(a),80+65*Math.sin(a));
+        else ctx.lineTo(100+65*Math.cos(a),80+65*Math.sin(a));
+      } ctx.closePath();
+    }
+    ctx.fill(); ctx.stroke();
+    /* Highlight corner dots */
+    var pts = [];
+    if(name==='Square')    pts=[[50,35],[150,35],[150,125],[50,125]];
+    if(name==='Triangle')  pts=[[100,20],[170,140],[30,140]];
+    if(name==='Rectangle') pts=[[20,50],[180,50],[180,110],[20,110]];
+    if(name==='Pentagon')  for(var pi=0;pi<5;pi++){var pa=-Math.PI/2+pi/5*Math.PI*2;pts.push([100+65*Math.cos(pa),80+65*Math.sin(pa)]);}
+    ctx.fillStyle='#fbbf24';
+    pts.forEach(function(p){ ctx.beginPath(); ctx.arc(p[0],p[1],5,0,Math.PI*2); ctx.fill(); });
+    /* Labels */
+    var prop = shapeProps[name];
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.font='bold 11px Nunito,sans-serif'; ctx.textAlign='center';
+    if(prop.corners>0) ctx.fillText('Corners: '+prop.corners+' · Sides: '+prop.sides, 100, 152);
+    else ctx.fillText('No corners!',100,152);
+
+    /* Question */
+    var q = document.createElement('div');
+    q.style.cssText = 'font-size:15px;font-weight:800;color:var(--text);text-align:center';
+    q.textContent = 'What shape is this? 👆';
+    wrap.appendChild(q);
+
+    /* Answer options */
+    var opts = document.createElement('div');
+    opts.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center';
+    shapes.forEach(function(sh) {
+      var btn = document.createElement('button');
+      btn.className = 'cbtn';
+      btn.innerHTML = shapeEmoji[sh]+' '+sh;
+      btn.style.cssText = 'font-size:13px;padding:7px 14px';
+      if(answered) {
+        btn.disabled = true;
+        if(sh===name) { btn.style.background='#22c55e'; btn.style.color='white'; }
+      }
+      btn.onclick = function() {
+        if(answered) return;
+        answered = true;
+        if(sh===name) score++;
+        round++;
+        btn.style.background = sh===name?'#22c55e':'#ef4444';
+        btn.style.color = 'white';
+        var fb = document.createElement('div');
+        fb.style.cssText = 'width:100%;text-align:center;font-size:12px;font-weight:700;padding:6px;background:var(--surface2);border-radius:8px;color:var(--text)';
+        fb.textContent = (sh===name?'✅ ':'❌ ')+name+'! '+shapeProps[name].fact;
+        wrap.appendChild(fb);
+        if(round < shapes.length) {
+          var nx = document.createElement('button');
+          nx.className='cbtn evs'; nx.textContent='Next shape →'; nx.style.marginTop='4px';
+          nx.onclick = function(){ current=(current+1)%shapes.length; newRound(); };
+          wrap.appendChild(nx);
+        } else {
+          fb.textContent += ' | Score: '+score+'/'+shapes.length+'! ⭐';
+        }
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+  newRound();
+};
+
+/* ── TALLER OR SHORTER ── */
+SIM_REGISTRY['measurement-compare'] = function(c) {
+  var objects = [
+    {name:'Pencil',    h:80,  emoji:'✏️', colour:'#f59e0b'},
+    {name:'Book',      h:130, emoji:'📚', colour:'#6366f1'},
+    {name:'Bottle',    h:160, emoji:'🍶', colour:'#22d3ee'},
+    {name:'Shoe',      h:55,  emoji:'👟', colour:'#ec4899'},
+    {name:'Cup',       h:70,  emoji:'☕', colour:'#10b981'},
+    {name:'Ruler',     h:100, emoji:'📏', colour:'#f97316'},
+    {name:'Phone',     h:110, emoji:'📱', colour:'#8b5cf6'},
+    {name:'Eraser',    h:35,  emoji:'🧹', colour:'#ef4444'},
+  ];
+  var round=0, score=0;
+  var objA=0, objB=1, answered=false;
+
+  function pick() {
+    answered=false;
+    objA=Math.floor(Math.random()*objects.length);
+    do { objB=Math.floor(Math.random()*objects.length); } while(objB===objA);
+    render();
+  }
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'</span>'+
+      '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
+    wrap.appendChild(top);
+
+    /* Canvas showing two objects as bars */
+    var cv=document.createElement('canvas');
+    cv.width=280; cv.height=200;
+    cv.style.cssText='width:280px;height:200px;display:block;border-radius:12px;background:var(--surface2)';
+    wrap.appendChild(cv);
+    var ctx=cv.getContext('2d');
+    var a=objects[objA], b=objects[objB];
+    var baseY=185;
+
+    /* Ground line */
+    ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(20,baseY); ctx.lineTo(260,baseY); ctx.stroke();
+
+    /* Object A bar */
+    ctx.fillStyle=a.colour+'99';
+    ctx.fillRect(55, baseY-a.h, 60, a.h);
+    ctx.strokeStyle=a.colour; ctx.lineWidth=2;
+    ctx.strokeRect(55, baseY-a.h, 60, a.h);
+    ctx.font='28px serif'; ctx.textAlign='center';
+    ctx.fillText(a.emoji, 85, baseY-a.h-10);
+    ctx.fillStyle='var(--text)'; ctx.font='bold 11px Nunito,sans-serif';
+    ctx.fillText(a.name, 85, baseY+14);
+
+    /* Object B bar */
+    ctx.fillStyle=b.colour+'99';
+    ctx.fillRect(165, baseY-b.h, 60, b.h);
+    ctx.strokeStyle=b.colour; ctx.lineWidth=2;
+    ctx.strokeRect(165, baseY-b.h, 60, b.h);
+    ctx.font='28px serif';
+    ctx.fillText(b.emoji, 195, baseY-b.h-10);
+    ctx.fillStyle='var(--text)'; ctx.font='bold 11px Nunito,sans-serif';
+    ctx.fillText(b.name, 195, baseY+14);
+
+    /* Height ruler marks */
+    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,0.5)'; ctx.lineWidth=1;
+    [40,80,120,160].forEach(function(y){
+      ctx.beginPath(); ctx.moveTo(0,baseY-y); ctx.lineTo(280,baseY-y); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    /* Question */
+    var q=document.createElement('div');
+    q.style.cssText='font-size:14px;font-weight:800;color:var(--text);text-align:center';
+    q.innerHTML='Which is <b>TALLER</b>?';
+    wrap.appendChild(q);
+
+    /* Buttons */
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:10px;justify-content:center';
+    [a,b].forEach(function(obj) {
+      var btn=document.createElement('button');
+      btn.className='cbtn';
+      btn.innerHTML=obj.emoji+' '+obj.name;
+      btn.style.cssText='font-size:13px;padding:8px 18px';
+      btn.onclick=function(){
+        if(answered) return;
+        answered=true;
+        var taller=a.h>b.h?a:b;
+        var correct=obj.name===taller.name;
+        if(correct) score++;
+        round++;
+        btn.style.background=correct?'#22c55e':'#ef4444';
+        btn.style.color='white';
+        var fb=document.createElement('div');
+        fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
+        fb.textContent=correct?'Correct! '+taller.name+' is taller!':'The '+taller.name+' is taller!';
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');
+        nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
+        nx.onclick=pick;
+        wrap.appendChild(nx);
+      };
+      btnRow.appendChild(btn);
+    });
+    wrap.appendChild(btnRow);
+
+    /* Also add "Which is shorter" variant */
+    var q2=document.createElement('div');
+    q2.style.cssText='font-size:11px;color:var(--muted);text-align:center';
+    q2.textContent='The bars show their heights. Taller = higher bar!';
+    wrap.appendChild(q2);
+    c.appendChild(wrap);
+  }
+  pick();
+};
+
+/* ── MORE OR LESS ── */
+SIM_REGISTRY['more-less'] = function(c) {
+  var round=0, score=0;
+  var numA=0, numB=0, answered=false;
+  var emojis=['🍎','🐝','⭐','🐸','🌸','🦋','🎈','🍌'];
+  var emojiIdx=0;
+
+  function pick() {
+    answered=false;
+    numA=1+Math.floor(Math.random()*9);
+    do { numB=1+Math.floor(Math.random()*9); } while(numB===numA);
+    emojiIdx=Math.floor(Math.random()*emojis.length);
+    render();
+  }
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'</span>'+
+      '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
+    wrap.appendChild(top);
+
+    /* Two groups displayed as emoji grids */
+    var groups=document.createElement('div');
+    groups.style.cssText='display:flex;gap:16px;justify-content:center;align-items:flex-start;width:100%';
+
+    function makeGroup(n, label) {
+      var div=document.createElement('div');
+      div.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;background:var(--surface2);border-radius:12px;padding:10px';
+      var title=document.createElement('div');
+      title.style.cssText='font-size:11px;font-weight:800;color:var(--muted)';
+      title.textContent=label;
+      div.appendChild(title);
+      var grid=document.createElement('div');
+      grid.style.cssText='display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:120px';
+      for(var i=0;i<n;i++){
+        var em=document.createElement('span');
+        em.style.cssText='font-size:22px;line-height:1';
+        em.textContent=emojis[emojiIdx];
+        grid.appendChild(em);
+      }
+      div.appendChild(grid);
+      var numLabel=document.createElement('div');
+      numLabel.style.cssText='font-size:32px;font-weight:900;color:var(--math);margin-top:4px';
+      numLabel.textContent=n;
+      div.appendChild(numLabel);
+      return div;
+    }
+
+    groups.appendChild(makeGroup(numA,'Group A'));
+
+    /* Crocodile symbol */
+    var croc=document.createElement('div');
+    croc.style.cssText='font-size:32px;align-self:center;cursor:pointer';
+    croc.textContent=numA>numB?'>':numA<numB?'<':'=';
+    croc.title='The mouth opens toward the bigger number!';
+    groups.appendChild(croc);
+
+    groups.appendChild(makeGroup(numB,'Group B'));
+    wrap.appendChild(groups);
+
+    /* Question */
+    var q=document.createElement('div');
+    q.style.cssText='font-size:14px;font-weight:800;color:var(--text);text-align:center';
+    q.textContent='Which group has MORE?';
+    wrap.appendChild(q);
+
+    /* Answer buttons */
+    var btnRow=document.createElement('div');
+    btnRow.style.cssText='display:flex;gap:10px;justify-content:center;flex-wrap:wrap';
+    [['Group A',numA],['Group B',numB],['They are equal',null]].forEach(function(opt) {
+      var btn=document.createElement('button');
+      btn.className='cbtn'; btn.textContent=opt[0];
+      btn.style.cssText='font-size:13px;padding:8px 16px';
+      btn.onclick=function(){
+        if(answered) return;
+        answered=true;
+        var more=numA>numB?'Group A':numA<numB?'Group B':'They are equal';
+        var correct=opt[0]===more;
+        if(correct) score++;
+        round++;
+        btn.style.background=correct?'#22c55e':'#ef4444';
+        btn.style.color='white';
+        var fb=document.createElement('div');
+        fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
+        fb.textContent=correct?'Correct! '+more+' has more!':more+' has more! '+numA+(numA>numB?'>':'<')+numB;
+        wrap.appendChild(fb);
+        var nx=document.createElement('button');
+        nx.className='cbtn evs'; nx.textContent='Next →'; nx.style.marginTop='4px';
+        nx.onclick=pick;
+        wrap.appendChild(nx);
+      };
+      btnRow.appendChild(btn);
+    });
+    wrap.appendChild(btnRow);
+
+    var hint=document.createElement('div');
+    hint.style.cssText='font-size:11px;color:var(--muted);text-align:center';
+    hint.innerHTML='🐊 The <b>&gt;</b> and <b>&lt;</b> sign is like a hungry mouth — it always faces the bigger number!';
+    wrap.appendChild(hint);
+    c.appendChild(wrap);
+  }
+  pick();
+};
+
+/* ── PATTERN MAKER ── */
+SIM_REGISTRY['pattern-maker'] = function(c) {
+  var palettes=['🔴🔵','🔴🟡','🟢🟣','⭐🌙','🐱🐶','🍎🍌'];
+  var paletteIdx=0;
+  var pattern=[];
+  var maxLen=12;
+  var round=0, score=0;
+  var mode='build'; /* build | complete */
+  var quiz=null; /* {pattern,gapIdx} */
+
+  var quizPatterns=[
+    ['🔴','🔵','🔴','🔵','🔴','❓'],
+    ['🟡','🟡','🔵','🟡','🟡','❓'],
+    ['🔴','🟡','🟢','🔴','🟡','❓'],
+    ['⭐','⭐','🌙','⭐','⭐','❓'],
+    ['🐱','🐶','🐱','🐶','🐱','❓'],
+    ['🍎','🍌','🍌','🍎','🍌','❓'],
+  ];
+
+  function startQuiz() {
+    mode='complete';
+    var q=quizPatterns[round%quizPatterns.length];
+    quiz={pattern:q.slice(0,-1), answer:null};
+    /* Figure out the answer */
+    /* Simple: if AB pattern, next is A if last shown is B */
+    var shown=q.slice(0,-1);
+    /* Derive by continuing the repeating unit */
+    quiz.answer=q[q.length-1]; /* pre-defined */
+    /* Replace ❓ with blank */
+    quiz.displayPattern=q.slice();
+    quiz.displayPattern[quiz.displayPattern.length-1]='❓';
+    render();
+  }
+
+  function render() {
+    c.innerHTML='';
+    var wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;justify-content:space-between;width:100%';
+    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+'</span>'+
+      '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
+    wrap.appendChild(top);
+
+    if(mode==='build') {
+      /* Palette picker */
+      var palRow=document.createElement('div');
+      palRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+      var palLabel=document.createElement('span');
+      palLabel.style.cssText='font-size:11px;color:var(--muted);font-weight:700;align-self:center';
+      palLabel.textContent='Symbols:';
+      palRow.appendChild(palLabel);
+      palettes.forEach(function(p,i){
+        var btn=document.createElement('button');
+        btn.textContent=p;
+        btn.style.cssText='font-size:14px;border-radius:8px;padding:3px 8px;cursor:pointer;border:2px solid '+(i===paletteIdx?'var(--math)':'transparent')+';background:'+(i===paletteIdx?'var(--math-dim)':'var(--surface2)');
+        btn.onclick=function(){paletteIdx=i;render();};
+        palRow.appendChild(btn);
+      });
+      wrap.appendChild(palRow);
+
+      /* Symbol buttons */
+      var symRow=document.createElement('div');
+      symRow.style.cssText='display:flex;gap:8px;justify-content:center';
+      var syms=palettes[paletteIdx].match(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|./gu)||palettes[paletteIdx].split('');
+      syms.forEach(function(sym){
+        var btn=document.createElement('button');
+        btn.style.cssText='font-size:28px;padding:6px 14px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer';
+        btn.textContent=sym;
+        btn.onclick=function(){
+          if(pattern.length<maxLen){pattern.push(sym);renderPattern();}
+        };
+        symRow.appendChild(btn);
+      });
+      wrap.appendChild(symRow);
+
+      /* Pattern display */
+      var patDisplay=document.createElement('div');
+      patDisplay.style.cssText='min-height:60px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;padding:10px;background:var(--surface2);border-radius:12px;border:2px dashed var(--border);width:100%;box-sizing:border-box';
+      wrap.appendChild(patDisplay);
+
+      function renderPattern(){
+        patDisplay.innerHTML='';
+        if(pattern.length===0){
+          var ph=document.createElement('span');
+          ph.style.cssText='font-size:12px;color:var(--muted)';
+          ph.textContent='Tap symbols above to build your pattern…';
+          patDisplay.appendChild(ph);
+        } else {
+          pattern.forEach(function(sym,i){
+            var span=document.createElement('span');
+            span.style.cssText='font-size:28px;cursor:pointer';
+            span.textContent=sym;
+            span.title='Tap to remove';
+            span.onclick=function(){pattern.splice(i,1);renderPattern();};
+            patDisplay.appendChild(span);
+          });
+        }
+      }
+      renderPattern();
+
+      /* Action buttons */
+      var act=document.createElement('div');
+      act.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap';
+      var quizBtn=document.createElement('button');
+      quizBtn.className='cbtn evs'; quizBtn.textContent='Complete the pattern! →';
+      quizBtn.onclick=startQuiz;
+      act.appendChild(quizBtn);
+      var clr=document.createElement('button');
+      clr.className='cbtn'; clr.textContent='↺ Clear';
+      clr.onclick=function(){pattern=[];renderPattern();};
+      act.appendChild(clr);
+      wrap.appendChild(act);
+
+      var hint=document.createElement('div');
+      hint.style.cssText='font-size:11px;color:var(--muted);text-align:center';
+      hint.textContent='Build a repeating pattern then challenge yourself! Tap a symbol to remove it.';
+      wrap.appendChild(hint);
+    }
+
+    if(mode==='complete') {
+      /* Show the quiz pattern with a gap */
+      var qLabel=document.createElement('div');
+      qLabel.style.cssText='font-size:14px;font-weight:800;color:var(--text);text-align:center';
+      qLabel.textContent='What comes next? Fill the ❓';
+      wrap.appendChild(qLabel);
+
+      var patBox=document.createElement('div');
+      patBox.style.cssText='display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:12px;background:var(--surface2);border-radius:12px;width:100%;box-sizing:border-box';
+      quiz.displayPattern.forEach(function(sym){
+        var span=document.createElement('span');
+        span.style.cssText='font-size:32px';
+        span.textContent=sym;
+        patBox.appendChild(span);
+      });
+      wrap.appendChild(patBox);
+
+      /* Unique symbols as answer options */
+      var uniq=[];
+      quiz.displayPattern.forEach(function(s){if(s!=='❓'&&uniq.indexOf(s)<0)uniq.push(s);});
+      /* Add a distractor */
+      var all=['🔴','🔵','🟡','🟢','🟣','⭐','🌙','🐱'];
+      var distractor=all.find(function(s){return uniq.indexOf(s)<0;})||'❌';
+      var options=[quiz.answer,distractor].filter(function(s,i,a){return a.indexOf(s)===i;});
+      while(options.length<Math.min(4,uniq.length+1)){
+        var ex=all.find(function(s){return options.indexOf(s)<0;});
+        if(ex) options.push(ex);
+      }
+      /* shuffle options */
+      for(var oi=options.length-1;oi>0;oi--){var oj=Math.floor(Math.random()*(oi+1));var ot=options[oi];options[oi]=options[oj];options[oj]=ot;}
+
+      var optRow=document.createElement('div');
+      optRow.style.cssText='display:flex;gap:10px;justify-content:center;flex-wrap:wrap';
+      options.forEach(function(opt){
+        var btn=document.createElement('button');
+        btn.style.cssText='font-size:32px;padding:6px 14px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);cursor:pointer';
+        btn.textContent=opt;
+        btn.onclick=function(){
+          var correct=opt===quiz.answer;
+          if(correct) score++;
+          round++;
+          btn.style.background=correct?'#22c55e':'#ef4444';
+          /* Show correct answer */
+          quiz.displayPattern[quiz.displayPattern.length-1]=quiz.answer;
+          patBox.lastChild.textContent=quiz.answer;
+          patBox.lastChild.style.background='rgba(34,197,94,0.2)';
+          patBox.lastChild.style.borderRadius='6px';
+          var fb=document.createElement('div');
+          fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
+          fb.textContent=correct?'Correct! Great pattern thinking!':'The answer was '+quiz.answer+'!';
+          wrap.appendChild(fb);
+          var nx=document.createElement('button');
+          nx.className='cbtn evs'; nx.textContent='Next pattern →'; nx.style.marginTop='4px';
+          nx.onclick=function(){mode='build';pattern=[];startQuiz();};
+          wrap.appendChild(nx);
+          optRow.querySelectorAll('button').forEach(function(b){b.disabled=true;});
+        };
+        optRow.appendChild(btn);
+      });
+      wrap.appendChild(optRow);
+    }
+
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
     { name:'Leaf',   floats:true,  color:'#22c55e', fact:'Waxy surface traps air — density < water!' },
