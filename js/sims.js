@@ -1121,216 +1121,231 @@ SIM_REGISTRY['pattern-maker'] = function(c) {
 
 /* ── FAMILY TREE — drag names to tree slots ── */
 SIM_REGISTRY['family-tree'] = function(c) {
-  var phase='explore'; /* explore | quiz */
-  var quizIdx=0, score=0, quizAnswered=false;
+  var phase = 'explore';
+  var quizIdx = 0, score = 0, quizAnswered = false;
 
-  /* Family relationships explained visually */
-  var members=[
-    {role:'Grandmother', emoji:'👵', relation:'Mother\'s or Father\'s mother', colour:'#ec4899',
-     fact:'Your grandmother is your parent\'s mother. She is your mother\'s or father\'s mum!',
-     riddle:'I am your father\'s mother. Who am I?', answer:'Grandmother',
-     options:['Sister','Grandmother','Aunt','Mother']},
-    {role:'Grandfather', emoji:'👴', relation:'Mother\'s or Father\'s father', colour:'#6366f1',
-     fact:'Your grandfather is your parent\'s father. You call your mum\'s dad "grandfather" too!',
-     riddle:'I am your mother\'s father. Who am I?', answer:'Grandfather',
-     options:['Uncle','Brother','Grandfather','Father']},
-    {role:'Mother',      emoji:'👩', relation:'She takes care of you at home', colour:'#f43f5e',
-     fact:'Your mother gave birth to you. She and your father are your parents.',
-     riddle:'She is my parent. I call her...?', answer:'Mother',
-     options:['Aunt','Sister','Grandmother','Mother']},
-    {role:'Father',      emoji:'👨', relation:'He is your other parent', colour:'#3b82f6',
-     fact:'Your father and mother together make your family. He is your parent too!',
-     riddle:'He is my parent. I call him...?', answer:'Father',
-     options:['Uncle','Father','Brother','Grandfather']},
-    {role:'Brother',     emoji:'👦', relation:'A boy born from the same parents', colour:'#f59e0b',
-     fact:'Your brother has the same parents as you. A sibling is a brother or sister.',
-     riddle:'My parents\' son who is not me is my...?', answer:'Brother',
-     options:['Father','Cousin','Friend','Brother']},
-    {role:'Sister',      emoji:'👧', relation:'A girl born from the same parents', colour:'#a855f7',
-     fact:'Your sister has the same parents as you. Brothers and sisters are called siblings!',
-     riddle:'My parents\' daughter who is not me is my...?', answer:'Sister',
-     options:['Sister','Aunt','Cousin','Mother']},
-    {role:'Uncle',       emoji:'🧔', relation:'Your parent\'s brother', colour:'#0ea5e9',
-     fact:'Your uncle is your mother\'s or father\'s brother. His children are your cousins!',
-     riddle:'My father\'s brother is my...?', answer:'Uncle',
-     options:['Father','Grandfather','Uncle','Brother']},
-    {role:'Aunt',        emoji:'👩‍🦰', relation:'Your parent\'s sister', colour:'#10b981',
-     fact:'Your aunt is your parent\'s sister. She is like a second mother figure!',
-     riddle:'My mother\'s sister is my...?', answer:'Aunt',
-     options:['Grandmother','Mother','Sister','Aunt']},
+  var members = [
+    {role:'Grandmother', emoji:'👵', colour:'#ec4899', bg:'#fdf2f8',
+     fact:'Your grandmother is your parent\'s mother. You may call her Ammamma or Paati!',
+     riddle:'I am your father\'s mother. Who am I?',
+     options:['Sister','Grandmother','Aunt','Mother'], answer:'Grandmother'},
+    {role:'Grandfather', emoji:'👴', colour:'#6366f1', bg:'#f5f3ff',
+     fact:'Your grandfather is your parent\'s father. You may call him Appuppa or Thatha!',
+     riddle:'I am your mother\'s father. Who am I?',
+     options:['Uncle','Brother','Grandfather','Father'], answer:'Grandfather'},
+    {role:'Father',      emoji:'👨', colour:'#3b82f6', bg:'#eff6ff',
+     fact:'Your father and mother are your parents. They love and take care of you!',
+     riddle:'He is my parent. I call him...?',
+     options:['Uncle','Father','Brother','Grandfather'], answer:'Father'},
+    {role:'Mother',      emoji:'👩', colour:'#f43f5e', bg:'#fff1f2',
+     fact:'Your mother gave birth to you. She and your father are your parents!',
+     riddle:'She is my parent. I call her...?',
+     options:['Aunt','Sister','Grandmother','Mother'], answer:'Mother'},
+    {role:'Brother',     emoji:'👦', colour:'#f59e0b', bg:'#fffbeb',
+     fact:'Your brother has the same parents as you. Brothers and sisters are called siblings!',
+     riddle:'My parents\' son who is not me is my...?',
+     options:['Father','Cousin','Friend','Brother'], answer:'Brother'},
+    {role:'Sister',      emoji:'👧', colour:'#a855f7', bg:'#faf5ff',
+     fact:'Your sister has the same parents as you. You are siblings!',
+     riddle:'My parents\' daughter who is not me is my...?',
+     options:['Sister','Aunt','Cousin','Mother'], answer:'Sister'},
+    {role:'Uncle',       emoji:'🧔', colour:'#0ea5e9', bg:'#f0f9ff',
+     fact:'Your uncle is your parent\'s brother. His children are your cousins!',
+     riddle:'My father\'s brother is my...?',
+     options:['Father','Grandfather','Uncle','Brother'], answer:'Uncle'},
+    {role:'Aunt',        emoji:'👩‍🦰', colour:'#10b981', bg:'#f0fdf4',
+     fact:'Your aunt is your parent\'s sister. Her children are your cousins too!',
+     riddle:'My mother\'s sister is my...?',
+     options:['Grandmother','Mother','Sister','Aunt'], answer:'Aunt'},
   ];
 
-  function renderExplore() {
-    c.innerHTML='';
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+  /* ── Family tree canvas — clean layered layout ── */
+  function drawTree() {
+    var cv = document.createElement('canvas');
+    cv.width = 320; cv.height = 200;
+    cv.style.cssText = 'width:100%;max-width:320px;height:200px;display:block;border-radius:14px;margin:0 auto;background:linear-gradient(160deg,#f0fdf4,#dcfce7)';
+    var ctx = cv.getContext('2d');
 
-    var title=document.createElement('div');
-    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
-    title.textContent='👨‍👩‍👧‍👦 Who is in my family?';
-    wrap.appendChild(title);
+    /* Node positions — clean 4-row tree */
+    /*  Row 0 (top): GrandpaL, GrandmaL, GrandpaR, GrandmaR  */
+    /*  Row 1: Father, Mother */
+    /*  Row 2: Me */
+    /*  Row 2: Brother, Sister (siblings row) */
+    var nodes = {
+      GGL: {x:52,  y:32,  e:'👴', lbl:'Grandpa', col:'#6366f1'},
+      GGmL:{x:112, y:32,  e:'👵', lbl:'Grandma', col:'#ec4899'},
+      GGR: {x:208, y:32,  e:'👴', lbl:'Grandpa', col:'#6366f1'},
+      GGmR:{x:268, y:32,  e:'👵', lbl:'Grandma', col:'#ec4899'},
+      Dad: {x:82,  y:100, e:'👨', lbl:'Father',  col:'#3b82f6'},
+      Mom: {x:238, y:100, e:'👩', lbl:'Mother',  col:'#f43f5e'},
+      Bro: {x:112, y:172, e:'👦', lbl:'Brother', col:'#f59e0b'},
+      Me:  {x:160, y:172, e:'🧒', lbl:'Me!',     col:'#22c55e'},
+      Sis: {x:208, y:172, e:'👧', lbl:'Sister',  col:'#a855f7'},
+    };
 
-    /* Family tree visual on canvas */
-    var cv=document.createElement('canvas');
-    cv.width=300; cv.height=190;
-    cv.style.cssText='width:100%;max-width:300px;height:190px;display:block;border-radius:12px;background:linear-gradient(180deg,#f0fdf4,#dcfce7);margin:0 auto';
-    wrap.appendChild(cv);
-    var ctx=cv.getContext('2d');
+    /* Lines first */
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2; ctx.lineCap = 'round';
 
-    /* Draw tree structure */
-    ctx.strokeStyle='#92400e'; ctx.lineWidth=2.5; ctx.lineCap='round';
-    /* Trunk */
-    ctx.beginPath(); ctx.moveTo(150,185); ctx.lineTo(150,155); ctx.stroke();
-    /* Parent branches */
-    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(80,130); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(220,130); ctx.stroke();
-    /* Grandparent branches */
-    ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(45,100); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(80,130); ctx.lineTo(115,100); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(220,130); ctx.lineTo(185,100); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(220,130); ctx.lineTo(255,100); ctx.stroke();
-    /* Siblings branch */
-    ctx.beginPath(); ctx.moveTo(150,155); ctx.lineTo(150,175); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(115,183); ctx.lineTo(185,183); ctx.stroke();
-
-    /* Person bubbles */
-    function bubble(x,y,emoji,label,col){
-      ctx.fillStyle=col+'33'; ctx.strokeStyle=col; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.fill(); ctx.stroke();
-      ctx.font='16px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(emoji,x,y-1);
-      ctx.fillStyle='#1e293b'; ctx.font='bold 8px Nunito,sans-serif'; ctx.textBaseline='top';
-      ctx.fillText(label,x,y+20);
+    function line(a, b) {
+      ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(nodes[b].x, nodes[b].y); ctx.stroke();
+    }
+    function hline(ax, ay, bx) {
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,ay); ctx.stroke();
+    }
+    function vline(x, ay, by) {
+      ctx.beginPath(); ctx.moveTo(x,ay); ctx.lineTo(x,by); ctx.stroke();
     }
 
-    bubble(45,  82, '👴','Grandpa','#6366f1');
-    bubble(115, 82, '👵','Grandma','#ec4899');
-    bubble(80,  115,'👨','Father', '#3b82f6');
-    bubble(185, 82, '👴','Grandpa','#6366f1');
-    bubble(255, 82, '👵','Grandma','#ec4899');
-    bubble(220, 115,'👩','Mother', '#f43f5e');
-    bubble(115, 178,'👦','Brother','#f59e0b');
-    bubble(150, 160,'🧒','Me!',    '#22c55e');
-    bubble(185, 178,'👧','Sister', '#a855f7');
+    /* Grandparent to parent lines */
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#b45309';
+    /* Left side: GGL+GGmL → Dad */
+    hline(nodes.GGL.x, 60, nodes.GGmL.x);       /* horizontal connector at y=60 */
+    vline(82, 60, nodes.Dad.y-14);               /* down to just above Dad */
+    /* Right side: GGR+GGmR → Mom */
+    hline(nodes.GGR.x, 60, nodes.GGmR.x);
+    vline(238, 60, nodes.Mom.y-14);
 
-    /* Family cards — tap to learn */
-    var grid=document.createElement('div');
-    grid.style.cssText='display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
-    members.forEach(function(mem){
-      var card=document.createElement('button');
-      card.style.cssText='display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:10px;cursor:pointer;'+
-        'border:2px solid '+mem.colour+'44;background:'+mem.colour+'11;min-width:70px';
-      card.innerHTML='<span style="font-size:22px">'+mem.emoji+'</span>'+
+    /* Parent to Me */
+    ctx.lineWidth = 2; ctx.strokeStyle = '#92400e';
+    hline(nodes.Dad.x, 136, nodes.Mom.x);        /* horizontal bar at y=136 */
+    vline(160, 136, 158);                         /* down to sibling row */
+
+    /* Sibling row */
+    ctx.lineWidth = 1.5; ctx.strokeStyle = '#64748b';
+    hline(nodes.Bro.x, 158, nodes.Sis.x);
+    [nodes.Bro, nodes.Me, nodes.Sis].forEach(function(n){ vline(n.x, 158, n.y-14); });
+
+    /* GG to grandparent dots */
+    ctx.lineWidth = 1; ctx.strokeStyle = '#b45309';
+    vline(nodes.GGL.x, nodes.GGL.y+14, 60);
+    vline(nodes.GGmL.x, nodes.GGmL.y+14, 60);
+    vline(nodes.GGR.x, nodes.GGR.y+14, 60);
+    vline(nodes.GGmR.x, nodes.GGmR.y+14, 60);
+
+    /* Parent connecting lines to their horizontal bar */
+    vline(nodes.Dad.x, nodes.Dad.y+14, 136);
+    vline(nodes.Mom.x, nodes.Mom.y+14, 136);
+
+    /* Bubbles */
+    function bubble(n) {
+      ctx.fillStyle = n.col + '28'; ctx.strokeStyle = n.col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(n.x, n.y, 13, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(n.e, n.x, n.y);
+      ctx.fillStyle = n.col; ctx.font = 'bold 7px Nunito,sans-serif'; ctx.textBaseline = 'top';
+      ctx.fillText(n.lbl, n.x, n.y+15);
+    }
+    Object.values(nodes).forEach(bubble);
+    return cv;
+  }
+
+  function renderExplore() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '👨‍👩‍👧‍👦 Who is in my family?';
+    wrap.appendChild(title);
+
+    wrap.appendChild(drawTree());
+
+    /* Member cards */
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;justify-content:center';
+    members.forEach(function(mem) {
+      var card = document.createElement('button');
+      card.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:10px;cursor:pointer;border:2px solid '+mem.colour+'44;background:'+mem.bg+';min-width:68px;max-width:90px';
+      card.innerHTML = '<span style="font-size:22px">'+mem.emoji+'</span>'+
         '<span style="font-size:10px;font-weight:800;color:'+mem.colour+'">'+mem.role+'</span>'+
-        '<span style="font-size:9px;color:var(--muted);line-height:1.2;text-align:center">'+mem.relation+'</span>';
-      card.onclick=function(){ showMember(mem); };
+        '<span style="font-size:9px;color:var(--muted);line-height:1.2;text-align:center">'+mem.fact.split('!')[0].split('.')[0]+'</span>';
+      card.onclick = function() { showMember(mem); };
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
 
-    var quizBtn=document.createElement('button');
-    quizBtn.className='cbtn evs'; quizBtn.textContent='Take the quiz! ✏️';
-    quizBtn.onclick=function(){ phase='quiz'; quizIdx=0; score=0; quizAnswered=false; renderQuiz(); };
-    wrap.appendChild(quizBtn);
+    var qBtn = document.createElement('button');
+    qBtn.className = 'cbtn evs'; qBtn.textContent = 'Take the quiz! ✏️';
+    qBtn.onclick = function() { phase='quiz'; quizIdx=0; score=0; quizAnswered=false; renderQuiz(); };
+    wrap.appendChild(qBtn);
     c.appendChild(wrap);
   }
 
   function showMember(mem) {
-    c.innerHTML='';
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
 
-    var backBtn=document.createElement('button');
-    backBtn.className='cbtn'; backBtn.textContent='← Back to family';
-    backBtn.onclick=renderExplore;
-    wrap.appendChild(backBtn);
+    var back = document.createElement('button');
+    back.className = 'cbtn'; back.textContent = '← Back'; back.onclick = renderExplore;
+    wrap.appendChild(back);
 
-    var panel=document.createElement('div');
-    panel.style.cssText='background:'+mem.colour+'11;border:2px solid '+mem.colour+'44;border-radius:14px;padding:16px;width:100%;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center';
-
-    panel.innerHTML='<div style="font-size:64px;line-height:1">'+mem.emoji+'</div>'+
+    var panel = document.createElement('div');
+    panel.style.cssText = 'background:'+mem.bg+';border:2px solid '+mem.colour+'44;border-radius:14px;padding:16px;width:100%;box-sizing:border-box;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center';
+    panel.innerHTML = '<div style="font-size:64px;line-height:1">'+mem.emoji+'</div>'+
       '<div style="font-size:20px;font-weight:900;color:'+mem.colour+'">'+mem.role+'</div>'+
-      '<div style="font-size:13px;color:var(--muted)">'+mem.relation+'</div>'+
-      '<div style="font-size:12px;font-weight:700;color:var(--text);background:rgba(255,255,255,0.6);border-radius:10px;padding:10px;line-height:1.6">'+mem.fact+'</div>';
-
-    /* Riddle */
-    var riddle=document.createElement('div');
-    riddle.style.cssText='background:'+mem.colour+'22;border-radius:10px;padding:10px;font-size:13px;font-weight:800;color:'+mem.colour+';text-align:center;font-style:italic';
-    riddle.textContent='"'+mem.riddle+'"';
-    panel.appendChild(riddle);
-
+      '<div style="font-size:12px;font-weight:700;color:var(--text);background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;line-height:1.6">'+mem.fact+'</div>'+
+      '<div style="background:'+mem.colour+'22;border-radius:10px;padding:8px;font-size:13px;font-weight:800;color:'+mem.colour+';font-style:italic">"'+mem.riddle+'"</div>';
     wrap.appendChild(panel);
     c.appendChild(wrap);
   }
 
   function renderQuiz() {
-    c.innerHTML='';
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;width:100%';
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
 
-    var top=document.createElement('div');
-    top.style.cssText='display:flex;justify-content:space-between;width:100%';
-    top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Question '+(quizIdx+1)+' of '+members.length+'</span>'+
-      '<span style="font-size:11px;color:var(--life);font-weight:800">Score: '+score+'/'+quizIdx+'</span>';
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;justify-content:space-between;width:100%';
+    top.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Question '+(quizIdx+1)+' of '+members.length+'</span>'+
+      '<span style="font-size:11px;color:var(--evs);font-weight:800">Score: '+score+'/'+quizIdx+'</span>';
     wrap.appendChild(top);
 
-    if(quizIdx>=members.length){
-      var fin=document.createElement('div');
-      fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
-      fin.innerHTML='<div style="font-size:48px">🎉</div>'+
-        '<div style="font-size:16px;font-weight:900;color:var(--evs)">Family Expert! '+score+'/'+members.length+'</div>'+
-        '<div style="font-size:12px;color:var(--muted)">You know all your family relationships! Families love and support each other. 💛</div>';
-      var rb=document.createElement('button');rb.className='cbtn';rb.textContent='← Explore again';
-      rb.onclick=function(){phase='explore';renderExplore();};fin.appendChild(rb);
-      var rq=document.createElement('button');rq.className='cbtn evs';rq.textContent='↺ Quiz again';
-      rq.onclick=function(){quizIdx=0;score=0;quizAnswered=false;renderQuiz();};fin.appendChild(rq);
-      wrap.appendChild(fin);c.appendChild(wrap);return;
+    if(quizIdx >= members.length) {
+      wrap.innerHTML += '<div style="text-align:center;padding:16px;font-size:48px">🎉</div>'+
+        '<div style="text-align:center;font-weight:900;font-size:16px;color:var(--evs)">Family Expert! '+score+'/'+members.length+'</div>'+
+        '<div style="text-align:center;font-size:12px;color:var(--muted);padding:0 12px">Families love and support each other. 💛</div>';
+      var rb = document.createElement('button'); rb.className='cbtn'; rb.textContent='← Explore again';
+      rb.onclick = function(){phase='explore';renderExplore();}; wrap.appendChild(rb);
+      c.appendChild(wrap); return;
     }
 
-    var mem=members[quizIdx];
-
-    /* Big emoji */
-    var emojiBox=document.createElement('div');
-    emojiBox.style.cssText='text-align:center;font-size:72px;line-height:1;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.15))';
-    emojiBox.textContent=mem.emoji;
+    var mem = members[quizIdx];
+    var emojiBox = document.createElement('div');
+    emojiBox.style.cssText = 'text-align:center;font-size:72px;line-height:1';
+    emojiBox.textContent = mem.emoji;
     wrap.appendChild(emojiBox);
 
-    /* Riddle */
-    var riddle=document.createElement('div');
-    riddle.style.cssText='background:var(--surface2);border-radius:12px;padding:12px;font-size:14px;font-weight:800;color:var(--text);text-align:center;line-height:1.5;border:1px solid var(--border)';
-    riddle.textContent=mem.riddle;
+    var riddle = document.createElement('div');
+    riddle.style.cssText = 'background:var(--surface2);border-radius:12px;padding:12px;font-size:14px;font-weight:800;color:var(--text);text-align:center;line-height:1.5';
+    riddle.textContent = mem.riddle;
     wrap.appendChild(riddle);
 
-    /* Options */
-    var opts=document.createElement('div');
-    opts.style.cssText='display:flex;flex-direction:column;gap:6px';
-    /* Shuffle options */
-    var shuffled=mem.options.slice().sort(function(){return Math.random()-0.5;});
-    shuffled.forEach(function(opt){
-      var btn=document.createElement('button');
-      btn.style.cssText='padding:11px 14px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
-      btn.textContent=opt;
-      btn.onclick=function(){
-        if(quizAnswered)return; quizAnswered=true;
-        var correct=opt===mem.answer;
+    var opts = document.createElement('div');
+    opts.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    mem.options.slice().sort(function(){return Math.random()-0.5;}).forEach(function(opt) {
+      var btn = document.createElement('button');
+      btn.style.cssText = 'padding:11px 14px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
+      btn.textContent = opt;
+      btn.onclick = function() {
+        if(quizAnswered) return; quizAnswered = true;
+        var correct = opt === mem.answer;
         if(correct) score++;
         quizIdx++;
-        btn.style.background=correct?'#22c55e33':'#ef444433';
-        btn.style.borderColor=correct?'#22c55e':'#ef4444';
-        opts.querySelectorAll('button').forEach(function(b){
-          b.disabled=true;
-          if(b.textContent===mem.answer){b.style.background='#22c55e33';b.style.borderColor='#22c55e';}
+        btn.style.background = correct?'#22c55e33':'#ef444433';
+        btn.style.borderColor = correct?'#22c55e':'#ef4444';
+        opts.querySelectorAll('button').forEach(function(b) {
+          b.disabled = true;
+          if(b.textContent===mem.answer) {b.style.background='#22c55e33';b.style.borderColor='#22c55e';}
         });
-        var fb=document.createElement('div');
-        fb.style.cssText='padding:8px 10px;border-radius:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.5;background:var(--surface2);border-left:3px solid '+(correct?'#22c55e':'#f59e0b');
-        fb.textContent=(correct?'✅ ':'❌ ')+mem.fact;
+        var fb = document.createElement('div');
+        fb.style.cssText = 'padding:8px 10px;border-radius:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.5;background:var(--surface2);border-left:3px solid '+(correct?'#22c55e':'#f59e0b');
+        fb.textContent = (correct?'✅ ':'❌ ')+mem.fact;
         wrap.appendChild(fb);
-        var nx=document.createElement('button');
-        nx.className='cbtn evs';
-        nx.textContent=quizIdx<members.length?'Next →':'See results!';
-        nx.style.marginTop='4px';
-        nx.onclick=function(){quizAnswered=false;renderQuiz();};
+        var nx = document.createElement('button'); nx.className='cbtn evs';
+        nx.textContent = quizIdx<members.length?'Next →':'See results!'; nx.style.marginTop='4px';
+        nx.onclick = function(){quizAnswered=false;renderQuiz();};
         wrap.appendChild(nx);
       };
       opts.appendChild(btn);
@@ -1341,6 +1356,8 @@ SIM_REGISTRY['family-tree'] = function(c) {
 
   renderExplore();
 };
+
+/* ── DAILY ROUTINE — time-matching drag game ── */
 
 SIM_REGISTRY['weather-diary'] = function(c) {
   var raf = null;
@@ -1938,123 +1955,141 @@ SIM_REGISTRY['soil-types'] = function(c) {
 
 /* ── DAILY ROUTINE — drag activities to time slots ── */
 SIM_REGISTRY['daily-routine'] = function(c) {
-  var activities=[
-    {name:'Wake up',    emoji:'⏰', time:'6 AM',  slot:0},
-    {name:'Brush teeth',emoji:'🪥', time:'6:15',  slot:1},
-    {name:'Bath',       emoji:'🛁', time:'6:30',  slot:2},
-    {name:'Breakfast',  emoji:'🥣', time:'7 AM',  slot:3},
-    {name:'School',     emoji:'🏫', time:'8 AM',  slot:4},
-    {name:'Lunch',      emoji:'🍱', time:'1 PM',  slot:5},
-    {name:'Homework',   emoji:'📚', time:'4 PM',  slot:6},
-    {name:'Play',       emoji:'⚽', time:'5 PM',  slot:7},
-    {name:'Dinner',     emoji:'🍛', time:'7 PM',  slot:8},
-    {name:'Sleep',      emoji:'😴', time:'9 PM',  slot:9},
+  /* Student sees scrambled activity cards and must sort them into morning/afternoon/evening/night */
+  var activities = [
+    {name:'Wake up',      emoji:'⏰', period:'Morning',   colour:'#f59e0b', why:'Starting the day at the same time keeps your body clock healthy!'},
+    {name:'Brush teeth',  emoji:'🪥', period:'Morning',   colour:'#f59e0b', why:'Brushing removes germs that grow overnight on your teeth!'},
+    {name:'Breakfast',    emoji:'🥣', period:'Morning',   colour:'#f59e0b', why:'Breakfast gives your brain energy for learning all morning!'},
+    {name:'Go to school', emoji:'🏫', period:'Morning',   colour:'#f59e0b', why:'School teaches you things you need to grow up strong and smart!'},
+    {name:'Lunch',        emoji:'🍱', period:'Afternoon', colour:'#22c55e', why:'Lunch refuels your body after a busy morning of learning!'},
+    {name:'Homework',     emoji:'📚', period:'Afternoon', colour:'#22c55e', why:'Doing homework while your brain is still alert helps you remember!'},
+    {name:'Play outside',  emoji:'⚽', period:'Afternoon', colour:'#22c55e', why:'Exercise keeps your body strong and improves your mood!'},
+    {name:'Dinner',       emoji:'🍛', period:'Evening',   colour:'#6366f1', why:'A warm dinner with family is good for body and relationships!'},
+    {name:'Read a book',  emoji:'📖', period:'Evening',   colour:'#6366f1', why:'Reading before bed calms your mind and builds your vocabulary!'},
+    {name:'Sleep',        emoji:'😴', period:'Night',     colour:'#1e40af', why:'Sleep is when your brain stores memories and your body grows!'},
   ];
 
-  var slots=['6 AM','6:15','6:30','7 AM','8 AM','1 PM','4 PM','5 PM','7 PM','9 PM'];
-  /* Shuffle activities and let student sort them */
-  var shuffled=activities.slice().sort(function(){return Math.random()-0.5;});
-  var placed={}; /* slotIndex → activityIndex in shuffled */
-  var selected=null;
-  var checked=false;
+  var periods = ['Morning','Afternoon','Evening','Night'];
+  var periodColours = {Morning:'#f59e0b',Afternoon:'#22c55e',Evening:'#6366f1',Night:'#1e40af'};
+  var periodEmoji   = {Morning:'🌅',Afternoon:'☀️',Evening:'🌆',Night:'🌙'};
 
-  function render(){
-    c.innerHTML='';
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-direction:column;gap:8px;width:100%';
+  var placed = {};   /* activityName → period */
+  var selected = null;
+  var checked = false;
 
-    var title=document.createElement('div');
-    title.style.cssText='font-size:13px;font-weight:800;color:var(--text);text-align:center';
-    title.textContent='⏰ Build the Perfect Daily Routine!';
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '⏰ Sort activities into the right time of day!';
     wrap.appendChild(title);
 
-    var instr=document.createElement('div');
-    instr.style.cssText='font-size:11px;color:var(--muted);text-align:center';
-    instr.textContent=selected!==null?'Now tap a time slot to place it!':'Tap an activity, then tap its correct time slot.';
+    var instr = document.createElement('div');
+    instr.style.cssText = 'font-size:11px;color:var(--muted);text-align:center';
+    instr.textContent = selected ? 'Now tap a time period to place "'+selected.name+'"!' : 'Tap an activity card, then tap its time period.';
     wrap.appendChild(instr);
 
-    /* Time slots */
-    var grid=document.createElement('div');
-    grid.style.cssText='display:flex;flex-direction:column;gap:4px';
-    slots.forEach(function(time,si){
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;gap:6px;align-items:center';
-      var timeLabel=document.createElement('div');
-      timeLabel.style.cssText='font-size:10px;font-weight:800;color:var(--muted);width:36px;text-align:right;flex-shrink:0';
-      timeLabel.textContent=time;
-      row.appendChild(timeLabel);
-
-      var slot=document.createElement('div');
-      var placedIdx=placed[si];
-      var act=placedIdx!==undefined?shuffled[placedIdx]:null;
-      var isCorrect=act&&act.slot===si;
-      slot.style.cssText='flex:1;height:36px;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 10px;cursor:pointer;'+
-        'border:2px solid '+(act?(checked?(isCorrect?'#22c55e':'#ef4444'):'var(--sci)'):'var(--border)')+
-        ';background:'+(act?(checked?(isCorrect?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'):'var(--sci-dim)'):'var(--surface2)');
-      if(act){
-        slot.innerHTML='<span style="font-size:20px">'+act.emoji+'</span><span style="font-size:12px;font-weight:700;color:var(--text)">'+act.name+'</span>';
-        if(checked&&!isCorrect){
-          /* Show correct */
-          var correctAct=activities.find(function(a){return a.slot===si;});
-          slot.innerHTML+='<span style="font-size:11px;color:#f59e0b;margin-left:auto">→'+correctAct.emoji+'</span>';
+    /* Period drop zones */
+    var periodsRow = document.createElement('div');
+    periodsRow.style.cssText = 'display:flex;gap:5px';
+    periods.forEach(function(period) {
+      var col = periodColours[period];
+      var zone = document.createElement('div');
+      zone.style.cssText = 'flex:1;min-height:80px;border-radius:10px;border:2px solid '+col+'44'+
+        ';background:'+col+'11;padding:5px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:3px';
+      /* Period header */
+      var hdr = document.createElement('div');
+      hdr.style.cssText = 'font-size:9px;font-weight:800;color:'+col+';text-align:center';
+      hdr.textContent = periodEmoji[period]+' '+period;
+      zone.appendChild(hdr);
+      /* Placed cards */
+      activities.forEach(function(act) {
+        if(placed[act.name] !== period) return;
+        var chip = document.createElement('div');
+        var correct = checked && act.period === period;
+        var wrong   = checked && act.period !== period;
+        chip.style.cssText = 'font-size:9px;font-weight:700;padding:3px 4px;border-radius:6px;text-align:center;cursor:pointer;'+
+          'background:'+(wrong?'#fecaca':correct?'#bbf7d0':col+'22')+
+          ';color:'+(wrong?'#dc2626':correct?'#166534':col)+
+          ';border:1px solid '+(wrong?'#fca5a5':correct?'#86efac':col+'44');
+        chip.textContent = act.emoji+' '+act.name;
+        chip.onclick = function(e) {
+          e.stopPropagation();
+          if(!checked) { delete placed[act.name]; selected=act; render(); }
+        };
+        zone.appendChild(chip);
+      });
+      zone.onclick = function() {
+        if(selected && !checked) {
+          placed[selected.name] = period;
+          selected = null;
+          render();
         }
-      } else {
-        slot.innerHTML='<span style="font-size:11px;color:var(--muted)">tap to place...</span>';
-      }
-      slot.onclick=function(){
-        if(selected!==null){placed[si]=selected;selected=null;render();}
-        else if(act){selected=placedIdx;delete placed[si];render();}
       };
-      row.appendChild(slot);
-      grid.appendChild(row);
+      periodsRow.appendChild(zone);
     });
-    wrap.appendChild(grid);
+    wrap.appendChild(periodsRow);
 
-    /* Activity picker */
-    var pickerLabel=document.createElement('div');
-    pickerLabel.style.cssText='font-size:11px;font-weight:800;color:var(--muted)';
-    pickerLabel.textContent='Tap to pick:';
-    wrap.appendChild(pickerLabel);
-    var picker=document.createElement('div');
-    picker.style.cssText='display:flex;flex-wrap:wrap;gap:5px';
-    shuffled.forEach(function(act,i){
-      var isPlaced=Object.values(placed).indexOf(i)>=0;
-      if(isPlaced) return;
-      var btn=document.createElement('button');
-      btn.style.cssText='font-size:12px;padding:4px 8px;border-radius:8px;cursor:pointer;'+
-        'border:2px solid '+(selected===i?'var(--sci)':'var(--border)')+
-        ';background:'+(selected===i?'var(--sci-dim)':'var(--surface2)');
-      btn.innerHTML=act.emoji+' '+act.name;
-      btn.onclick=function(){selected=(selected===i)?null:i;render();};
-      picker.appendChild(btn);
-    });
-    wrap.appendChild(picker);
+    /* Unplaced activity cards */
+    var unplaced = activities.filter(function(a){ return placed[a.name]===undefined; });
+    if(unplaced.length > 0) {
+      var cardRow = document.createElement('div');
+      cardRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;justify-content:center';
+      unplaced.forEach(function(act) {
+        var card = document.createElement('button');
+        var isSel = selected && selected.name === act.name;
+        card.style.cssText = 'display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:10px;cursor:pointer;'+
+          'border:2px solid '+(isSel?act.colour:'var(--border)')+
+          ';background:'+(isSel?act.colour+'22':'var(--surface2)')+
+          ';font-family:Nunito,sans-serif;font-size:12px;font-weight:700;color:var(--text)';
+        card.innerHTML = '<span style="font-size:18px">'+act.emoji+'</span>'+act.name;
+        card.onclick = function() { selected = (selected&&selected.name===act.name)?null:act; render(); };
+        cardRow.appendChild(card);
+      });
+      wrap.appendChild(cardRow);
+    }
 
-    /* Check button */
-    var placedCount=Object.keys(placed).length;
-    if(placedCount>=10&&!checked){
-      var checkBtn=document.createElement('button');
-      checkBtn.className='cbtn evs';checkBtn.textContent='Check my routine! ✅';
-      checkBtn.onclick=function(){checked=true;render();};
+    /* Check / results */
+    var allPlaced = activities.every(function(a){ return placed[a.name]; });
+    if(allPlaced && !checked) {
+      var checkBtn = document.createElement('button');
+      checkBtn.className = 'cbtn evs'; checkBtn.textContent = 'Check! ✅';
+      checkBtn.onclick = function() { checked=true; render(); };
       wrap.appendChild(checkBtn);
     }
-    if(checked){
-      var correct=Object.keys(placed).filter(function(si){return shuffled[placed[si]].slot===parseInt(si);}).length;
-      var fb=document.createElement('div');
-      fb.style.cssText='text-align:center;font-size:13px;font-weight:800;color:'+(correct>=8?'#22c55e':'#f59e0b')+';padding:8px;background:var(--surface2);border-radius:10px';
-      fb.textContent=correct+'/10 correct! '+(correct>=8?'Great routine! 🌟':'A good routine helps your body and mind stay healthy.');
+
+    if(checked) {
+      var correct = activities.filter(function(a){ return placed[a.name]===a.period; }).length;
+      var fb = document.createElement('div');
+      fb.style.cssText = 'text-align:center;font-size:13px;font-weight:800;color:'+(correct>=8?'#22c55e':'#f59e0b')+
+        ';padding:8px;background:var(--surface2);border-radius:10px';
+      fb.textContent = correct+'/'+activities.length+' correct! '+(correct>=8?'Great routine sense! 🌟':'Check the highlighted ones!');
       wrap.appendChild(fb);
-      var reset=document.createElement('button');
-      reset.className='cbtn';reset.textContent='↺ Try again';
-      reset.onclick=function(){placed={};selected=null;checked=false;shuffled=activities.slice().sort(function(){return Math.random()-0.5;});render();};
+
+      /* Show why for any wrong ones */
+      activities.filter(function(a){ return placed[a.name]!==a.period; }).forEach(function(a){
+        var tip = document.createElement('div');
+        tip.style.cssText = 'font-size:11px;font-weight:700;color:var(--text);padding:6px 8px;background:var(--surface2);border-radius:8px;border-left:3px solid #f59e0b';
+        tip.textContent = a.emoji+' '+a.name+' → '+a.period+'. '+a.why;
+        wrap.appendChild(tip);
+      });
+
+      var reset = document.createElement('button');
+      reset.className = 'cbtn'; reset.textContent = '↺ Try again'; reset.style.marginTop='4px';
+      reset.onclick = function() { placed={}; selected=null; checked=false; render(); };
       wrap.appendChild(reset);
     }
+
     c.appendChild(wrap);
   }
   render();
 };
 
-/* ── SAYING SORRY RIGHT — scenario-based ── */
+/* ── HYGIENE HABITS — spot the good vs bad habit ── */
+
 SIM_REGISTRY['apology-sim'] = function(c) {
   var scenarios=[
     {
@@ -2161,160 +2196,106 @@ SIM_REGISTRY['apology-sim'] = function(c) {
 
 /* ── HAND WASH — step-by-step animated guide with quiz ── */
 SIM_REGISTRY['hand-wash'] = function(c) {
-  var steps=[
-    {emoji:'💧', title:'Wet your hands', desc:'Turn on the tap. Wet both hands completely with clean water.', time:5},
-    {emoji:'🧴', title:'Apply soap',     desc:'Put enough soap to cover all surfaces. About the size of a coin.', time:3},
-    {emoji:'🤲', title:'Lather palms',   desc:'Rub palms together vigorously to create foam. 20 seconds!', time:20},
-    {emoji:'🙌', title:'Clean the back', desc:'Rub the back of each hand with the other palm. Don\'t miss any spots!', time:10},
-    {emoji:'🤞', title:'Between fingers',desc:'Interlace fingers and rub between them. Germs hide here!', time:10},
-    {emoji:'👍', title:'Clean thumbs',   desc:'Clasp each thumb and rotate. Thumbs touch everything!', time:5},
-    {emoji:'💦', title:'Rinse well',     desc:'Rinse all soap off under clean running water. Point fingers down.', time:10},
-    {emoji:'🧻', title:'Dry thoroughly', desc:'Pat dry with a clean towel or paper. Wet hands spread germs more!', time:5},
+  var habits = [
+    {text:'Brush teeth twice a day — morning and before bed.',  emoji:'🪥', good:true,  reason:'Brushing removes food bits and bacteria. Twice a day keeps cavities away!'},
+    {text:'Skip washing hands before eating because you\'re not dirty.',emoji:'🙅',good:false,reason:'Hands touch hundreds of surfaces daily. Invisible germs transfer to food!'},
+    {text:'Wash hands with soap for at least 20 seconds.',       emoji:'🤲', good:true,  reason:'20 seconds of scrubbing kills 99% of harmful bacteria!'},
+    {text:'Sneeze into your hand and then shake someone\'s hand.',emoji:'🤧',good:false, reason:'Sneezing into your elbow or a tissue stops germs from spreading!'},
+    {text:'Bathe or shower every day.',                          emoji:'🛁', good:true,  reason:'Daily bathing removes sweat, dead skin and bacteria that cause body odour!'},
+    {text:'Wear the same clothes 3 days in a row.',              emoji:'👕', good:false, reason:'Clothes absorb sweat and bacteria. Fresh clothes prevent skin infections!'},
+    {text:'Clip fingernails regularly and keep them clean.',     emoji:'💅', good:true,  reason:'Long dirty nails trap food and bacteria that go into your mouth!'},
+    {text:'Drink from someone else\'s bottle when thirsty.',    emoji:'🧴', good:false, reason:'Sharing bottles spreads colds, flu and other illnesses!'},
+    {text:'Cover mouth and nose with a tissue when sneezing.',  emoji:'🤧', good:true,  reason:'Covering a sneeze prevents thousands of droplets from spreading germs!'},
+    {text:'Eat food that fell on the floor — 5 second rule!',   emoji:'🍕', good:false, reason:'Bacteria transfer in milliseconds — there is no safe "5 second rule"!'},
   ];
 
-  var currentStep=0, mode='learn', quizAnswered=false;
-  var timerVal=0, timerRunning=false, timerInterval=null;
+  var shuffled = habits.slice().sort(function(){return Math.random()-0.5;});
+  var current = 0, score = 0, answered = false;
 
-  function render(){
-    c.innerHTML='';
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    /* Progress */
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;justify-content:space-between;width:100%';
+    top.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Habit '+(current+1)+' of '+habits.length+'</span>'+
+      '<span style="font-size:11px;color:var(--life);font-weight:800">Score: '+score+'/'+current+'</span>';
+    wrap.appendChild(top);
 
     /* Progress bar */
-    var progress=document.createElement('div');
-    progress.style.cssText='width:100%;height:6px;border-radius:4px;background:var(--surface2)';
-    var fill=document.createElement('div');
-    fill.style.cssText='height:100%;border-radius:4px;background:var(--life);transition:width .3s;width:'+
-      (mode==='quiz'?100:(currentStep/steps.length*100))+'%';
-    progress.appendChild(fill); wrap.appendChild(progress);
+    var pb = document.createElement('div');
+    pb.style.cssText = 'width:100%;height:5px;border-radius:3px;background:var(--surface2)';
+    var pf = document.createElement('div');
+    pf.style.cssText = 'height:100%;border-radius:3px;background:var(--life);width:'+(current/habits.length*100)+'%';
+    pb.appendChild(pf); wrap.appendChild(pb);
 
-    if(mode==='learn'){
-      var st=steps[currentStep];
-
-      /* Step dots */
-      var dots=document.createElement('div');
-      dots.style.cssText='display:flex;gap:5px;justify-content:center';
-      steps.forEach(function(s,i){
-        var dot=document.createElement('div');
-        dot.style.cssText='width:'+(i===currentStep?'20px':'8px')+';height:8px;border-radius:4px;background:'+(i<currentStep?'var(--life)':i===currentStep?'var(--life)':'var(--border)')+';transition:all .3s';
-        dots.appendChild(dot);
-      });
-      wrap.appendChild(dots);
-
-      /* Big emoji */
-      var bigEmoji=document.createElement('div');
-      bigEmoji.style.cssText='font-size:72px;text-align:center;line-height:1';
-      bigEmoji.textContent=st.emoji;
-      wrap.appendChild(bigEmoji);
-
-      var stepTitle=document.createElement('div');
-      stepTitle.style.cssText='font-size:16px;font-weight:900;color:var(--text);text-align:center';
-      stepTitle.textContent='Step '+(currentStep+1)+': '+st.title;
-      wrap.appendChild(stepTitle);
-
-      var stepDesc=document.createElement('div');
-      stepDesc.style.cssText='font-size:12px;color:var(--muted);text-align:center;padding:8px 12px;background:var(--surface2);border-radius:10px;line-height:1.6';
-      stepDesc.textContent=st.desc;
-      wrap.appendChild(stepDesc);
-
-      /* Timer */
-      var timerRow=document.createElement('div');
-      timerRow.style.cssText='display:flex;align-items:center;gap:10px;justify-content:center';
-      var timerDisplay=document.createElement('div');
-      timerDisplay.style.cssText='font-size:32px;font-weight:900;color:var(--life);min-width:60px;text-align:center';
-      timerDisplay.textContent=timerRunning?(timerVal+'s'):(st.time+'s');
-      timerRow.appendChild(timerDisplay);
-      var timerBtn=document.createElement('button');
-      timerBtn.className='cbtn evs'; timerBtn.textContent=timerRunning?'⏸ Pause':'▶ Start timer';
-      timerBtn.onclick=function(){
-        if(timerRunning){clearInterval(timerInterval);timerRunning=false;timerVal=0;render();}
-        else{
-          timerRunning=true; timerVal=st.time;
-          timerDisplay.textContent=timerVal+'s';
-          timerInterval=setInterval(function(){
-            timerVal--;
-            timerDisplay.textContent=timerVal+'s';
-            if(timerVal<=0){clearInterval(timerInterval);timerRunning=false;
-              timerDisplay.textContent='✅ Done!';
-              timerDisplay.style.color='#22c55e';}
-          },1000);
-        }
-      };
-      timerRow.appendChild(timerBtn);
-      wrap.appendChild(timerRow);
-
-      /* Navigation */
-      var nav=document.createElement('div');
-      nav.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap';
-      if(currentStep>0){
-        var prev=document.createElement('button');
-        prev.className='cbtn'; prev.textContent='← Back';
-        prev.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;currentStep--;render();};
-        nav.appendChild(prev);
-      }
-      if(currentStep<steps.length-1){
-        var next=document.createElement('button');
-        next.className='cbtn evs'; next.textContent='Next step →';
-        next.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;currentStep++;render();};
-        nav.appendChild(next);
-      } else {
-        var quiz=document.createElement('button');
-        quiz.className='cbtn evs'; quiz.textContent='Take the quiz! ✏️';
-        quiz.onclick=function(){clearInterval(timerInterval);timerRunning=false;timerVal=0;mode='quiz';currentStep=0;render();};
-        nav.appendChild(quiz);
-      }
-      wrap.appendChild(nav);
-
-    } else {
-      /* Quiz mode */
-      var questions=[
-        {q:'How long should you rub your hands with soap?',opts:['5 seconds','20 seconds','2 minutes','1 second'],ans:1},
-        {q:'Which part of the hands hides the most germs?',opts:['The palm','Fingertips','Between the fingers','The wrist'],ans:2},
-        {q:'Why do you dry your hands after washing?',opts:['So they look nice','Wet hands spread germs more easily','To use the towel','It feels good'],ans:1},
-        {q:'What should you do to your thumbs specially?',opts:['Ignore them','Clasp and rotate each thumb','Only rinse them','Wash them last'],ans:1},
-      ];
-      var q=questions[currentStep%questions.length];
-      var qDisplay=document.createElement('div');
-      qDisplay.style.cssText='font-size:14px;font-weight:800;color:var(--text);text-align:center;padding:8px';
-      qDisplay.textContent='Quiz '+(currentStep+1)+'/'+questions.length+': '+q.q;
-      wrap.appendChild(qDisplay);
-
-      var optDiv=document.createElement('div');
-      optDiv.style.cssText='display:flex;flex-direction:column;gap:6px;width:100%';
-      q.opts.forEach(function(opt,i){
-        var btn=document.createElement('button');
-        btn.style.cssText='padding:10px 12px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
-        btn.textContent=opt;
-        btn.onclick=function(){
-          if(quizAnswered)return; quizAnswered=true;
-          var correct=i===q.ans;
-          btn.style.background=correct?'#22c55e22':'#ef444422';
-          btn.style.borderColor=correct?'#22c55e':'#ef4444';
-          optDiv.querySelectorAll('button').forEach(function(b,bi){
-            b.disabled=true;
-            if(bi===q.ans){b.style.background='#22c55e22';b.style.borderColor='#22c55e';}
-          });
-          var nx=document.createElement('button');
-          nx.className='cbtn evs';
-          nx.textContent=currentStep+1<questions.length?'Next question →':'Finish! 🎉';
-          nx.style.marginTop='6px';
-          nx.onclick=function(){
-            quizAnswered=false;
-            if(currentStep+1<questions.length){currentStep++;render();}
-            else{mode='learn';currentStep=0;render();}
-          };
-          wrap.appendChild(nx);
-        };
-        optDiv.appendChild(btn);
-      });
-      wrap.appendChild(optDiv);
+    if(current >= habits.length) {
+      var fin = document.createElement('div');
+      fin.style.cssText = 'text-align:center;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
+      var stars = score >= 8 ? '⭐⭐⭐' : score >= 5 ? '⭐⭐' : '⭐';
+      fin.innerHTML = '<div style="font-size:48px">'+stars+'</div>'+
+        '<div style="font-size:18px;font-weight:900;color:var(--life)">Hygiene Score: '+score+'/'+habits.length+'</div>'+
+        '<div style="font-size:12px;color:var(--muted);padding:0 12px;line-height:1.6">Good hygiene keeps YOU healthy and OTHERS safe. It\'s one of the most powerful things you can do!</div>';
+      var rb = document.createElement('button'); rb.className='cbtn evs'; rb.textContent='↺ Play again';
+      rb.onclick=function(){shuffled=habits.slice().sort(function(){return Math.random()-0.5;});current=0;score=0;answered=false;render();};
+      fin.appendChild(rb); wrap.appendChild(fin); c.appendChild(wrap); return;
     }
+
+    var habit = shuffled[current];
+
+    /* Habit card */
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface2);border-radius:14px;padding:16px 18px;width:100%;box-sizing:border-box;text-align:center;border:2px solid var(--border)';
+    card.innerHTML = '<div style="font-size:52px;margin-bottom:10px">'+habit.emoji+'</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6">'+habit.text+'</div>';
+    wrap.appendChild(card);
+
+    /* Question */
+    var q = document.createElement('div');
+    q.style.cssText = 'font-size:13px;font-weight:800;color:var(--muted);text-align:center';
+    q.textContent = 'Is this a GOOD habit or a BAD habit?';
+    wrap.appendChild(q);
+
+    /* Buttons */
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:12px;justify-content:center';
+    [{label:'✅ Good habit', val:true, col:'#22c55e'},{label:'❌ Bad habit', val:false, col:'#ef4444'}].forEach(function(opt){
+      var btn = document.createElement('button');
+      btn.style.cssText = 'font-size:13px;font-weight:800;padding:12px 20px;border-radius:12px;cursor:pointer;font-family:Nunito,sans-serif;'+
+        'border:2px solid '+opt.col+';background:'+opt.col+'18;color:'+opt.col+';min-width:130px';
+      btn.textContent = opt.label;
+      btn.onclick = function() {
+        if(answered) return; answered = true;
+        var correct = opt.val === habit.good;
+        if(correct) score++;
+        current++;
+        btn.style.background = correct ? opt.col+'44' : '#ef444433';
+        btnRow.querySelectorAll('button').forEach(function(b) { b.disabled=true; });
+        /* Correct answer highlight */
+        if(!correct) {
+          btnRow.querySelectorAll('button').forEach(function(b,bi){
+            if((bi===0&&habit.good)||(bi===1&&!habit.good)) { b.style.background=b.style.borderColor+'44'; }
+          });
+        }
+        var fb = document.createElement('div');
+        fb.style.cssText = 'width:100%;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;color:var(--text);line-height:1.6;background:var(--surface2);border-left:3px solid '+(correct?'#22c55e':'#f59e0b');
+        fb.textContent = (correct?'✅ ':'❌ ')+(habit.good?'GOOD':'BAD')+' habit! '+habit.reason;
+        wrap.appendChild(fb);
+        var nx = document.createElement('button'); nx.className='cbtn evs';
+        nx.textContent = current<habits.length?'Next habit →':'See results!'; nx.style.marginTop='4px';
+        nx.onclick = function(){answered=false; render();};
+        wrap.appendChild(nx);
+      };
+      btnRow.appendChild(btn);
+    });
+    wrap.appendChild(btnRow);
     c.appendChild(wrap);
   }
   render();
 };
 
-/* ── STRANGER SAFETY — scenario choices ── */
 SIM_REGISTRY['safety-sim'] = function(c) {
   var scenarios=[
     {
