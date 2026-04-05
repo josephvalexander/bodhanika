@@ -342,127 +342,139 @@ SIM_REGISTRY['shapes-hunt'] = function(c) {
 };
 
 SIM_REGISTRY['measurement-compare'] = function(c) {
-  /* Real-world objects with actual relative heights in cm */
+  /* Objects with real-world heights in cm */
   var objects = [
-    {name:'Ant',        cm:0.2,  emoji:'🐜', draw:function(ctx,cx,by,sc){
-      ctx.fillStyle='#1a1a1a'; ctx.font=(10*sc)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('🐜',cx,by);}},
-    {name:'Pencil',     cm:19,   emoji:'✏️', draw:function(ctx,cx,by,sc){
-      /* Vertical pencil */
-      var h=100*sc,w=8*sc;
-      ctx.fillStyle='#fbbf24'; ctx.fillRect(cx-w/2,by-h,w,h*0.8);
-      ctx.fillStyle='#f97316'; ctx.fillRect(cx-w/2,by-h*0.2,w,h*0.15);
-      ctx.fillStyle='#fcd34d'; /* tip */ ctx.beginPath(); ctx.moveTo(cx-w/2,by); ctx.lineTo(cx+w/2,by); ctx.lineTo(cx,by+h*0.05); ctx.fill();
-      ctx.fillStyle='#94a3b8'; ctx.fillRect(cx-w/2,by-h,w,h*0.07); /* eraser */
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('Pencil',cx,by+3);}},
-    {name:'Bottle',     cm:30,   emoji:'🍶', draw:function(ctx,cx,by,sc){
-      var h=130*sc,w=22*sc;
-      ctx.fillStyle='#bae6fd'; ctx.fillRect(cx-w/2,by-h,w,h*0.8);
-      ctx.fillStyle='#7dd3fc'; ctx.fillRect(cx-w*0.3,by-h,w*0.6,h*0.15); /* neck */
-      ctx.fillStyle='#475569'; ctx.fillRect(cx-w*0.25,by-h,w*0.5,h*0.05); /* cap */
-      ctx.strokeStyle='#93c5fd'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(cx-w*0.3,by-h*0.5); ctx.lineTo(cx+w*0.3,by-h*0.5); ctx.stroke();
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('Bottle',cx,by+3);}},
-    {name:'Door',       cm:200,  emoji:'🚪', draw:function(ctx,cx,by,sc){
-      var h=160*sc,w=70*sc;
-      ctx.fillStyle='#92400e'; ctx.fillRect(cx-w/2,by-h,w,h);
-      ctx.strokeStyle='#78350f'; ctx.lineWidth=2*sc; ctx.strokeRect(cx-w/2+5*sc,by-h+5*sc,w-10*sc,h-10*sc);
-      /* panels */ ctx.strokeRect(cx-w/2+8*sc,by-h+8*sc,w/2-12*sc,h/2-12*sc);
-      ctx.strokeRect(cx+3*sc,by-h+8*sc,w/2-12*sc,h/2-12*sc);
-      ctx.strokeRect(cx-w/2+8*sc,by-h/2,w/2-12*sc,h/2-12*sc);
-      ctx.strokeRect(cx+3*sc,by-h/2,w/2-12*sc,h/2-12*sc);
-      /* handle */ ctx.fillStyle='#fcd34d'; ctx.beginPath(); ctx.arc(cx+w*0.3,by-h*0.5,4*sc,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('Door',cx,by+3);}},
-    {name:'Table',      cm:75,   emoji:'🪑', draw:function(ctx,cx,by,sc){
-      var h=80*sc,w=80*sc,th=8*sc;
-      ctx.fillStyle='#d97706';
-      ctx.fillRect(cx-w/2,by-h,w,th); /* top */
-      /* legs */ ctx.fillRect(cx-w/2+4*sc,by-h+th,8*sc,h-th);
-      ctx.fillRect(cx+w/2-12*sc,by-h+th,8*sc,h-th);
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText('Table',cx,by+3);}},
-    {name:'Cat',        cm:25,   emoji:'🐱', draw:function(ctx,cx,by,sc){
-      var h=60*sc;
-      ctx.font=(h)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('🐱',cx,by);
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textBaseline='top'; ctx.fillText('Cat',cx,by+3);}},
-    {name:'Sunflower',  cm:150,  emoji:'🌻', draw:function(ctx,cx,by,sc){
-      var h=140*sc;
-      ctx.strokeStyle='#65a30d'; ctx.lineWidth=4*sc;
-      ctx.beginPath(); ctx.moveTo(cx,by); ctx.lineTo(cx,by-h*0.75); ctx.stroke();
-      ctx.font=(h*0.35)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('🌻',cx,by-h*0.72);
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textBaseline='top'; ctx.fillText('Sunflower',cx,by+3);}},
-    {name:'Shoe',       cm:28,   emoji:'👟', draw:function(ctx,cx,by,sc){
-      var h=45*sc;
-      ctx.font=(h)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText('👟',cx,by);
-      ctx.fillStyle='#1e293b'; ctx.font='bold '+(8*sc)+'px Nunito,sans-serif'; ctx.textBaseline='top'; ctx.fillText('Shoe',cx,by+3);}},
+    {name:'Eraser',    cm:4,   emoji:'🧹', col:'#ef4444'},
+    {name:'Pencil',    cm:19,  emoji:'✏️', col:'#f59e0b'},
+    {name:'Shoe',      cm:28,  emoji:'👟', col:'#ec4899'},
+    {name:'Bottle',    cm:30,  emoji:'🍶', col:'#22d3ee'},
+    {name:'Ruler',     cm:30,  emoji:'📏', col:'#f97316'},
+    {name:'Cat',       cm:25,  emoji:'🐱', col:'#a855f7'},
+    {name:'Schoolbag', cm:45,  emoji:'🎒', col:'#6366f1'},
+    {name:'Chair',     cm:80,  emoji:'🪑', col:'#0ea5e9'},
+    {name:'Table',     cm:75,  emoji:'🪑', col:'#d97706'},
+    {name:'Door',      cm:200, emoji:'🚪', col:'#78716c'},
+    {name:'Tree',      cm:300, emoji:'🌳', col:'#16a34a'},
+    {name:'Child',     cm:110, emoji:'🧒', col:'#f43f5e'},
   ];
 
   var round=0, score=0, maxRounds=10, answered=false;
-  var usedPairs=[];
-  var questionType='taller'; /* alternate taller/shorter */
+  var usedPairs=[], iA=0, iB=1;
+  var questionType='taller';
 
-  function pick() {
-    if(round>=maxRounds){render();return;}
+  function pickPair() {
+    if(round>=maxRounds){render(iA,iB);return;}
     answered=false;
-    questionType = round%2===0?'taller':'shorter';
-    var tries=0, a,b;
+    questionType=round%2===0?'taller':'shorter';
+    var tries=0;
     do {
-      a=Math.floor(Math.random()*objects.length);
-      b=Math.floor(Math.random()*objects.length);
+      iA=Math.floor(Math.random()*objects.length);
+      iB=Math.floor(Math.random()*objects.length);
       tries++;
-    } while((a===b||usedPairs.indexOf(Math.min(a,b)+'-'+Math.max(a,b))>=0)&&tries<40);
-    usedPairs.push(Math.min(a,b)+'-'+Math.max(a,b));
-    render(a,b);
+    } while((iA===iB||usedPairs.indexOf(Math.min(iA,iB)+'-'+Math.max(iA,iB))>=0)&&tries<50);
+    usedPairs.push(Math.min(iA,iB)+'-'+Math.max(iA,iB));
+    render(iA,iB);
   }
 
-  function render(iA,iB) {
+  function render(idxA, idxB) {
     c.innerHTML='';
     var wrap=document.createElement('div');
     wrap.style.cssText='display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
 
+    /* Header */
     var top=document.createElement('div');
     top.style.cssText='display:flex;justify-content:space-between;width:100%';
     top.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:800">Round '+(round+1)+' of '+maxRounds+'</span>'+
       '<span style="font-size:11px;color:var(--math);font-weight:800">Score: '+score+'/'+round+'</span>';
     wrap.appendChild(top);
 
-    if(round>=maxRounds) {
+    if(round>=maxRounds){
       var fin=document.createElement('div');
       fin.style.cssText='text-align:center;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center';
       fin.innerHTML='<div style="font-size:40px">🏆</div><div style="font-size:16px;font-weight:900;color:var(--math)">Done! Score: '+score+'/'+maxRounds+'</div>';
-      var rb=document.createElement('button'); rb.className='cbtn evs'; rb.textContent='↺ Play again';
-      rb.onclick=function(){round=0;score=0;usedPairs=[];pick();}; fin.appendChild(rb);
-      wrap.appendChild(fin); c.appendChild(wrap); return;
+      var rb=document.createElement('button');rb.className='cbtn evs';rb.textContent='↺ Play again';
+      rb.onclick=function(){round=0;score=0;usedPairs=[];pickPair();};fin.appendChild(rb);
+      wrap.appendChild(fin);c.appendChild(wrap);return;
     }
 
-    var a=objects[iA], b=objects[iB];
-    /* Scale so taller object fits in canvas */
-    var maxCm=Math.max(a.cm,b.cm);
-    var sc=Math.min(1, 140/maxCm); /* scale factor */
+    var a=objects[idxA], b=objects[idxB];
+    /* Scale so BOTH objects are visible — shorter gets min 40px, taller gets max 160px */
+    var maxCm=Math.max(a.cm, b.cm), minCm=Math.min(a.cm, b.cm);
+    var canvasH=220, baseY=canvasH-28;
+    /* Min bar height 40px ensures short objects are visible */
+    var minBarH=40, maxBarH=160;
+    /* Scale: taller object → maxBarH, shorter → proportional but at least minBarH */
+    var ratio=minCm/maxCm;
+    var tallH=maxBarH;
+    var shortH=Math.max(minBarH, Math.round(tallH*ratio));
+    var hA=a.cm>=b.cm ? tallH : shortH;
+    var hB=b.cm>=a.cm ? tallH : shortH;
 
     /* Canvas */
     var cv=document.createElement('canvas');
-    cv.width=280; cv.height=220;
-    cv.style.cssText='width:100%;max-width:280px;height:220px;display:block;border-radius:12px;background:var(--surface2)';
+    cv.width=280; cv.height=canvasH;
+    cv.style.cssText='width:100%;max-width:280px;height:'+canvasH+'px;display:block;border-radius:12px;background:var(--surface2);margin:0 auto';
     wrap.appendChild(cv);
     var ctx=cv.getContext('2d');
 
-    var baseY=195;
+    /* Sky */
+    ctx.fillStyle='#e0f2fe'; ctx.fillRect(0,0,280,baseY);
     /* Ground */
-    ctx.strokeStyle='#94a3b8'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(10,baseY); ctx.lineTo(270,baseY); ctx.stroke();
+    ctx.fillStyle='#d4edbc'; ctx.fillRect(0,baseY,280,canvasH-baseY);
+    ctx.strokeStyle='#86a96a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,baseY); ctx.lineTo(280,baseY); ctx.stroke();
 
-    /* Height markers */
-    ctx.setLineDash([3,4]); ctx.strokeStyle='rgba(148,163,184,0.3)'; ctx.lineWidth=1;
-    [50,100,150].forEach(function(y){ ctx.beginPath(); ctx.moveTo(10,baseY-y*sc); ctx.lineTo(270,baseY-y*sc); ctx.stroke(); });
+    /* Dashed height comparison line */
+    var shorterH=Math.min(hA,hB);
+    ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(148,163,184,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(15,baseY-shorterH); ctx.lineTo(265,baseY-shorterH); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.fillStyle='rgba(100,100,100,0.5)'; ctx.font='9px Nunito,sans-serif'; ctx.textAlign='left';
+    ctx.fillText('←same height', 15, baseY-shorterH-3);
 
-    /* Draw objects */
-    var scA=a.cm/maxCm, scB=b.cm/maxCm;
-    a.draw(ctx, 75, baseY, scA*sc*160/Math.max(a.cm,1)*a.cm);
-    b.draw(ctx, 205, baseY, scB*sc*160/Math.max(b.cm,1)*b.cm);
+    function drawObj(obj, bh, cx) {
+      /* Coloured bar */
+      ctx.fillStyle=obj.col+'55';
+      ctx.fillRect(cx-28, baseY-bh, 56, bh);
+      ctx.strokeStyle=obj.col; ctx.lineWidth=2.5;
+      ctx.strokeRect(cx-28, baseY-bh, 56, bh);
+      /* Emoji inside bar */
+      var emojiSize=Math.min(40, bh-8);
+      if(emojiSize>=14) {
+        ctx.font=emojiSize+'px serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(obj.emoji, cx, baseY-bh/2);
+      }
+      /* Name below ground */
+      ctx.fillStyle=obj.col; ctx.font='bold 10px Nunito,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(obj.name, cx, baseY+4);
+      /* Height label above bar */
+      ctx.fillStyle='#1e293b'; ctx.font='bold 10px Nunito,sans-serif';
+      ctx.textBaseline='bottom';
+      ctx.fillText(obj.cm+'cm', cx, baseY-bh-2);
+    }
 
-    /* Real height labels */
-    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.font='bold 10px Nunito,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(a.cm<1?'tiny':a.cm+'cm', 75, baseY-a.cm*sc*1.1-8);
-    ctx.fillText(b.cm<1?'tiny':b.cm+'cm', 205, baseY-b.cm*sc*1.1-8);
+    drawObj(a, hA, 85);
+    drawObj(b, hB, 195);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='9px Nunito,sans-serif';
+    ctx.textBaseline='top';
+    ctx.fillText(a.cm+'cm', 70, baseY+2);
+
+    /* Object B */
+    ctx.fillStyle=b.col+'44';
+    ctx.fillRect(175, baseY-hB, 60, hB);
+    ctx.strokeStyle=b.col;ctx.lineWidth=2;
+    ctx.strokeRect(175, baseY-hB, 60, hB);
+    ctx.font=Math.min(36, hB-4)+'px serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    if(hB>20) ctx.fillText(b.emoji, 205, baseY-hB/2);
+    ctx.fillStyle=b.col;ctx.font='bold 10px Nunito,sans-serif';
+    ctx.textBaseline='bottom';
+    ctx.fillText(b.name, 205, baseY-hB-2);
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.font='9px Nunito,sans-serif';
+    ctx.textBaseline='top';
+    ctx.fillText(b.cm+'cm', 205, baseY+2);
 
     /* Question */
     var q=document.createElement('div');
@@ -470,13 +482,12 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
     q.innerHTML='Which is <b style="color:'+(questionType==='taller'?'#22c55e':'#f59e0b')+'">'+(questionType==='taller'?'TALLER':'SHORTER')+'</b>?';
     wrap.appendChild(q);
 
-    /* Real height info */
     var info=document.createElement('div');
     info.style.cssText='font-size:11px;color:var(--muted);text-align:center';
-    info.textContent=a.name+' = '+(a.cm<1?'<1':a.cm)+'cm · '+b.name+' = '+(b.cm<1?'<1':b.cm)+'cm in real life';
+    info.textContent=a.name+' = '+a.cm+'cm · '+b.name+' = '+b.cm+'cm in real life';
     wrap.appendChild(info);
 
-    /* Buttons */
+    /* Answer buttons */
     var btnRow=document.createElement('div');
     btnRow.style.cssText='display:flex;gap:10px;justify-content:center';
     [a,b].forEach(function(obj){
@@ -485,24 +496,32 @@ SIM_REGISTRY['measurement-compare'] = function(c) {
       btn.innerHTML=obj.emoji+' '+obj.name;
       btn.style.cssText='font-size:13px;padding:8px 18px';
       btn.onclick=function(){
-        if(answered) return; answered=true;
-        var correct=(questionType==='taller')?(obj.name===(a.cm>b.cm?a:b).name):(obj.name===(a.cm<b.cm?a:b).name);
-        var answer=(questionType==='taller')?(a.cm>b.cm?a:b):(a.cm<b.cm?a:b);
-        if(correct) score++; round++;
-        btn.style.background=correct?'#22c55e':'#ef4444'; btn.style.color='white';
+        if(answered)return; answered=true;
+        var correct= questionType==='taller'
+          ? obj.name===(a.cm>b.cm?a:b).name
+          : obj.name===(a.cm<b.cm?a:b).name;
+        var answer=questionType==='taller'?(a.cm>b.cm?a:b):(a.cm<b.cm?a:b);
+        if(correct)score++;round++;
+        btn.style.background=correct?'#22c55e':'#ef4444';btn.style.color='white';
         var fb=document.createElement('div');
         fb.style.cssText='text-align:center;font-size:12px;font-weight:700;color:'+(correct?'#22c55e':'#f59e0b');
         fb.textContent=correct?'Correct! '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)':'The '+answer.name+' is '+questionType+'! ('+answer.cm+'cm)';
         wrap.appendChild(fb);
-        if(round<maxRounds){var nx=document.createElement('button');nx.className='cbtn evs';nx.textContent='Next →';nx.style.marginTop='4px';nx.onclick=pick;wrap.appendChild(nx);}
-        else{fb.textContent+=' | Final: '+score+'/'+maxRounds+' ⭐';var rx=document.createElement('button');rx.className='cbtn';rx.textContent='↺ Again';rx.style.marginTop='4px';rx.onclick=function(){round=0;score=0;usedPairs=[];pick();};wrap.appendChild(rx);}
+        if(round<maxRounds){
+          var nx=document.createElement('button');nx.className='cbtn evs';nx.textContent='Next →';nx.style.marginTop='4px';
+          nx.onclick=pickPair;wrap.appendChild(nx);
+        } else {
+          fb.textContent+=' | Final: '+score+'/'+maxRounds+' ⭐';
+          var rx=document.createElement('button');rx.className='cbtn';rx.textContent='↺ Again';rx.style.marginTop='4px';
+          rx.onclick=function(){round=0;score=0;usedPairs=[];pickPair();};wrap.appendChild(rx);
+        }
       };
       btnRow.appendChild(btn);
     });
     wrap.appendChild(btnRow);
     c.appendChild(wrap);
   }
-  pick();
+  pickPair();
 };
 
 SIM_REGISTRY['more-less'] = function(c) {
