@@ -77,9 +77,19 @@
 }
 </script>
 
-<!-- ══ GOOGLE ANALYTICS 4 ══
-     Replace G-Z7T5E7CP00 with your real Measurement ID from analytics.google.com
-     ══════════════════════ -->
+<!-- ══ OWNER TESTING OPT-OUT ══
+     Run in console once to exclude your sessions from analytics:
+     localStorage.setItem('bodhanika_owner', '1')
+     To re-enable: localStorage.removeItem('bodhanika_owner')
+     ══════════════════════════ -->
+<script>
+  if (localStorage.getItem('bodhanika_owner') === '1') {
+    window['ga-disable-G-Z7T5E7CP00'] = true;
+    window.__clarityOptOut = true;
+  }
+</script>
+
+<!-- ══ GOOGLE ANALYTICS 4 ══ -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z7T5E7CP00"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -88,15 +98,15 @@
   gtag('config', 'G-Z7T5E7CP00');
 </script>
 
-<!-- ══ MICROSOFT CLARITY ══
-     Replace XXXXXXXXXX with your real Clarity Project ID from clarity.microsoft.com
-     ════════════════════ -->
+<!-- ══ MICROSOFT CLARITY ══ -->
 <script>
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window,document,"clarity","script","w2pfhlkfg7");
+  if (!window.__clarityOptOut) {
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window,document,"clarity","script","w2pfhlkfg7");
+  }
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -342,6 +352,16 @@ window.addEventListener('load', handleHash);
 <script>
 (function() {
   if (!('serviceWorker' in navigator)) return;
+
+  /* Force-clear any stale SW registrations before re-registering.
+     This guarantees fresh files on every hard refresh. */
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    var stale = regs.filter(function(r) {
+      /* Keep only the current SW scope */
+      return r.scope !== location.origin + '/';
+    });
+    return Promise.all(stale.map(function(r) { return r.unregister(); }));
+  });
 
   var newWorker = null;
 
