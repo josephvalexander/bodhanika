@@ -1955,140 +1955,120 @@ SIM_REGISTRY['soil-types'] = function(c) {
 
 /* ── DAILY ROUTINE — drag activities to time slots ── */
 SIM_REGISTRY['daily-routine'] = function(c) {
-  /* Student sees scrambled activity cards and must sort them into morning/afternoon/evening/night */
   var activities = [
-    {name:'Wake up',      emoji:'⏰', period:'Morning',   colour:'#f59e0b', why:'Starting the day at the same time keeps your body clock healthy!'},
-    {name:'Brush teeth',  emoji:'🪥', period:'Morning',   colour:'#f59e0b', why:'Brushing removes germs that grow overnight on your teeth!'},
-    {name:'Breakfast',    emoji:'🥣', period:'Morning',   colour:'#f59e0b', why:'Breakfast gives your brain energy for learning all morning!'},
-    {name:'Go to school', emoji:'🏫', period:'Morning',   colour:'#f59e0b', why:'School teaches you things you need to grow up strong and smart!'},
-    {name:'Lunch',        emoji:'🍱', period:'Afternoon', colour:'#22c55e', why:'Lunch refuels your body after a busy morning of learning!'},
-    {name:'Homework',     emoji:'📚', period:'Afternoon', colour:'#22c55e', why:'Doing homework while your brain is still alert helps you remember!'},
-    {name:'Play outside',  emoji:'⚽', period:'Afternoon', colour:'#22c55e', why:'Exercise keeps your body strong and improves your mood!'},
-    {name:'Dinner',       emoji:'🍛', period:'Evening',   colour:'#6366f1', why:'A warm dinner with family is good for body and relationships!'},
-    {name:'Read a book',  emoji:'📖', period:'Evening',   colour:'#6366f1', why:'Reading before bed calms your mind and builds your vocabulary!'},
-    {name:'Sleep',        emoji:'😴', period:'Night',     colour:'#1e40af', why:'Sleep is when your brain stores memories and your body grows!'},
+    {name:'Wake up',      emoji:'⏰', period:'Morning',   col:'#f59e0b', why:'Starting the day at the same time keeps your body clock healthy!'},
+    {name:'Brush teeth',  emoji:'🪥', period:'Morning',   col:'#f59e0b', why:'Brushing removes bacteria that grow on your teeth overnight!'},
+    {name:'Breakfast',    emoji:'🥣', period:'Morning',   col:'#f59e0b', why:'Breakfast gives your brain energy for the whole morning!'},
+    {name:'Go to school', emoji:'🏫', period:'Morning',   col:'#f59e0b', why:'School teaches you skills you need for life!'},
+    {name:'Lunch',        emoji:'🍱', period:'Afternoon', col:'#22c55e', why:'Lunch refuels your body after a busy morning!'},
+    {name:'Play outside',  emoji:'⚽', period:'Afternoon', col:'#22c55e', why:'Exercise keeps your body strong and your mood happy!'},
+    {name:'Homework',     emoji:'📚', period:'Afternoon', col:'#22c55e', why:'Your brain is still fresh in the afternoon — best time to study!'},
+    {name:'Dinner',       emoji:'🍛', period:'Evening',   col:'#6366f1', why:'A family dinner is good for your body and your relationships!'},
+    {name:'Read a book',  emoji:'📖', period:'Evening',   col:'#6366f1', why:'Reading calms your mind and helps you sleep better!'},
+    {name:'Sleep',        emoji:'😴', period:'Night',     col:'#1e40af', why:'Sleep is when your brain stores memories and your body grows!'},
   ];
 
   var periods = ['Morning','Afternoon','Evening','Night'];
-  var periodColours = {Morning:'#f59e0b',Afternoon:'#22c55e',Evening:'#6366f1',Night:'#1e40af'};
-  var periodEmoji   = {Morning:'🌅',Afternoon:'☀️',Evening:'🌆',Night:'🌙'};
+  var periodEmoji = {Morning:'🌅',Afternoon:'☀️',Evening:'🌆',Night:'🌙'};
+  var periodCol   = {Morning:'#f59e0b',Afternoon:'#22c55e',Evening:'#6366f1',Night:'#1e40af'};
 
-  var placed = {};   /* activityName → period */
-  var selected = null;
-  var checked = false;
+  /* Shuffle order */
+  var order = activities.slice().sort(function(){ return Math.random()-0.5; });
+  var current = 0, score = 0, answered = false;
 
   function render() {
     c.innerHTML = '';
     var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;width:100%';
 
-    var title = document.createElement('div');
-    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
-    title.textContent = '⏰ Sort activities into the right time of day!';
-    wrap.appendChild(title);
-
-    var instr = document.createElement('div');
-    instr.style.cssText = 'font-size:11px;color:var(--muted);text-align:center';
-    instr.textContent = selected ? 'Now tap a time period to place "'+selected.name+'"!' : 'Tap an activity card, then tap its time period.';
-    wrap.appendChild(instr);
-
-    /* Period drop zones */
-    var periodsRow = document.createElement('div');
-    periodsRow.style.cssText = 'display:flex;gap:5px';
-    periods.forEach(function(period) {
-      var col = periodColours[period];
-      var zone = document.createElement('div');
-      zone.style.cssText = 'flex:1;min-height:80px;border-radius:10px;border:2px solid '+col+'44'+
-        ';background:'+col+'11;padding:5px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:3px';
-      /* Period header */
-      var hdr = document.createElement('div');
-      hdr.style.cssText = 'font-size:9px;font-weight:800;color:'+col+';text-align:center';
-      hdr.textContent = periodEmoji[period]+' '+period;
-      zone.appendChild(hdr);
-      /* Placed cards */
-      activities.forEach(function(act) {
-        if(placed[act.name] !== period) return;
-        var chip = document.createElement('div');
-        var correct = checked && act.period === period;
-        var wrong   = checked && act.period !== period;
-        chip.style.cssText = 'font-size:9px;font-weight:700;padding:3px 4px;border-radius:6px;text-align:center;cursor:pointer;'+
-          'background:'+(wrong?'#fecaca':correct?'#bbf7d0':col+'22')+
-          ';color:'+(wrong?'#dc2626':correct?'#166534':col)+
-          ';border:1px solid '+(wrong?'#fca5a5':correct?'#86efac':col+'44');
-        chip.textContent = act.emoji+' '+act.name;
-        chip.onclick = function(e) {
-          e.stopPropagation();
-          if(!checked) { delete placed[act.name]; selected=act; render(); }
-        };
-        zone.appendChild(chip);
-      });
-      zone.onclick = function() {
-        if(selected && !checked) {
-          placed[selected.name] = period;
-          selected = null;
-          render();
-        }
-      };
-      periodsRow.appendChild(zone);
+    /* Progress dots */
+    var dots = document.createElement('div');
+    dots.style.cssText = 'display:flex;gap:4px;justify-content:center;align-items:center';
+    order.forEach(function(_,i) {
+      var d = document.createElement('div');
+      var done = i < current;
+      var active = i === current;
+      d.style.cssText = 'border-radius:4px;transition:all .3s;background:'+
+        (done?'var(--evs)':active?'var(--math)':'var(--border)')+
+        ';width:'+(active?'20px':'8px')+';height:8px';
+      dots.appendChild(d);
     });
-    wrap.appendChild(periodsRow);
+    wrap.appendChild(dots);
 
-    /* Unplaced activity cards */
-    var unplaced = activities.filter(function(a){ return placed[a.name]===undefined; });
-    if(unplaced.length > 0) {
-      var cardRow = document.createElement('div');
-      cardRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;justify-content:center';
-      unplaced.forEach(function(act) {
-        var card = document.createElement('button');
-        var isSel = selected && selected.name === act.name;
-        card.style.cssText = 'display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:10px;cursor:pointer;'+
-          'border:2px solid '+(isSel?act.colour:'var(--border)')+
-          ';background:'+(isSel?act.colour+'22':'var(--surface2)')+
-          ';font-family:Nunito,sans-serif;font-size:12px;font-weight:700;color:var(--text)';
-        card.innerHTML = '<span style="font-size:18px">'+act.emoji+'</span>'+act.name;
-        card.onclick = function() { selected = (selected&&selected.name===act.name)?null:act; render(); };
-        cardRow.appendChild(card);
-      });
-      wrap.appendChild(cardRow);
+    /* Score */
+    var scoreEl = document.createElement('div');
+    scoreEl.style.cssText = 'font-size:11px;font-weight:800;color:var(--math);text-align:center';
+    scoreEl.textContent = 'Score: '+score+'/'+current;
+    wrap.appendChild(scoreEl);
+
+    if(current >= order.length) {
+      /* Final screen */
+      var fin = document.createElement('div');
+      fin.style.cssText = 'display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;padding:10px';
+      fin.innerHTML = '<div style="font-size:56px">'+(score>=8?'🌟':score>=5?'👍':'💪')+'</div>'+
+        '<div style="font-size:18px;font-weight:900;color:var(--evs)">'+score+'/'+order.length+' correct!</div>'+
+        '<div style="font-size:12px;color:var(--muted);line-height:1.7;padding:0 8px">A good daily routine helps your body and mind stay strong. Same time every day = healthy habits for life! 💪</div>';
+      var rb = document.createElement('button'); rb.className='cbtn evs'; rb.textContent='↺ Play again';
+      rb.onclick = function(){ order=activities.slice().sort(function(){return Math.random()-0.5;}); current=0; score=0; answered=false; render(); };
+      fin.appendChild(rb); wrap.appendChild(fin); c.appendChild(wrap); return;
     }
 
-    /* Check / results */
-    var allPlaced = activities.every(function(a){ return placed[a.name]; });
-    if(allPlaced && !checked) {
-      var checkBtn = document.createElement('button');
-      checkBtn.className = 'cbtn evs'; checkBtn.textContent = 'Check! ✅';
-      checkBtn.onclick = function() { checked=true; render(); };
-      wrap.appendChild(checkBtn);
-    }
+    var act = order[current];
 
-    if(checked) {
-      var correct = activities.filter(function(a){ return placed[a.name]===a.period; }).length;
-      var fb = document.createElement('div');
-      fb.style.cssText = 'text-align:center;font-size:13px;font-weight:800;color:'+(correct>=8?'#22c55e':'#f59e0b')+
-        ';padding:8px;background:var(--surface2);border-radius:10px';
-      fb.textContent = correct+'/'+activities.length+' correct! '+(correct>=8?'Great routine sense! 🌟':'Check the highlighted ones!');
-      wrap.appendChild(fb);
+    /* Big activity card */
+    var card = document.createElement('div');
+    card.style.cssText = 'width:100%;background:var(--surface2);border-radius:16px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;border:2px solid var(--border);box-sizing:border-box';
+    card.innerHTML = '<div style="font-size:72px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.15))">'+act.emoji+'</div>'+
+      '<div style="font-size:20px;font-weight:900;color:var(--text)">'+act.name+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);font-weight:700">When do you usually do this?</div>';
+    wrap.appendChild(card);
 
-      /* Show why for any wrong ones */
-      activities.filter(function(a){ return placed[a.name]!==a.period; }).forEach(function(a){
-        var tip = document.createElement('div');
-        tip.style.cssText = 'font-size:11px;font-weight:700;color:var(--text);padding:6px 8px;background:var(--surface2);border-radius:8px;border-left:3px solid #f59e0b';
-        tip.textContent = a.emoji+' '+a.name+' → '+a.period+'. '+a.why;
-        wrap.appendChild(tip);
-      });
-
-      var reset = document.createElement('button');
-      reset.className = 'cbtn'; reset.textContent = '↺ Try again'; reset.style.marginTop='4px';
-      reset.onclick = function() { placed={}; selected=null; checked=false; render(); };
-      wrap.appendChild(reset);
-    }
-
+    /* 4 big answer buttons — one per period */
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%';
+    periods.forEach(function(period) {
+      var col = periodCol[period];
+      var btn = document.createElement('button');
+      btn.style.cssText = 'padding:14px 10px;border-radius:14px;cursor:pointer;font-family:Nunito,sans-serif;'+
+        'font-size:13px;font-weight:800;border:2px solid '+col+'55;background:'+col+'15;color:'+col+
+        ';display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s';
+      btn.innerHTML = '<span style="font-size:28px">'+periodEmoji[period]+'</span>'+period;
+      btn.onclick = function() {
+        if(answered) return; answered = true;
+        var correct = period === act.period;
+        if(correct) score++;
+        current++;
+        btn.style.background = correct ? col+'44' : '#ef444433';
+        btn.style.borderColor = correct ? col : '#ef4444';
+        /* Disable all */
+        grid.querySelectorAll('button').forEach(function(b) { b.disabled = true; });
+        /* Highlight correct */
+        if(!correct) {
+          grid.querySelectorAll('button').forEach(function(b) {
+            if(b.innerHTML.indexOf('>'+act.period+'<') >= 0 || b.textContent.trim().endsWith(act.period)) {
+              b.style.background = periodCol[act.period]+'44';
+              b.style.borderColor = periodCol[act.period];
+            }
+          });
+        }
+        /* Fact */
+        var fb = document.createElement('div');
+        fb.style.cssText = 'width:100%;padding:10px 12px;border-radius:12px;font-size:12px;font-weight:700;color:var(--text);line-height:1.6;background:var(--surface2);border-left:4px solid '+(correct?col:'#f59e0b')+';box-sizing:border-box';
+        fb.textContent = (correct?'✅ ':'❌ ')+act.name+' → '+act.period+'. '+act.why;
+        wrap.appendChild(fb);
+        var nx = document.createElement('button'); nx.className='cbtn evs';
+        nx.textContent = current < order.length ? 'Next →' : 'See results! 🎉';
+        nx.style.cssText = 'margin-top:4px;width:100%';
+        nx.onclick = function(){ answered=false; render(); };
+        wrap.appendChild(nx);
+      };
+      grid.appendChild(btn);
+    });
+    wrap.appendChild(grid);
     c.appendChild(wrap);
   }
   render();
 };
-
-/* ── HYGIENE HABITS — spot the good vs bad habit ── */
 
 SIM_REGISTRY['apology-sim'] = function(c) {
   var scenarios=[
