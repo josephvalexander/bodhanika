@@ -2523,6 +2523,566 @@ SIM_REGISTRY['feelings-wheel'] = function(c) {
 };
 
 
+/* ══════════════════════════════════════════════════
+   CLASS 2 SCIENCE SIMS
+   ══════════════════════════════════════════════════ */
+
+/* ── AIR TAKES UP SPACE ── */
+SIM_REGISTRY['air-space'] = function(c) {
+  var experiments = [
+    {
+      id: 'squeeze',
+      title: 'Squeeze the bottle',
+      emoji: '🍶',
+      question: 'You squeeze an empty plastic bottle. What do you feel?',
+      options: ['Nothing — it\'s empty!', 'Air pushes back against your hand', 'The bottle fills with water'],
+      answer: 1,
+      fact: '✅ You feel air pushing back! The bottle is full of air even though you can\'t see it. Air takes up space!',
+      visual: 'bottle'
+    },
+    {
+      id: 'bubbles',
+      title: 'Bottle underwater',
+      emoji: '💧',
+      question: 'You push an "empty" bottle underwater and open the cap. What happens?',
+      options: ['Nothing happens', 'Bubbles come out', 'Water rushes in silently'],
+      answer: 1,
+      fact: '✅ Bubbles! The air inside the bottle escapes as bubbles — proving the bottle was NOT empty. It was full of air!',
+      visual: 'bubbles'
+    },
+    {
+      id: 'balloon',
+      title: 'Blow up a balloon',
+      emoji: '🎈',
+      question: 'When you blow up a balloon, what fills it up and makes it round?',
+      options: ['Nothing — it just stretches', 'Air from your lungs', 'A special gas from the balloon'],
+      answer: 1,
+      fact: '✅ Air from your lungs! You push air from your body into the balloon. Air has mass and takes up space — it stretches the balloon!',
+      visual: 'balloon'
+    },
+    {
+      id: 'wind',
+      title: 'Fan the air',
+      emoji: '🌬️',
+      question: 'You wave a book quickly near your face. What do you feel?',
+      options: ['Nothing — air is invisible', 'Moving air (wind) on your face', 'The book pages touching you'],
+      answer: 1,
+      fact: '✅ Moving air! Wind is just air in motion. Even though you can\'t see air, you can feel it move. Air is real matter!',
+      visual: 'wind'
+    },
+  ];
+
+  var current = 0, score = 0, answered = false;
+
+  function drawVisual(type) {
+    var cv = document.createElement('canvas');
+    cv.width = 200; cv.height = 130;
+    cv.style.cssText = 'width:100%;max-width:200px;height:130px;display:block;border-radius:12px;background:#e0f2fe;margin:0 auto';
+    var ctx = cv.getContext('2d');
+    var t = Date.now() / 1000;
+
+    if(type === 'bottle') {
+      /* Bottle with air molecules */
+      ctx.fillStyle = 'rgba(186,230,253,0.6)'; ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(70,25,60,85,8) : ctx.rect(70,25,60,85);
+      ctx.fill(); ctx.stroke();
+      ctx.fillRect(82,15,36,12); ctx.strokeRect(82,15,36,12); /* neck */
+      ctx.fillStyle='#7dd3fc'; ctx.fillRect(86,10,28,6); /* cap */
+      /* Air molecules */
+      ctx.fillStyle='rgba(14,165,233,0.4)';
+      [[90,50],[110,45],[95,65],[115,60],[100,80],[120,75]].forEach(function(p){
+        ctx.beginPath(); ctx.arc(p[0],p[1],5,0,Math.PI*2); ctx.fill();
+      });
+      ctx.fillStyle='#0369a1'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Air molecules inside!',100,118);
+    }
+    else if(type === 'bubbles') {
+      /* Underwater bottle with bubbles */
+      ctx.fillStyle='rgba(147,197,253,0.5)'; ctx.fillRect(0,0,200,130);
+      /* Bottle */
+      ctx.fillStyle='rgba(186,230,253,0.7)'; ctx.strokeStyle='#0ea5e9'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(70,50,60,70,8) : ctx.rect(70,50,60,70);
+      ctx.fill(); ctx.stroke();
+      /* Bubbles rising */
+      ctx.fillStyle='rgba(255,255,255,0.7)';
+      [95,100,105].forEach(function(x,i){
+        var by = 45 - (i*12);
+        ctx.beginPath(); ctx.arc(x,by,5+i*2,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='rgba(14,165,233,0.5)'; ctx.lineWidth=1; ctx.stroke();
+      });
+      ctx.fillStyle='#1e40af'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Bubbles = air escaping!',100,125);
+    }
+    else if(type === 'balloon') {
+      /* Inflating balloon */
+      var inflate = 0.7 + 0.3*Math.sin(t*2);
+      ctx.fillStyle='#fda4af';
+      ctx.beginPath(); ctx.ellipse(100,55,40*inflate,45*inflate,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#f43f5e'; ctx.lineWidth=2; ctx.stroke();
+      /* Knot */
+      ctx.fillStyle='#f43f5e'; ctx.beginPath(); ctx.arc(100,100,5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#f43f5e'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(100,100); ctx.lineTo(100,110); ctx.stroke();
+      /* String */
+      ctx.beginPath(); ctx.moveTo(100,110); ctx.lineTo(100,128); ctx.stroke();
+      /* Arrow showing air */
+      ctx.strokeStyle='rgba(14,165,233,0.6)'; ctx.lineWidth=2; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(50,115); ctx.lineTo(90,85); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#0369a1'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Air fills the balloon!',100,125);
+    }
+    else if(type === 'wind') {
+      /* Wind lines and face */
+      ctx.fillStyle='#fcd34d'; ctx.beginPath(); ctx.arc(140,65,30,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2; ctx.stroke();
+      /* Face */
+      ctx.fillStyle='#1e293b';
+      ctx.beginPath(); ctx.arc(130,60,4,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(150,60,4,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#92400e'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(140,72,8,0.2,Math.PI-0.2); ctx.stroke();
+      /* Wind lines */
+      ctx.strokeStyle='rgba(14,165,233,0.6)'; ctx.lineWidth=2; ctx.lineCap='round';
+      [[20,45,70,42],[15,60,65,58],[18,75,68,73]].forEach(function(l,i){
+        ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(l[0],l[1]); ctx.lineTo(l[2],l[3]); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      ctx.fillStyle='#0369a1'; ctx.font='bold 9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Feel the moving air!',100,118);
+    }
+    return cv;
+  }
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:center;width:100%';
+
+    /* Progress */
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;justify-content:space-between;width:100%';
+    top.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Experiment '+(current+1)+' of '+experiments.length+'</span>'+
+      '<span style="font-size:11px;color:var(--sci);font-weight:800">Score: '+score+'/'+current+'</span>';
+    wrap.appendChild(top);
+
+    if(current >= experiments.length) {
+      wrap.innerHTML += '<div style="text-align:center;font-size:48px;margin:8px 0">'+(score>=3?'🧪':'💨')+'</div>'+
+        '<div style="text-align:center;font-weight:900;font-size:16px;color:var(--sci)">Score: '+score+'/'+experiments.length+'</div>'+
+        '<div style="text-align:center;font-size:12px;color:var(--muted);padding:8px;line-height:1.6">Air is matter — it has mass, takes up space, and can push on things. Even though you cannot see it, it is everywhere!</div>';
+      var rb = document.createElement('button'); rb.className='cbtn evs'; rb.textContent='↺ Try again';
+      rb.onclick = function(){ current=0; score=0; answered=false; render(); };
+      wrap.appendChild(rb); c.appendChild(wrap); return;
+    }
+
+    var exp = experiments[current];
+
+    /* Visual */
+    wrap.appendChild(drawVisual(exp.visual));
+
+    /* Title + question */
+    var q = document.createElement('div');
+    q.style.cssText = 'background:var(--surface2);border-radius:12px;padding:12px;width:100%;box-sizing:border-box;text-align:center;border:1px solid var(--border)';
+    q.innerHTML = '<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:6px">'+exp.emoji+' '+exp.title+'</div>'+
+      '<div style="font-size:12px;font-weight:700;color:var(--muted);line-height:1.5">'+exp.question+'</div>';
+    wrap.appendChild(q);
+
+    /* Options */
+    var opts = document.createElement('div');
+    opts.style.cssText = 'display:flex;flex-direction:column;gap:6px;width:100%';
+    exp.options.forEach(function(opt, i) {
+      var btn = document.createElement('button');
+      btn.style.cssText = 'padding:11px 14px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:12px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%';
+      btn.textContent = opt;
+      btn.onclick = function() {
+        if(answered) return; answered = true;
+        var correct = i === exp.answer;
+        if(correct) score++;
+        current++;
+        btn.style.background = correct ? '#22c55e33' : '#ef444433';
+        btn.style.borderColor = correct ? '#22c55e' : '#ef4444';
+        opts.querySelectorAll('button').forEach(function(b,bi){
+          b.disabled = true;
+          if(bi === exp.answer) { b.style.background='#22c55e33'; b.style.borderColor='#22c55e'; }
+        });
+        var fb = document.createElement('div');
+        fb.style.cssText = 'padding:10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--text);line-height:1.5;background:var(--surface2);border-left:3px solid '+(correct?'#22c55e':'#f59e0b')+';width:100%;box-sizing:border-box';
+        fb.textContent = exp.fact;
+        wrap.appendChild(fb);
+        var nx = document.createElement('button'); nx.className='cbtn evs';
+        nx.textContent = current < experiments.length ? 'Next experiment →' : 'See results!';
+        nx.style.cssText = 'margin-top:4px;width:100%';
+        nx.onclick = function(){ answered=false; render(); };
+        wrap.appendChild(nx);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── LIGHT AND SHADOWS ── */
+SIM_REGISTRY['shadow-basics'] = function(c) {
+  var objIdx = 0;
+  var dist = 50; /* 0=close, 100=far */
+  var angle = 45; /* sun angle 0=sunrise, 90=noon, 180=sunset */
+  var raf = null;
+
+  var objects = [
+    {name:'Tree',   emoji:'🌳', w:30, h:70},
+    {name:'House',  emoji:'🏠', w:50, h:50},
+    {name:'Person', emoji:'🧒', w:20, h:60},
+    {name:'Car',    emoji:'🚗', w:55, h:30},
+  ];
+
+  function shadowLen(distVal, angleVal) {
+    /* Shorter shadow when sun is high (angle=90), longer when low */
+    var sunHeight = Math.sin(angleVal * Math.PI / 180);
+    var base = 60 + (100 - distVal) * 0.8; /* closer to light = bigger shadow */
+    return Math.max(20, base / Math.max(0.3, sunHeight));
+  }
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '🌑 Shadow Science Lab';
+    wrap.appendChild(title);
+
+    /* Canvas */
+    var cv = document.createElement('canvas');
+    cv.width = 300; cv.height = 180;
+    cv.style.cssText = 'width:100%;max-width:300px;height:180px;display:block;border-radius:12px;margin:0 auto';
+    wrap.appendChild(cv);
+    var ctx = cv.getContext('2d');
+
+    var obj = objects[objIdx];
+    var sLen = shadowLen(dist, angle);
+    var sunX = angle <= 90 ? 30 + angle : 30 + (180 - angle) * 2;
+    var sunY = 20 + (1 - Math.sin(angle * Math.PI / 180)) * 40;
+    var groundY = 145;
+    var objX = 150, objY = groundY;
+
+    /* Sky */
+    var skyG = ctx.createLinearGradient(0,0,0,groundY);
+    skyG.addColorStop(0, angle < 30 || angle > 150 ? '#fbbf24' : '#bae6fd');
+    skyG.addColorStop(1, '#e0f2fe');
+    ctx.fillStyle = skyG; ctx.fillRect(0,0,300,groundY);
+
+    /* Ground */
+    ctx.fillStyle = '#bbf7d0'; ctx.fillRect(0,groundY,300,180-groundY);
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(300,groundY); ctx.stroke();
+
+    /* Sun */
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fcd34d';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 13, 0, Math.PI*2); ctx.fill();
+    /* Rays */
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+    for(var ri=0;ri<8;ri++){
+      var ra = ri/8*Math.PI*2;
+      ctx.beginPath(); ctx.moveTo(sunX+Math.cos(ra)*16,sunY+Math.sin(ra)*16);
+      ctx.lineTo(sunX+Math.cos(ra)*24,sunY+Math.sin(ra)*24); ctx.stroke();
+    }
+
+    /* Light ray to object */
+    ctx.strokeStyle = 'rgba(251,191,36,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(sunX,sunY); ctx.lineTo(objX,groundY-obj.h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Shadow */
+    var shadowDir = sunX < objX ? 1 : -1; /* shadow falls away from sun */
+    var shadowW = obj.w + Math.min(sLen * 0.3, 40);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.moveTo(objX - obj.w/2, groundY);
+    ctx.lineTo(objX + obj.w/2, groundY);
+    ctx.lineTo(objX + obj.w/2 + shadowDir * sLen, groundY + 5);
+    ctx.lineTo(objX - obj.w/2 + shadowDir * (sLen * 0.85), groundY + 5);
+    ctx.closePath(); ctx.fill();
+
+    /* Object */
+    ctx.font = obj.h + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText(obj.emoji, objX, groundY + 2);
+
+    /* Shadow length label */
+    ctx.fillStyle = '#64748b'; ctx.font = 'bold 9px Nunito,sans-serif'; ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Shadow: '+(Math.round(sLen))+' units', objX + shadowDir*sLen*0.5, groundY + 8);
+
+    /* Time of day label */
+    var timeLabel = angle < 45 ? '🌅 Sunrise' : angle < 80 ? '☀️ Morning' : angle < 100 ? '🌞 Noon' : angle < 135 ? '☀️ Afternoon' : '🌇 Sunset';
+    ctx.fillStyle = '#0369a1'; ctx.font = 'bold 10px Nunito,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(timeLabel, 8, 8);
+
+    /* Controls */
+    var controls = document.createElement('div');
+    controls.style.cssText = 'display:flex;flex-direction:column;gap:8px;width:100%';
+
+    /* Object picker */
+    var objRow = document.createElement('div');
+    objRow.style.cssText = 'display:flex;gap:6px;justify-content:center';
+    objects.forEach(function(obj,i){
+      var btn = document.createElement('button');
+      btn.style.cssText = 'font-size:18px;padding:5px 10px;border-radius:8px;cursor:pointer;border:2px solid '+(i===objIdx?'var(--sci)':'var(--border)')+';background:'+(i===objIdx?'var(--sci-dim)':'var(--surface2)');
+      btn.textContent = obj.emoji;
+      btn.title = obj.name;
+      btn.onclick = function(){ objIdx=i; render(); };
+      objRow.appendChild(btn);
+    });
+    controls.appendChild(objRow);
+
+    /* Sun angle (time of day) slider */
+    var sunLabel = document.createElement('div');
+    sunLabel.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted)';
+    sunLabel.textContent = 'Time of day (move the sun):';
+    controls.appendChild(sunLabel);
+    var sunSlider = document.createElement('input');
+    sunSlider.type='range'; sunSlider.min=10; sunSlider.max=170; sunSlider.value=angle;
+    sunSlider.className='slide'; sunSlider.style.cssText='width:100%;--val:'+((angle-10)/160*100)+'%;--acc:#f59e0b';
+    sunSlider.oninput = function(){ angle=+this.value; sunSlider.style.setProperty('--val',((angle-10)/160*100)+'%'); render(); };
+    controls.appendChild(sunSlider);
+
+    /* Distance slider */
+    var distLabel = document.createElement('div');
+    distLabel.style.cssText = 'font-size:11px;font-weight:800;color:var(--muted)';
+    distLabel.textContent = 'Distance from light source:';
+    controls.appendChild(distLabel);
+    var distSlider = document.createElement('input');
+    distSlider.type='range'; distSlider.min=0; distSlider.max=100; distSlider.value=dist;
+    distSlider.className='slide'; distSlider.style.cssText='width:100%;--val:'+dist+'%;--acc:#6366f1';
+    distSlider.oninput = function(){ dist=+this.value; distSlider.style.setProperty('--val',dist+'%'); render(); };
+    controls.appendChild(distSlider);
+
+    /* Discovery text */
+    var discovery = document.createElement('div');
+    discovery.style.cssText = 'font-size:11px;font-weight:700;color:var(--muted);text-align:center;padding:6px;background:var(--surface2);border-radius:8px';
+    var shadowSize = sLen;
+    var msg = shadowSize < 40 ? '☀️ Sun is high — short shadow (noon)' :
+              shadowSize < 80 ? '🌤 Sun is lower — medium shadow' :
+              '🌅 Sun is very low — very long shadow (sunrise/sunset)';
+    discovery.textContent = msg;
+    controls.appendChild(discovery);
+
+    wrap.appendChild(controls);
+    c.appendChild(wrap);
+  }
+  render();
+};
+
+/* ── ANIMAL BODY PARTS ── */
+SIM_REGISTRY['animal-parts'] = function(c) {
+  var animals = [
+    {name:'Eagle',   emoji:'🦅', habitat:'Sky',   colour:'#f59e0b',
+     parts:[
+       {part:'Wings',      emoji:'🪶', use:'To fly and soar through the sky'},
+       {part:'Sharp beak', emoji:'👃', use:'To tear meat — eagles are predators'},
+       {part:'Talons',     emoji:'🦶', use:'To grip and catch prey while flying'},
+     ],
+     fun:'An eagle can spot a rabbit from 3 km away! Their eyes are 4 times sharper than human eyes.'},
+    {name:'Fish',    emoji:'🐟', habitat:'Water', colour:'#0ea5e9',
+     parts:[
+       {part:'Fins',       emoji:'🏊', use:'To steer and balance in water'},
+       {part:'Streamlined body', emoji:'💧', use:'Smooth shape moves easily through water'},
+       {part:'Gills',      emoji:'🫁', use:'To breathe oxygen dissolved in water'},
+     ],
+     fun:'Fish breathe by passing water over their gills. They extract oxygen from water just like we extract it from air!'},
+    {name:'Elephant',emoji:'🐘', habitat:'Land',  colour:'#6b7280',
+     parts:[
+       {part:'Trunk',      emoji:'👃', use:'To smell, pick up food, drink water and communicate'},
+       {part:'Big ears',   emoji:'👂', use:'To hear far away sounds and fan themselves cool'},
+       {part:'Tusks',      emoji:'🦷', use:'To dig for water, strip bark and defend'},
+     ],
+     fun:'An elephant\'s trunk has 40,000 muscles! Humans have only 650 muscles in the whole body.'},
+    {name:'Duck',    emoji:'🦆', habitat:'Water & Land', colour:'#22c55e',
+     parts:[
+       {part:'Webbed feet', emoji:'🦶', use:'Like paddles — push against water to swim'},
+       {part:'Waterproof feathers', emoji:'🪶', use:'Oil coating keeps them dry even when swimming'},
+       {part:'Flat beak',  emoji:'👃', use:'Filters food from water and mud'},
+     ],
+     fun:'Ducks spread oil from a gland near their tail onto their feathers. This is why water rolls right off their backs!'},
+    {name:'Kangaroo',emoji:'🦘', habitat:'Land',  colour:'#f97316',
+     parts:[
+       {part:'Powerful back legs', emoji:'🦵', use:'To jump up to 9 metres in one hop!'},
+       {part:'Pouch',      emoji:'👜', use:'To carry and protect the baby (called a joey)'},
+       {part:'Strong tail', emoji:'🐍', use:'For balance while hopping and sitting'},
+     ],
+     fun:'A newborn kangaroo (joey) is the size of a grape! It crawls into the pouch and stays there for 6 months.'},
+    {name:'Bat',     emoji:'🦇', habitat:'Sky & Caves', colour:'#8b5cf6',
+     parts:[
+       {part:'Wings (skin membrane)', emoji:'🪶', use:'Skin stretched between long fingers forms wings'},
+       {part:'Echolocation',emoji:'👂', use:'Makes sounds and listens for echoes to "see" in the dark'},
+       {part:'Feet claws', emoji:'🦶', use:'Hook onto cave ceilings to sleep upside down'},
+     ],
+     fun:'Bats are the only mammals that can truly fly. And echolocation is so precise they can detect a wire thinner than a human hair in complete darkness!'},
+  ];
+
+  var animalIdx = 0, partIdx = null, phase = 'explore';
+  var quizIdx = 0, score = 0, quizAnswered = false;
+
+  function renderExplore() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '🦁 Animal Body Parts Lab';
+    wrap.appendChild(title);
+
+    /* Animal selector */
+    var animalRow = document.createElement('div');
+    animalRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center';
+    animals.forEach(function(a,i){
+      var btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 10px;border-radius:10px;cursor:pointer;'+
+        'border:2px solid '+(i===animalIdx?a.colour:'var(--border)')+
+        ';background:'+(i===animalIdx?a.colour+'18':'var(--surface2)');
+      btn.innerHTML = '<span style="font-size:24px">'+a.emoji+'</span>'+
+        '<span style="font-size:9px;font-weight:800;color:'+(i===animalIdx?a.colour:'var(--muted)')+'">'+a.name+'</span>';
+      btn.onclick = function(){ animalIdx=i; partIdx=null; renderExplore(); };
+      animalRow.appendChild(btn);
+    });
+    wrap.appendChild(animalRow);
+
+    var animal = animals[animalIdx];
+
+    /* Animal display */
+    var card = document.createElement('div');
+    card.style.cssText = 'background:'+animal.colour+'11;border:2px solid '+animal.colour+'33;border-radius:14px;padding:12px;text-align:center';
+    card.innerHTML = '<div style="font-size:64px;line-height:1;margin-bottom:4px">'+animal.emoji+'</div>'+
+      '<div style="font-size:16px;font-weight:900;color:'+animal.colour+'">'+animal.name+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);font-weight:700">Habitat: '+animal.habitat+'</div>';
+    wrap.appendChild(card);
+
+    /* Body parts */
+    var partsLabel = document.createElement('div');
+    partsLabel.style.cssText = 'font-size:12px;font-weight:800;color:var(--muted)';
+    partsLabel.textContent = 'Tap a body part to learn what it does:';
+    wrap.appendChild(partsLabel);
+
+    var partsRow = document.createElement('div');
+    partsRow.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    animal.parts.forEach(function(p,i){
+      var btn = document.createElement('button');
+      var isSel = partIdx === i;
+      btn.style.cssText = 'padding:10px 12px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;text-align:left;width:100%;'+
+        'border:2px solid '+(isSel?animal.colour:'var(--border)')+
+        ';background:'+(isSel?animal.colour+'18':'var(--surface2)');
+      btn.innerHTML = '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:20px">'+p.emoji+'</span>'+
+        '<span style="font-size:13px;font-weight:800;color:'+(isSel?animal.colour:'var(--text)')+'">'+p.part+'</span></div>'+
+        (isSel?'<div style="font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5;padding-left:28px">'+p.use+'</div>':'');
+      btn.onclick = function(){ partIdx = (partIdx===i)?null:i; renderExplore(); };
+      partsRow.appendChild(btn);
+    });
+    wrap.appendChild(partsRow);
+
+    /* Fun fact */
+    var funBox = document.createElement('div');
+    funBox.style.cssText = 'background:var(--surface2);border-radius:10px;padding:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.6;border-left:3px solid '+animal.colour;
+    funBox.innerHTML = '💡 <b>Amazing fact:</b> '+animal.fun;
+    wrap.appendChild(funBox);
+
+    var quizBtn = document.createElement('button');
+    quizBtn.className = 'cbtn evs'; quizBtn.textContent = 'Body Parts Quiz! ✏️';
+    quizBtn.onclick = function(){ phase='quiz'; quizIdx=0; score=0; quizAnswered=false; renderQuiz(); };
+    wrap.appendChild(quizBtn);
+    c.appendChild(wrap);
+  }
+
+  /* Quiz: show a body part emoji+name, ask which animal has it */
+  var quizQuestions = [];
+  animals.forEach(function(a){
+    a.parts.forEach(function(p){
+      quizQuestions.push({
+        part: p.part, emoji: p.emoji, use: p.use,
+        animal: a.name, animalEmoji: a.emoji, colour: a.colour,
+        options: animals.map(function(x){ return x.name; })
+      });
+    });
+  });
+  quizQuestions = quizQuestions.sort(function(){ return Math.random()-0.5; }).slice(0,8);
+
+  function renderQuiz() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;justify-content:space-between;width:100%';
+    top.innerHTML = '<span style="font-size:11px;color:var(--muted);font-weight:800">Question '+(quizIdx+1)+' of '+quizQuestions.length+'</span>'+
+      '<span style="font-size:11px;color:var(--sci);font-weight:800">Score: '+score+'/'+quizIdx+'</span>';
+    wrap.appendChild(top);
+
+    if(quizIdx >= quizQuestions.length){
+      wrap.innerHTML += '<div style="text-align:center;font-size:48px;margin:8px 0">🏆</div>'+
+        '<div style="text-align:center;font-weight:900;font-size:16px;color:var(--sci)">Score: '+score+'/'+quizQuestions.length+'</div>'+
+        '<div style="text-align:center;font-size:12px;color:var(--muted);padding:8px">Every animal body part has a special job. Nature is the best designer!</div>';
+      var rb = document.createElement('button'); rb.className='cbtn'; rb.textContent='← Explore animals';
+      rb.onclick = function(){ phase='explore'; renderExplore(); }; wrap.appendChild(rb);
+      c.appendChild(wrap); return;
+    }
+
+    var q = quizQuestions[quizIdx];
+
+    var qCard = document.createElement('div');
+    qCard.style.cssText = 'background:var(--surface2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border)';
+    qCard.innerHTML = '<div style="font-size:40px;margin-bottom:6px">'+q.emoji+'</div>'+
+      '<div style="font-size:15px;font-weight:900;color:var(--text)">'+q.part+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px">'+q.use+'</div>';
+    wrap.appendChild(qCard);
+
+    var qlabel = document.createElement('div');
+    qlabel.style.cssText = 'font-size:12px;font-weight:800;color:var(--muted);text-align:center';
+    qlabel.textContent = 'Which animal has this body part?';
+    wrap.appendChild(qlabel);
+
+    var opts = document.createElement('div');
+    opts.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    var shuffled = animals.slice().sort(function(){ return Math.random()-0.5; }).slice(0,4);
+    if(!shuffled.find(function(a){ return a.name===q.animal; })) { shuffled[0] = animals.find(function(a){ return a.name===q.animal; }); shuffled = shuffled.sort(function(){return Math.random()-0.5;}); }
+    shuffled.forEach(function(a){
+      var btn = document.createElement('button');
+      btn.style.cssText = 'padding:10px 14px;border-radius:10px;cursor:pointer;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);text-align:left;width:100%;display:flex;align-items:center;gap:8px';
+      btn.innerHTML = '<span style="font-size:20px">'+a.emoji+'</span>'+a.name;
+      btn.onclick = function(){
+        if(quizAnswered) return; quizAnswered=true;
+        var correct = a.name === q.animal;
+        if(correct) score++;
+        quizIdx++;
+        btn.style.background = correct?q.colour+'33':'#ef444433';
+        btn.style.borderColor = correct?q.colour:'#ef4444';
+        opts.querySelectorAll('button').forEach(function(b){
+          b.disabled=true;
+          if(b.textContent.trim().endsWith(q.animal)){ b.style.background=q.colour+'33'; b.style.borderColor=q.colour; }
+        });
+        var fb = document.createElement('div');
+        fb.style.cssText = 'padding:8px 10px;border-radius:10px;font-size:11px;font-weight:700;color:var(--text);line-height:1.5;background:var(--surface2);border-left:3px solid '+(correct?q.colour:'#f59e0b');
+        fb.textContent = (correct?'✅ ':'❌ ')+q.animalEmoji+' '+q.animal+'! '+q.use;
+        wrap.appendChild(fb);
+        var nx = document.createElement('button'); nx.className='cbtn evs';
+        nx.textContent = quizIdx<quizQuestions.length?'Next →':'See results!'; nx.style.marginTop='4px';
+        nx.onclick = function(){ quizAnswered=false; renderQuiz(); };
+        wrap.appendChild(nx);
+      };
+      opts.appendChild(btn);
+    });
+    wrap.appendChild(opts);
+    c.appendChild(wrap);
+  }
+
+  renderExplore();
+};
+
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
     { name:'Leaf',   floats:true,  color:'#22c55e', fact:'Waxy surface traps air — density < water!' },

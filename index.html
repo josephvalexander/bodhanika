@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
 <meta property="og:type" content="website">
 <link rel="manifest" href="manifest.json">
 <link rel="canonical" href="https://bodhanika.in/">
-<meta name="theme-color" content="#0d1b2a">
+<meta name="theme-color" content="#ffffff">
 <meta name="robots" content="index, follow">
 
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -286,7 +286,7 @@ window.searchClearBtn = function() {
 <!-- ══ THEME TOGGLE ══ -->
 <script>
 (function() {
-  var saved = localStorage.getItem('bodhanika-theme') || 'dark';
+  var saved = localStorage.getItem('bodhanika-theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
   document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
 })();
