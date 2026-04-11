@@ -3083,6 +3083,277 @@ SIM_REGISTRY['animal-parts'] = function(c) {
   renderExplore();
 };
 
+SIM_REGISTRY['plant-needs'] = function(c) {
+  /* Three independent conditions — student adjusts each and watches plant react */
+  var sun   = 60;  /* 0-100 */
+  var water = 60;
+  var soil  = 60;
+  var day   = 0;
+  var raf   = null;
+  var t     = 0;
+
+  function health() {
+    /* Each condition below 30 or above 90 hurts the plant */
+    var s = sun   < 25 ? (sun/25)   : sun   > 90 ? (1-(sun-90)/10)   : 1;
+    var w = water < 25 ? (water/25) : water > 90 ? (1-(water-90)/10) : 1;
+    var l = soil  < 25 ? (soil/25)  : soil  > 90 ? (1-(soil-90)/10)  : 1;
+    return Math.max(0, Math.min(1, s * w * l));
+  }
+
+  function status() {
+    var h = health();
+    if(h > 0.8)  return {label:'🌸 Thriving!',   col:'#22c55e'};
+    if(h > 0.55) return {label:'🌿 Growing',      col:'#65a30d'};
+    if(h > 0.3)  return {label:'🌱 Struggling',   col:'#f59e0b'};
+    return             {label:'🥀 Wilting',        col:'#ef4444'};
+  }
+
+  function problems() {
+    var msgs = [];
+    if(sun   < 25) msgs.push('☀️ Too little sunlight — plant cannot make food!');
+    if(sun   > 90) msgs.push('🔥 Too much direct sun — leaves are scorching!');
+    if(water < 25) msgs.push('💧 Too dry — roots cannot absorb nutrients!');
+    if(water > 90) msgs.push('🌊 Overwatered — roots are rotting!');
+    if(soil  < 25) msgs.push('🪨 Poor soil — not enough nutrients!');
+    if(soil  > 90) msgs.push('🧱 Soil too compacted — roots cannot breathe!');
+    return msgs;
+  }
+
+  function drawPlant(ctx, W, H, h, t2) {
+    var groundY = H * 0.72;
+    /* Sky */
+    var skyCol = sun < 25 ? '#1e293b' : sun > 85 ? '#fef3c7' : '#bae6fd';
+    var skyG = ctx.createLinearGradient(0,0,0,groundY);
+    skyG.addColorStop(0, skyCol); skyG.addColorStop(1,'#e0f2fe');
+    ctx.fillStyle = skyG; ctx.fillRect(0,0,W,groundY);
+
+    /* Sun */
+    if(sun > 10) {
+      var sunBright = Math.min(1, sun/60);
+      var sunX = W*0.8, sunY = H*0.12;
+      ctx.globalAlpha = sunBright;
+      /* Rays */
+      ctx.strokeStyle = '#fcd34d'; ctx.lineWidth = 2;
+      for(var ri=0;ri<8;ri++){
+        var ra = ri/8*Math.PI*2 + t2*0.3;
+        ctx.beginPath();
+        ctx.moveTo(sunX+Math.cos(ra)*18, sunY+Math.sin(ra)*18);
+        ctx.lineTo(sunX+Math.cos(ra)*26, sunY+Math.sin(ra)*26);
+        ctx.stroke();
+      }
+      var sg = ctx.createRadialGradient(sunX,sunY,2,sunX,sunY,16);
+      sg.addColorStop(0,'#fffbeb'); sg.addColorStop(1,'#fbbf24');
+      ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sunX,sunY,16,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      /* Clouds blocking sun */
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath(); ctx.arc(W*0.75,H*0.12,18,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(W*0.82,H*0.1,14,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(W*0.68,H*0.14,12,0,Math.PI*2); ctx.fill();
+    }
+
+    /* Rain if overwatered */
+    if(water > 85) {
+      ctx.strokeStyle = 'rgba(96,165,250,0.5)'; ctx.lineWidth = 1.5;
+      for(var di=0;di<8;di++){
+        var dx = (W*0.2 + di*W*0.08 + t2*20)%W;
+        var dy = (di*20 + t2*80)%(groundY);
+        ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(dx+3,dy+10); ctx.stroke();
+      }
+    }
+
+    /* Soil */
+    var soilCol = soil < 25 ? '#a16207' : soil > 85 ? '#44403c' : '#92400e';
+    ctx.fillStyle = soilCol; ctx.fillRect(0,groundY,W,H-groundY);
+    /* Soil texture */
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    [W*0.15,W*0.35,W*0.55,W*0.75].forEach(function(sx){
+      ctx.beginPath(); ctx.arc(sx,groundY+8,3,0,Math.PI*2); ctx.fill();
+    });
+    /* Water puddle if overwatered */
+    if(water > 85) {
+      ctx.fillStyle = 'rgba(96,165,250,0.3)';
+      ctx.beginPath(); ctx.ellipse(W/2,groundY+4,W*0.35,6,0,0,Math.PI*2); ctx.fill();
+    }
+    /* Dry cracks if underwatered */
+    if(water < 25) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(W*0.3,groundY+5); ctx.lineTo(W*0.4,groundY+15); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.6,groundY+8); ctx.lineTo(W*0.7,groundY+18); ctx.stroke();
+    }
+
+    /* Plant — height and colour based on health */
+    var stemH = Math.max(8, h * 120);
+    var stemX = W / 2;
+    var stemTop = groundY - stemH;
+    var leafGreen = h > 0.6 ? '#22c55e' : h > 0.3 ? '#a3e635' : '#d97706';
+
+    /* Stem */
+    ctx.strokeStyle = h > 0.3 ? '#16a34a' : '#92400e';
+    ctx.lineWidth = Math.max(2, h*6);
+    ctx.lineCap = 'round';
+    if(h < 0.3) {
+      /* Drooping stem */
+      ctx.beginPath();
+      ctx.moveTo(stemX, groundY);
+      ctx.bezierCurveTo(stemX+10,groundY-stemH*0.5,stemX+20,groundY-stemH*0.7,stemX+15,groundY-stemH);
+      ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(stemX, groundY); ctx.lineTo(stemX, stemTop); ctx.stroke();
+    }
+
+    if(h > 0.15) {
+      /* Leaves */
+      ctx.fillStyle = leafGreen;
+      var leafSize = Math.max(8, h * 28);
+      /* Left leaf */
+      ctx.beginPath();
+      ctx.moveTo(stemX, stemTop + stemH*0.35);
+      ctx.bezierCurveTo(stemX-leafSize*1.5,stemTop+stemH*0.2,stemX-leafSize*1.8,stemTop+stemH*0.45,stemX-leafSize*0.3,stemTop+stemH*0.5);
+      ctx.closePath(); ctx.fill();
+      /* Right leaf */
+      ctx.beginPath();
+      ctx.moveTo(stemX, stemTop + stemH*0.55);
+      ctx.bezierCurveTo(stemX+leafSize*1.5,stemTop+stemH*0.4,stemX+leafSize*1.8,stemTop+stemH*0.65,stemX+leafSize*0.3,stemTop+stemH*0.7);
+      ctx.closePath(); ctx.fill();
+    }
+
+    /* Flower or wilted top */
+    if(h > 0.8) {
+      ctx.font = Math.round(h*28)+'px serif';
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText('🌸', stemX + (h<0.3?15:0), stemTop+2);
+    } else if(h > 0.5) {
+      ctx.fillStyle = leafGreen;
+      ctx.beginPath(); ctx.arc(stemX + (h<0.3?15:0), stemTop, h*12, 0, Math.PI*2); ctx.fill();
+    } else if(h > 0.2) {
+      /* Small bud */
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(stemX+(h<0.3?15:0), stemTop, 5, 0, Math.PI*2); ctx.fill();
+    }
+
+    /* Roots hint below soil */
+    if(h > 0.3 && water > 20) {
+      ctx.strokeStyle = 'rgba(146,64,14,0.4)'; ctx.lineWidth=1; ctx.lineCap='round';
+      [[-10,12],[8,18],[-5,25],[12,10]].forEach(function(r){
+        ctx.beginPath(); ctx.moveTo(stemX,groundY+3); ctx.lineTo(stemX+r[0],groundY+r[1]); ctx.stroke();
+      });
+    }
+
+    /* Status label */
+    var st = status();
+    ctx.fillStyle = st.col; ctx.font='bold 12px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(st.label, W/2, 6);
+  }
+
+  function render() {
+    c.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;width:100%';
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:13px;font-weight:800;color:var(--text);text-align:center';
+    title.textContent = '🌱 What Do Plants Need to Grow?';
+    wrap.appendChild(title);
+
+    /* Live canvas */
+    var cv = document.createElement('canvas');
+    cv.width = 280; cv.height = 160;
+    cv.style.cssText = 'width:100%;max-width:280px;height:160px;display:block;border-radius:12px;margin:0 auto';
+    wrap.appendChild(cv);
+    var ctx = cv.getContext('2d');
+
+    if(raf) cancelAnimationFrame(raf);
+    function loop(){ t+=0.016; raf=requestAnimationFrame(loop); ctx.clearRect(0,0,280,160); drawPlant(ctx,280,160,health(),t); }
+    loop();
+
+    /* Sliders */
+    var sliders = [
+      {key:'sun',   label:'☀️ Sunlight', val:sun,   col:'#f59e0b',
+       low:'Too dark — can\'t make food', high:'Scorching!', good:'Just right'},
+      {key:'water', label:'💧 Water',    val:water, col:'#3b82f6',
+       low:'Too dry — wilting!', high:'Overwatered!', good:'Perfectly moist'},
+      {key:'soil',  label:'🌍 Soil',    val:soil,  col:'#92400e',
+       low:'Poor nutrients', high:'Too compacted', good:'Rich and loose'},
+    ];
+
+    sliders.forEach(function(sl){
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;flex-direction:column;gap:3px';
+
+      var topRow = document.createElement('div');
+      topRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+      var lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:12px;font-weight:800;color:var(--text)';
+      lbl.textContent = sl.label;
+      var val = document.createElement('span');
+      val.style.cssText = 'font-size:11px;font-weight:700;color:'+sl.col;
+      var pct = sl.val;
+      val.textContent = pct < 25 ? sl.low : pct > 85 ? sl.high : sl.good;
+      topRow.appendChild(lbl); topRow.appendChild(val);
+      row.appendChild(topRow);
+
+      var input = document.createElement('input');
+      input.type='range'; input.min=0; input.max=100; input.value=sl.val;
+      input.className='slide';
+      input.style.cssText='width:100%;--val:'+sl.val+'%;--acc:'+sl.col;
+      input.oninput = function(){
+        var v = +this.value;
+        if(sl.key==='sun')   sun=v;
+        if(sl.key==='water') water=v;
+        if(sl.key==='soil')  soil=v;
+        this.style.setProperty('--val',v+'%');
+        val.textContent = v<25?sl.low:v>85?sl.high:sl.good;
+        val.style.color = v<25||v>85?'#ef4444':sl.col;
+        updateProblems();
+      };
+      row.appendChild(input);
+      wrap.appendChild(row);
+    });
+
+    /* Problems box */
+    var probBox = document.createElement('div');
+    probBox.id = 'prob-box';
+    probBox.style.cssText = 'display:flex;flex-direction:column;gap:4px';
+    wrap.appendChild(probBox);
+
+    function updateProblems() {
+      probBox.innerHTML = '';
+      var probs = problems();
+      if(probs.length === 0) {
+        var good = document.createElement('div');
+        good.style.cssText = 'font-size:11px;font-weight:700;color:#22c55e;padding:6px 10px;background:rgba(34,197,94,0.1);border-radius:8px;text-align:center';
+        good.textContent = '✅ Perfect conditions! Your plant is thriving!';
+        probBox.appendChild(good);
+      } else {
+        probs.forEach(function(p){
+          var el = document.createElement('div');
+          el.style.cssText = 'font-size:11px;font-weight:700;color:#f59e0b;padding:5px 8px;background:rgba(245,158,11,0.1);border-radius:8px;border-left:3px solid #f59e0b';
+          el.textContent = p;
+          probBox.appendChild(el);
+        });
+      }
+    }
+    updateProblems();
+
+    /* Science facts */
+    var facts = document.createElement('div');
+    facts.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px';
+    [{e:'☀️',t:'Sunlight',f:'Energy to make food'},{e:'💧',t:'Water',f:'Carries nutrients'},{e:'🌍',t:'Soil',f:'Nutrients + support'}].forEach(function(f){
+      var card = document.createElement('div');
+      card.style.cssText = 'background:var(--surface2);border-radius:8px;padding:6px;text-align:center';
+      card.innerHTML = '<div style="font-size:18px">'+f.e+'</div><div style="font-size:9px;font-weight:800;color:var(--text)">'+f.t+'</div><div style="font-size:9px;color:var(--muted)">'+f.f+'</div>';
+      facts.appendChild(card);
+    });
+    wrap.appendChild(facts);
+
+    window.simCleanup = function(){ if(raf) cancelAnimationFrame(raf); };
+    c.appendChild(wrap);
+  }
+  render();
+};
+
 SIM_REGISTRY['sink-float'] = function(c) {
   var items = [
     { name:'Leaf',   floats:true,  color:'#22c55e', fact:'Waxy surface traps air — density < water!' },
